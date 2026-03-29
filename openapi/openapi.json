@@ -1,0 +1,256 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PB138 REST API",
+    "version": "1.0.0",
+    "description": "REST API for wagers and outcomes"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Wagers"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Service health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wagers": {
+      "get": {
+        "operationId": "listWagers",
+        "tags": ["Wagers"],
+        "responses": {
+          "200": {
+            "description": "List wagers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListWagersResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWager",
+        "tags": ["Wagers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWagerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created wager",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWagerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wagers/{id}": {
+      "get": {
+        "operationId": "getWagerById",
+        "tags": ["Wagers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wager detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWagerResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "service"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"]
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      },
+      "WagerStatus": {
+        "type": "string",
+        "enum": ["OPEN", "PENDING", "CLOSED"]
+      },
+      "WagerSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "status",
+          "categoryId",
+          "categoryName",
+          "createdById",
+          "creatorName",
+          "isPublic",
+          "createdAt"
+        ],
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "description": { "type": ["string", "null"] },
+          "status": { "$ref": "#/components/schemas/WagerStatus" },
+          "categoryId": { "type": "integer" },
+          "categoryName": { "type": "string" },
+          "createdById": { "type": "integer" },
+          "creatorName": { "type": "string" },
+          "isPublic": { "type": "boolean" },
+          "createdAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "WagerDetailOutcome": {
+        "type": "object",
+        "required": ["id", "title", "odds", "isWinner"],
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "odds": { "type": ["string", "null"] },
+          "isWinner": { "type": ["boolean", "null"] }
+        }
+      },
+      "WagerDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/WagerSummary" },
+          {
+            "type": "object",
+            "required": ["outcomes"],
+            "properties": {
+              "outcomes": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/WagerDetailOutcome" }
+              }
+            }
+          }
+        ]
+      },
+      "CreateWagerOutcome": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "odds": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      },
+      "CreateWagerRequest": {
+        "type": "object",
+        "required": ["title", "categoryId", "createdById", "isPublic", "outcomes"],
+        "properties": {
+          "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+          "description": { "type": "string", "maxLength": 2000 },
+          "categoryId": { "type": "integer", "minimum": 1 },
+          "createdById": { "type": "integer", "minimum": 1 },
+          "isPublic": { "type": "boolean" },
+          "outcomes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 8,
+            "items": { "$ref": "#/components/schemas/CreateWagerOutcome" }
+          }
+        }
+      },
+      "ListWagersResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WagerSummary" }
+          }
+        }
+      },
+      "GetWagerResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/WagerDetail" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

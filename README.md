@@ -1,55 +1,90 @@
-# PB138 Project (DrizzleORM + Vite + PostgreSQL)
+# PB138 Project
 
-## 🔧 Overview
+Clean client-server split with dedicated packages:
+- `client` (React + Vite + generated API hooks)
+- `server` (Elysia + Drizzle + PostgreSQL)
+- `shared` (shared Zod schemas)
+- root package (orchestration scripts only)
 
-This repository is a TypeScript full-stack template using:
-- Vite + React frontend
-- Drizzle ORM and PostgreSQL database
-- `tsx` scripts for migrations (`src/db/migrate.ts`), seeding (`src/db/seed.ts`), and a simple query runner (`src/index.ts`)
+## Quick Start
 
-## 🛠 Prerequisites
-
+### Prerequisites
 - Node.js 18+
 - npm
-- PostgreSQL (local or remote)
+- Docker
 
-## 1. Install dependencies
-
-```bash
-npm install
-```
-
-## 2. Environment variables
-
-Copy `.env.example` to `.env`:
+### One-command setup
 
 ```bash
-cp .env.example .env
+npm run setup
 ```
 
-## 3. Run PostgreSQL locally via Docker
+This command:
+1. Creates/starts PostgreSQL Docker container `pb138`
+2. Installs dependencies in `server` and `client`
+3. Runs DB generate/migrate/seed
+4. Generates client API from OpenAPI
+5. Runs lint
+
+### Start API
 
 ```bash
-docker run --detach --name pb138 -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=database -p 5432:5432 postgres:latest
+npm run start
 ```
 
-Stop and remove container:
+Server URLs:
+- API: `http://localhost:3000`
+- Swagger: `http://localhost:3000/swagger`
+
+### Start frontend
 
 ```bash
-docker stop pb138 && docker rm pb138
+npm run dev
 ```
 
-### 2. Generate Drizzle schema
+Frontend URL:
+- App: `http://localhost:5173`
+
+## Scripts (root)
+
+- `npm run setup` - full setup pipeline
+- `npm run start` - start server package
+- `npm run dev` - start client package
+- `npm run build` - build client + server typecheck
+- `npm run lint` - lint client + server + root scripts
+- `npm run api:generate` - generate `client/src/api/gen`
+- `npm run db:generate` - generate drizzle migration
+- `npm run db:migrate` - apply migrations
+- `npm run db:seed` - seed sample data
+- `npm run cli:query` - run query report
+
+## Debugging
+
+### Query summary
 
 ```bash
-npm run db:generate
+npm run cli:query
 ```
 
-### 3. Apply migrations
+Shows open wagers, recent bets, and accurate totals.
+
+### Health check
 
 ```bash
-npm run db:migrate
+curl http://localhost:3000/api/health
 ```
+
+Expected response:
+
+```json
+{"status":"ok","service":"pb138-api"}
+```
+
+## Notes
+
+- Client and server are separate packages with separate dependency trees.
+- Root package is intentionally thin and only orchestrates workflows.
+- Shared schemas are in `shared/src/schemas` and imported by both sides.
 
 ### 4. Seed initial data
 
@@ -59,23 +94,27 @@ npm run db:seed
 
 ## ▶️ Run project
 
-### Dev UI (React frontend)
+### Generate API client from OpenAPI
+
+```bash
+npm run api:generate
+```
+
+### Run API server
+
+```bash
+npm run start
+```
+
+API routes are served at `http://localhost:3000/api`, swagger docs at `http://localhost:3000/swagger`.
+
+### Run SPA frontend
 
 ```bash
 npm run dev
 ```
 
 Then visit `http://localhost:5173` (default Vite URL).
-
-### Database query script (CLI check)
-
-```bash
-npm run start
-```
-
-This runs `src/index.ts` and prints:
-- Open wagers
-- Recent bets
 
 ## 🧹 Linters
 
