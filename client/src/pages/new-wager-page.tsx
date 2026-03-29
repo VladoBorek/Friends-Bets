@@ -45,12 +45,17 @@ export function NewWagerPage() {
     mutation: {
       onSuccess: async (result) => {
         await queryClient.invalidateQueries({ queryKey: listWagers.queryKey });
-        const payload = result as { data?: { id?: number }; id?: number };
-        const createdWagerId = payload.data?.id ?? payload.id;
+        const createdWagerId = result.data?.id;
 
         if (createdWagerId) {
           await navigate({ to: "/wagers/$wagerId", params: { wagerId: String(createdWagerId) } });
         }
+      },
+      onError: async (error) => {
+        console.error("[createWager mutation error]", error);
+        const message = toErrorMessage(error);
+
+        setErrorMessage(message);
       },
     },
   });

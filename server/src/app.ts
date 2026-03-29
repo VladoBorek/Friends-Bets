@@ -7,19 +7,6 @@ import { HttpError, toErrorMessage } from "./errors";
 import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
 
-function jsonError(status: number, message: string, issues?: unknown) {
-  const payload = issues === undefined
-    ? { message }
-    : { message, issues };
-
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-    },
-  });
-}
-
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
@@ -44,18 +31,31 @@ export function createApp() {
     )
     .use(api)
     .onError(({ error, set }) => {
+      console.error("[API Error]", { error });
+      set.headers = {
+        "content-type": "application/json; charset=utf-8",
+      };
+
       if (error instanceof HttpError) {
         set.status = error.status;
-        return jsonError(error.status, error.message);
+        console.error("[API HttpError]", error.status, error.message);
+        return { message: error.message };
       }
 
       if (error instanceof ZodError) {
         set.status = 400;
-        return jsonError(400, "Validation failed", error.issues);
+        console.error("[API ZodError]", error.issues);
+        return {
+          message: "Validation failed",
+          issues: error.issues,
+        };
       }
 
       set.status = 500;
-      return jsonError(500, toErrorMessage(error));
+      console.error("[API InternalError]", toErrorMessage(error));
+      return {
+        message: toErrorMessage(error),
+      };
     });
 }
 
