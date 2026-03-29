@@ -8,6 +8,9 @@ import "./index.css";
 
 setApiClientConfig({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:3000" : ""),
+  headers: {
+    "content-type": "application/json",
+  },
 });
 
 const queryClient = new QueryClient();
