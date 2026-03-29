@@ -1,0 +1,46 @@
+{
+  "name": "pb138-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"src/api/gen/**\"",
+    "preview": "vite preview",
+    "api:generate": "kubb generate --config ./kubb.config.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.95.2",
+    "@tanstack/react-router": "^1.168.8",
+    "@tanstack/react-router-devtools": "^1.166.11",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@kubb/cli": "^4.37.0",
+    "@kubb/plugin-client": "^4.37.0",
+    "@kubb/plugin-oas": "^4.37.0",
+    "@kubb/plugin-react-query": "^4.37.0",
+    "@kubb/plugin-ts": "^4.37.0",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "vite": "^8.0.0"
+  }
+}

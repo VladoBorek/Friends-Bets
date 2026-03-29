@@ -1,0 +1,21 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "@tanstack/react-router";
+import { setConfig as setApiClientConfig } from "@kubb/plugin-client/clients/fetch";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { router } from "./router";
+import "./index.css";
+
+setApiClientConfig({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:3000" : ""),
+});
+
+const queryClient = new QueryClient();
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  </React.StrictMode>,
+);

@@ -4,38 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
-    "start": "tsx src/index.ts"
-  },
-  "dependencies": {
-    "@faker-js/faker": "^9.9.0",
-    "dotenv": "^16.6.1",
-    "drizzle-orm": "^0.45.1",
-    "pg": "^8.16.3",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "dev": "npm --prefix client run dev",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "lint": "npm --prefix client run lint && npm --prefix server run lint && eslint scripts",
+    "preview": "npm --prefix client run preview",
+    "api:generate": "npm --prefix client run api:generate",
+    "db:generate": "npm --prefix server run db:generate",
+    "db:migrate": "npm --prefix server run db:migrate",
+    "db:seed": "npm --prefix server run db:seed",
+    "cli:query": "npm --prefix server run cli:query",
+    "setup": "tsx scripts/setup.ts",
+    "start": "npm --prefix server run start"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@types/node": "^24.12.0",
-    "@types/pg": "^8.18.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.0",
-    "drizzle-kit": "^0.31.10",
+    "@types/node": "^25.5.0",
     "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "tsx": "^4.20.6",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.0"
+    "typescript-eslint": "^8.56.1"
   }
 }

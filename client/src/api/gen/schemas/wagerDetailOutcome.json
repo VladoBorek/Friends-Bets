@@ -1,0 +1,1 @@
+{"type":"object","required":["id","title","odds","isWinner"],"properties":{"id":{"type":"integer"},"title":{"type":"string"},"odds":{"type":["string","null"]},"isWinner":{"type":["boolean","null"]}},"x-readme-ref-name":"WagerDetailOutcome"}
