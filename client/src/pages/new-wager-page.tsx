@@ -47,7 +47,7 @@ export function NewWagerPage() {
         const createdWagerId = result.data?.id;
 
         if (createdWagerId) {
-          await navigate({ to: "/wagers/$wagerId", params: { wagerId: String(createdWagerId) } });
+          await navigate({ to: `/wagers/${createdWagerId}` });
         }
       },
       onError: async (error) => {
