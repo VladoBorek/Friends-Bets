@@ -52,6 +52,26 @@ export const createWagerResponseSchema = z.object({
   data: wagerDetailSchema,
 });
 
+export const placeBetRequestSchema = z.object({
+  userId: z.coerce.number().int().positive(),
+  outcomeId: z.coerce.number().int().positive(),
+  amount: z.coerce.number().positive(),
+});
+
+export const betSchema = z.object({
+  id: z.number().int(),
+  userId: z.number().int(),
+  outcomeId: z.number().int(),
+  amount: z.number(),
+  createdAt: z.string(),
+});
+
+export const placeBetResponseSchema = z.object({
+  data: betSchema,
+});
+
 export type CreateWagerRequest = z.infer<typeof createWagerRequestSchema>;
 export type WagerSummary = z.infer<typeof wagerSummarySchema>;
 export type WagerDetail = z.infer<typeof wagerDetailSchema>;
+export type PlaceBetRequest = z.infer<typeof placeBetRequestSchema>;
+export type Bet = z.infer<typeof betSchema>;

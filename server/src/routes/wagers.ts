@@ -5,8 +5,10 @@ import {
   createWagerResponseSchema,
   getWagerResponseSchema,
   listWagersResponseSchema,
+  placeBetRequestSchema,
+  placeBetResponseSchema,
 } from "../../../shared/src/schemas/wager";
-import { createWager, getWagerById, listWagers } from "../services/wager-service";
+import { createWager, getWagerById, listWagers, placeBet } from "../services/wager-service";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -26,4 +28,10 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const parsedBody = createWagerRequestSchema.parse(body);
     const data = await createWager(parsedBody);
     return createWagerResponseSchema.parse({ data });
+  })
+  .post("/:id/bets", async ({ params, body }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const parsedBody = placeBetRequestSchema.parse(body);
+    const data = await placeBet(parsedParams.id, parsedBody);
+    return placeBetResponseSchema.parse({ data });
   });
