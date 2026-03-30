@@ -30,7 +30,7 @@ This command:
 ### Start API
 
 ```bash
-npm run start
+npm run server
 ```
 
 Server URLs:
@@ -40,7 +40,7 @@ Server URLs:
 ### Start frontend
 
 ```bash
-npm run dev
+npm run client
 ```
 
 Frontend URL:
@@ -49,8 +49,8 @@ Frontend URL:
 ## Scripts (root)
 
 - `npm run setup` - full setup pipeline (uses `bun` where available, falls back to `npm`)
-- `npm run start` - start server package
-- `npm run dev` - start client package
+- `npm run server` - start server package
+- `npm run client` - start client package
 - `npm run build` - build client + server typecheck
 - `npm run lint` - lint client + server + root scripts
 - `npm run api:generate` - generate `client/src/api/gen`
