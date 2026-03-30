@@ -129,6 +129,65 @@
           }
         }
       }
+    },
+    "/api/wagers/{id}/bets": {
+      "post": {
+        "operationId": "placeBet",
+        "tags": ["Wagers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceBetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Placed bet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceBetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -242,6 +301,33 @@
         "required": ["data"],
         "properties": {
           "data": { "$ref": "#/components/schemas/WagerDetail" }
+        }
+      },
+      "PlaceBetRequest": {
+        "type": "object",
+        "required": ["userId", "outcomeId", "amount"],
+        "properties": {
+          "userId": { "type": "integer", "minimum": 1 },
+          "outcomeId": { "type": "integer", "minimum": 1 },
+          "amount": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      },
+      "Bet": {
+        "type": "object",
+        "required": ["id", "userId", "outcomeId", "amount", "createdAt"],
+        "properties": {
+          "id": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "outcomeId": { "type": "integer" },
+          "amount": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PlaceBetResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/Bet" }
         }
       },
       "ErrorResponse": {

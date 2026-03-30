@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ComponentProps } from "react";
 import { useEffect, useMemo, useState } from "react";
+import type { SubmitEvent } from "react";
 import { useCreateWager, useListWagers } from "../api/gen/hooks";
 import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
@@ -9,7 +9,6 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { createWagerRequestSchema } from "../../../shared/src/schemas/wager";
 
-type FormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0];
 
 function toErrorMessage(error: unknown): string {
   if (error && typeof error === "object") {
@@ -90,7 +89,7 @@ export function NewWagerPage() {
     [outcomes],
   );
 
-  async function onSubmit(event: FormSubmitEvent) {
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
 

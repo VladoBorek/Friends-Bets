@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "../db/db";
-import { Category, Outcome, User, Wager } from "../db/schema";
-import type { CreateWagerRequest, WagerDetail, WagerSummary } from "../../../shared/src/schemas/wager";
+import { Bet, Category, Outcome, User, Wager } from "../db/schema";
+import type { Bet as BetType, CreateWagerRequest, PlaceBetRequest, WagerDetail, WagerSummary } from "../../../shared/src/schemas/wager";
 import { HttpError } from "../errors";
 
 function normalizeStatus(value: string | null): "OPEN" | "PENDING" | "CLOSED" {
@@ -139,4 +139,58 @@ export async function createWager(input: CreateWagerRequest): Promise<WagerDetai
   });
 
   return getWagerById(created.id);
+}
+
+export async function placeBet(
+  wagerId: number,
+  input: PlaceBetRequest,
+): Promise<BetType> {
+  const [wager] = await db.select().from(Wager).where(eq(Wager.id, wagerId)).limit(1);
+  if (!wager) {
+    throw new HttpError(404, "Wager not found");
+  }
+
+  if (wager.status !== "OPEN") {
+    throw new HttpError(400, "Cannot place bets on wagers that are not OPEN");
+  }
+
+  const [outcome] = await db
+    .select({ id: Outcome.id, wagerId: Outcome.wager_id })
+    .from(Outcome)
+    .where(eq(Outcome.id, input.outcomeId))
+    .limit(1);
+
+  if (!outcome || outcome.wagerId !== wagerId) {
+    throw new HttpError(400, "Outcome not found for this wager");
+  }
+
+  const [user] = await db.select({ id: User.id }).from(User).where(eq(User.id, input.userId)).limit(1);
+  if (!user) {
+    throw new HttpError(400, "User not found");
+  }
+
+  const [betRow] = await db.insert(Bet).values({
+    user_id: input.userId,
+    outcome_id: input.outcomeId,
+    amount: input.amount.toString(),
+  })
+  .returning({
+    id: Bet.id,
+    userId: Bet.user_id,
+    outcomeId: Bet.outcome_id,
+    amount: Bet.amount,
+    createdAt: Bet.created_at,
+  });
+
+  if (!betRow) {
+    throw new HttpError(500, "Failed to create bet");
+  }
+
+  return {
+    id: betRow.id,
+    userId: betRow.userId,
+    outcomeId: betRow.outcomeId,
+    amount: Number(betRow.amount),
+    createdAt: betRow.createdAt.toISOString(),
+  };
 }
