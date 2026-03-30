@@ -23,6 +23,7 @@ export function RootLayout() {
                 to={item.to}
                 className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-cyan-400/50 hover:text-cyan-200"
                 activeProps={{ className: "border-cyan-400 bg-cyan-500/10 text-cyan-200" }}
+                activeOptions={{ exact: true }}
               >
                 {item.label}
               </Link>
