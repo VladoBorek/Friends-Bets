@@ -25,51 +25,64 @@ interface Step {
 }
 
 const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+const bunCmd = process.platform === "win32" ? "bun.exe" : "bun";
 const dockerCmd = process.platform === "win32" ? "docker.exe" : "docker";
+
+async function getPackageManager(): Promise<"bun" | "npm"> {
+  const bunVersion = await runCommand(bunCmd, ["--version"], undefined, true);
+  return bunVersion === 0 ? "bun" : "npm";
+}
 
 const steps: Step[] = [
   {
     name: "Shared Dependencies",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["install"],
     cwd: resolve(process.cwd(), "shared"),
     description: "Install shared package dependencies (Zod schemas)",
   },
   {
     name: "Server Dependencies",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["install"],
     cwd: resolve(process.cwd(), "server"),
     description: "Install server package dependencies",
   },
   {
     name: "Client Dependencies",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["install"],
     cwd: resolve(process.cwd(), "client"),
     description: "Install client package dependencies",
   },
   {
+    name: "TanStack Router Plugin",
+    cmd: "ROUTER_PLUGIN_PACKAGE_MANAGER",
+    args: [],
+    cwd: resolve(process.cwd(), "client"),
+    description: "Ensure @tanstack/router-plugin is installed for Vite plugin import",
+  },
+  {
     name: "Database Schema Generation",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["run", "db:generate"],
     description: "Generate Drizzle migrations from schema",
   },
   {
     name: "Database Migration",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["run", "db:migrate"],
     description: "Apply database migrations",
   },
   {
     name: "Database Seeding",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["run", "db:seed"],
     description: "Seed database with sample data",
   },
   {
     name: "API Client Generation",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["run", "api:generate"],
     description: "Generate TypeScript client and React Query hooks from OpenAPI",
   },
@@ -145,15 +158,24 @@ async function ensurePostgresContainer(): Promise<boolean> {
   return true;
 }
 
-async function runStep(step: Step, stepNumber: number, totalSteps: number): Promise<boolean> {
+async function runStep(step: Step, stepNumber: number, totalSteps: number, packageManager: "bun" | "npm"): Promise<boolean> {
   const prefix = `[${stepNumber}/${totalSteps}]`;
   console.log(`\n${BLUE}${prefix} ${step.name}${RESET}`);
   if (step.description) {
     console.log(`  ${YELLOW}→ ${step.description}${RESET}`);
   }
 
+  let cmd = step.cmd;
+  let args = [...step.args];
+  if (step.cmd === "PACKAGE_MANAGER") {
+    cmd = packageManager === "bun" ? bunCmd : npmCmd;
+  } else if (step.cmd === "ROUTER_PLUGIN_PACKAGE_MANAGER") {
+    cmd = packageManager === "bun" ? bunCmd : npmCmd;
+    args = packageManager === "bun" ? ["add", "@tanstack/router-plugin"] : ["install", "@tanstack/router-plugin"];
+  }
+
   return new Promise((resolve) => {
-    const proc = spawn(step.cmd, step.args, {
+    const proc = spawn(cmd, args, {
       cwd: step.cwd || process.cwd(),
       stdio: "inherit",
       shell: false,
@@ -186,6 +208,9 @@ async function main() {
   console.log(`${BLUE}  PB138 Full Project Setup${RESET}`);
   console.log(`${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}`);
 
+  const packageManager = await getPackageManager();
+  console.log(`${GREEN}✓ Using package manager: ${packageManager}${RESET}`);
+
   // Check .env exists
   const envPath = resolve(process.cwd(), ".env");
   if (!existsSync(envPath)) {
@@ -213,7 +238,7 @@ async function main() {
 
   let failed = false;
   for (let i = 0; i < steps.length; i++) {
-    const success = await runStep(steps[i], i + 1, steps.length);
+    const success = await runStep(steps[i], i + 1, steps.length, packageManager);
     if (!success) {
       failed = true;
       break;

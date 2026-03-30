@@ -1,3 +1,4 @@
+export type { Bet } from "./Bet.ts";
 export type { CreateWager200, CreateWager400, CreateWagerMutation, CreateWagerMutationRequest, CreateWagerMutationResponse } from "./CreateWager.ts";
 export type { CreateWagerOutcome } from "./CreateWagerOutcome.ts";
 export type { CreateWagerRequest } from "./CreateWagerRequest.ts";
@@ -8,6 +9,9 @@ export type { GetWagerResponse } from "./GetWagerResponse.ts";
 export type { HealthResponse, HealthResponseStatusEnumKey } from "./HealthResponse.ts";
 export type { ListWagers200, ListWagersQuery, ListWagersQueryResponse } from "./ListWagers.ts";
 export type { ListWagersResponse } from "./ListWagersResponse.ts";
+export type { PlaceBet200, PlaceBet400, PlaceBet404, PlaceBetMutation, PlaceBetMutationRequest, PlaceBetMutationResponse, PlaceBetPathParams } from "./PlaceBet.ts";
+export type { PlaceBetRequest } from "./PlaceBetRequest.ts";
+export type { PlaceBetResponse } from "./PlaceBetResponse.ts";
 export type { WagerDetail } from "./WagerDetail.ts";
 export type { WagerDetailOutcome } from "./WagerDetailOutcome.ts";
 export type { WagerStatus, WagerStatusEnumKey } from "./WagerStatus.ts";

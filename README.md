@@ -11,6 +11,7 @@ Clean client-server split with dedicated packages:
 ### Prerequisites
 - Node.js 18+
 - npm
+- Bun (optional, preferred if installed)
 - Docker
 
 ### One-command setup
@@ -47,7 +48,7 @@ Frontend URL:
 
 ## Scripts (root)
 
-- `npm run setup` - full setup pipeline
+- `npm run setup` - full setup pipeline (uses `bun` where available, falls back to `npm`)
 - `npm run start` - start server package
 - `npm run dev` - start client package
 - `npm run build` - build client + server typecheck
