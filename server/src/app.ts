@@ -3,7 +3,7 @@ import { node } from "@elysiajs/node";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
 import { ZodError } from "zod";
-import { HttpError, toErrorMessage } from "./errors";
+import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
 
@@ -52,9 +52,9 @@ export function createApp() {
       }
 
       set.status = 500;
-      console.error("[API InternalError]", toErrorMessage(error));
+      console.error("[API InternalError]", error);
       return {
-        message: toErrorMessage(error),
+        message: "Unexpected server error",
       };
     });
 }

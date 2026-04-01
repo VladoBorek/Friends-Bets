@@ -36,6 +36,17 @@ function toErrorMessage(error: unknown): string {
   return "Unable to create wager";
 }
 
+function getCreatedWagerId(result: unknown): number | null {
+  if (!result || typeof result !== "object") {
+    return null;
+  }
+
+  const payload = result as { id?: unknown; data?: { id?: unknown } };
+  const candidate = payload.id ?? payload.data?.id;
+
+  return typeof candidate === "number" && Number.isInteger(candidate) ? candidate : null;
+}
+
 export function NewWagerPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -44,7 +55,7 @@ export function NewWagerPage() {
     mutation: {
       onSuccess: async (result) => {
         await queryClient.invalidateQueries({ queryKey: listWagers.queryKey });
-        const createdWagerId = result.data?.id;
+        const createdWagerId = getCreatedWagerId(result);
 
         if (createdWagerId) {
           await navigate({ to: `/wagers/${createdWagerId}` });

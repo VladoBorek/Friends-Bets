@@ -1,15 +1,42 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
-import { useGetWagerById } from "../api/gen/hooks";
+import { useGetWagerById, usePlaceBet } from "../api/gen/hooks";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 
 type WagerDetailPageProps = {
   wagerId: number;
 };
 
+function toErrorMessage(error: unknown): string {
+  if (error && typeof error === "object") {
+    const value = error as {
+      response?: { data?: unknown };
+      message?: unknown;
+    };
+
+    if (typeof value.response?.data === "string" && value.response.data.trim()) {
+      return value.response.data;
+    }
+
+    if (value.response?.data && typeof value.response.data === "object") {
+      const data = value.response.data as { message?: unknown };
+      if (typeof data.message === "string" && data.message.trim()) {
+        return data.message;
+      }
+    }
+
+    if (typeof value.message === "string" && value.message.trim()) {
+      return value.message;
+    }
+  }
+
+  return "Failed to place bet";
+}
+
 export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const wager = useGetWagerById(wagerId);
+  const placeBet = usePlaceBet();
 
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<number | null>(null);
   const [betAmount, setBetAmount] = useState("");
@@ -59,29 +86,22 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/wagers/${detail.id}/bets`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const result = await placeBet.mutateAsync({
+        id: detail.id,
+        data: {
           userId: user,
           outcomeId: selectedOutcomeId,
           amount,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        const message = body?.message || response.statusText || "Failed to place bet";
-        throw new Error(message);
-      }
-
-      const data = await response.json();
-      setMessage(`Bet placed successfully (id ${data.data.id})`);
+      const betId = result.data?.id;
+      setMessage(betId ? `Bet placed successfully (id ${betId})` : "Bet placed successfully");
       setBetAmount("");
-      setIsSubmitting(false);
-      wager.refetch();
+      await wager.refetch();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to place bet");
+      setError(toErrorMessage(err));
+    } finally {
       setIsSubmitting(false);
     }
   };
