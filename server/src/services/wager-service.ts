@@ -100,7 +100,6 @@ export async function getWagerById(id: number): Promise<WagerDetail> {
 }
 
 export async function createWager(input: CreateWagerRequest): Promise<WagerDetail> {
-  console.debug("[createWager] input", input);
   const [category, creator] = await Promise.all([
     db.select({ id: Category.id }).from(Category).where(eq(Category.id, input.categoryId)).limit(1),
     db.select({ id: User.id }).from(User).where(eq(User.id, input.createdById)).limit(1),
@@ -191,6 +190,6 @@ export async function placeBet(
     userId: betRow.userId,
     outcomeId: betRow.outcomeId,
     amount: Number(betRow.amount),
-    createdAt: betRow.createdAt.toISOString(),
+    createdAt: (betRow.createdAt ?? new Date()).toISOString(),
   };
 }
