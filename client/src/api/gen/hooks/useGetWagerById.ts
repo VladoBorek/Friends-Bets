@@ -3,11 +3,11 @@
 * Do not edit manually.
 */
 
-import type { GetWagerByIdQueryResponse, GetWagerByIdPathParams, GetWagerById404 } from "../models/GetWagerById.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from "@tanstack/react-query";
-import { getWagerById } from "../client/getWagerById.ts";
+import type { GetWagerByIdQueryResponse, GetWagerByIdPathParams, GetWagerById404 } from "../models/GetWagerById.ts";
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { getWagerById } from "../client/getWagerById.ts";
 
 export const getWagerByIdQueryKey = (id: GetWagerByIdPathParams["id"]) => [{ url: '/api/wagers/:id', params: {id:id} }] as const
 

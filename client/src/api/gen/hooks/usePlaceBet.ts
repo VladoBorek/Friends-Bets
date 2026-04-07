@@ -3,11 +3,11 @@
 * Do not edit manually.
 */
 
-import type { PlaceBetMutationRequest, PlaceBetMutationResponse, PlaceBetPathParams, PlaceBet400, PlaceBet404 } from "../models/PlaceBet.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { UseMutationOptions, UseMutationResult, QueryClient } from "@tanstack/react-query";
-import { placeBet } from "../client/placeBet.ts";
+import type { PlaceBetMutationRequest, PlaceBetMutationResponse, PlaceBetPathParams, PlaceBet400, PlaceBet404 } from "../models/PlaceBet.ts";
 import { mutationOptions, useMutation } from "@tanstack/react-query";
+import { placeBet } from "../client/placeBet.ts";
 
 export const placeBetMutationKey = () => [{ url: '/api/wagers/:id/bets' }] as const
 

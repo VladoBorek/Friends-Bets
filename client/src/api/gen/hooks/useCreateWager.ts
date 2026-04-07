@@ -3,11 +3,11 @@
 * Do not edit manually.
 */
 
-import type { CreateWagerMutationRequest, CreateWagerMutationResponse, CreateWager400 } from "../models/CreateWager.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { UseMutationOptions, UseMutationResult, QueryClient } from "@tanstack/react-query";
-import { createWager } from "../client/createWager.ts";
+import type { CreateWagerMutationRequest, CreateWagerMutationResponse, CreateWager400 } from "../models/CreateWager.ts";
 import { mutationOptions, useMutation } from "@tanstack/react-query";
+import { createWager } from "../client/createWager.ts";
 
 export const createWagerMutationKey = () => [{ url: '/api/wagers' }] as const
 

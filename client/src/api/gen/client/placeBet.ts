@@ -4,8 +4,8 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/fetch";
-import type { PlaceBetMutationRequest, PlaceBetMutationResponse, PlaceBetPathParams, PlaceBet400, PlaceBet404 } from "../models/PlaceBet.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
+import type { PlaceBetMutationRequest, PlaceBetMutationResponse, PlaceBetPathParams, PlaceBet400, PlaceBet404 } from "../models/PlaceBet.ts";
 
 function getPlaceBetUrl(id: PlaceBetPathParams["id"]) {
   const res = { method: 'POST', url: `/api/wagers/${id}/bets` as const }

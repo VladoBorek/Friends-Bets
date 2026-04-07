@@ -100,7 +100,7 @@ function runCommand(cmd: string, args: string[], cwd?: string, silent = false): 
     const proc = spawn(cmd, args, {
       cwd: cwd || process.cwd(),
       stdio: silent ? "ignore" : "inherit",
-      shell: false,
+      shell: true,
     });
 
     proc.on("close", (code) => resolve(code ?? 1));
@@ -178,7 +178,7 @@ async function runStep(step: Step, stepNumber: number, totalSteps: number, packa
     const proc = spawn(cmd, args, {
       cwd: step.cwd || process.cwd(),
       stdio: "inherit",
-      shell: false,
+      shell: true,
     });
 
     proc.on("close", (code) => {
