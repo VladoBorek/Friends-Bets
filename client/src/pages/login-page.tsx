@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { LogIn } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 
 export function LoginPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { refreshUser } = useAuth();
   
   const [email, setEmail] = useState("");
@@ -32,9 +32,7 @@ export function LoginPage() {
       }
 
       await refreshUser();
-      
-      // Let the router redirect the user to their destination based on auth state
-      router.invalidate();
+      await navigate({ to: "/" });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -102,10 +100,6 @@ export function LoginPage() {
             {isLoading ? "Authenticating..." : "Sign In"}
           </button>
         </form>
-        
-        <div className="mt-6 text-center text-xs text-slate-500">
-          Terminal Access is restricted to authorized personnel only.
-        </div>
       </div>
     </div>
   );
