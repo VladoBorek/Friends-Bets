@@ -9,11 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerminalRouteImport } from './routes/terminal'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WagersIndexRouteImport } from './routes/wagers/index'
 import { Route as WagersNewRouteImport } from './routes/wagers/new'
 import { Route as WagersWagerIdRouteImport } from './routes/wagers/$wagerId'
 
+const TerminalRoute = TerminalRouteImport.update({
+  id: '/terminal',
+  path: '/terminal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +49,16 @@ const WagersWagerIdRoute = WagersWagerIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/terminal': typeof TerminalRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/terminal': typeof TerminalRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers': typeof WagersIndexRoute
@@ -50,20 +66,43 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/terminal': typeof TerminalRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/wagers/$wagerId' | '/wagers/new' | '/wagers/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/terminal'
+    | '/wagers/$wagerId'
+    | '/wagers/new'
+    | '/wagers/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/wagers/$wagerId' | '/wagers/new' | '/wagers'
-  id: '__root__' | '/' | '/wagers/$wagerId' | '/wagers/new' | '/wagers/'
+  to:
+    | '/'
+    | '/login'
+    | '/terminal'
+    | '/wagers/$wagerId'
+    | '/wagers/new'
+    | '/wagers'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/terminal'
+    | '/wagers/$wagerId'
+    | '/wagers/new'
+    | '/wagers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  TerminalRoute: typeof TerminalRoute
   WagersWagerIdRoute: typeof WagersWagerIdRoute
   WagersNewRoute: typeof WagersNewRoute
   WagersIndexRoute: typeof WagersIndexRoute
@@ -71,6 +110,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terminal': {
+      id: '/terminal'
+      path: '/terminal'
+      fullPath: '/terminal'
+      preLoaderRoute: typeof TerminalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +157,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  TerminalRoute: TerminalRoute,
   WagersWagerIdRoute: WagersWagerIdRoute,
   WagersNewRoute: WagersNewRoute,
   WagersIndexRoute: WagersIndexRoute,

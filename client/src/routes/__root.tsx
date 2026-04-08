@@ -1,6 +1,43 @@
-import { createRootRoute } from "@tanstack/react-router";
+import { createRootRouteWithContext, redirect } from "@tanstack/react-router";
 import { RootLayout } from "../pages/root-layout";
+import type { UserSummary } from "../../../shared/src/schemas/user";
 
-export const Route = createRootRoute({
+export interface RouterContext {
+  auth: {
+    user: UserSummary | null;
+    isLoading: boolean;
+    refreshUser: () => Promise<void>;
+    logout: () => Promise<void>;
+  };
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
+  beforeLoad: ({ context, location }) => {
+    // Wait for auth to load before deciding
+    if (context.auth.isLoading) {
+      return; 
+    }
+
+    if (!context.auth.user && location.pathname !== "/login") {
+      throw redirect({
+        to: "/login",
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
+
+    if (context.auth.user && location.pathname === "/login") {
+      throw redirect({
+        to: "/",
+      });
+    }
+
+    if (location.pathname === "/terminal" && context.auth.user?.roleName !== "ADMIN") {
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
 });

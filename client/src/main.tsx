@@ -4,6 +4,7 @@ import { setConfig as setApiClientConfig } from "@kubb/plugin-client/clients/fet
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { router } from "./router";
+import { AuthProvider, useAuth } from "./lib/auth-context";
 import "./index.css";
 
 setApiClientConfig({
@@ -15,10 +16,17 @@ setApiClientConfig({
 
 const queryClient = new QueryClient();
 
+function InnerApp() {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <InnerApp />
+      </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );
