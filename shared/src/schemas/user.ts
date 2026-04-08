@@ -20,9 +20,27 @@ export const userSummarySchema = z.object({
   email: z.string(),
   roleName: z.string().nullable(),
   createdAt: z.string().nullable(),
+  suspendedUntil: z.string().nullable().optional(),
 });
 
 export const userDetailSchema = userSummarySchema.extend({});
+
+export const updateUserRoleRequestSchema = z.object({
+  roleName: userRoleSchema,
+});
+
+export const suspendUserRequestSchema = z.object({
+  durationValue: z.coerce.number().int().positive().max(24 * 365),
+  durationUnit: z.enum(["hours", "days", "months"]),
+});
+
+export const userMutationResponseSchema = z.object({
+  data: userSummarySchema,
+});
+
+export const userDeleteResponseSchema = z.object({
+  message: z.string(),
+});
 
 // Response Wrappers
 export const loginResponseSchema = z.object({
@@ -41,3 +59,5 @@ export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export type CreateUserRequest = z.infer<typeof createUserRequestSchema>;
 export type UserSummary = z.infer<typeof userSummarySchema>;
 export type UserDetail = z.infer<typeof userDetailSchema>;
+export type UpdateUserRoleRequest = z.infer<typeof updateUserRoleRequestSchema>;
+export type SuspendUserRequest = z.infer<typeof suspendUserRequestSchema>;

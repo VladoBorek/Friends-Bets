@@ -4,12 +4,14 @@ import { db } from "../db/db";
 import { Role, User } from "../db/schema";
 import type { CreateUserRequest, LoginRequest, UserSummary } from "../../../shared/src/schemas/user";
 import { HttpError } from "../errors";
+import { emailClient } from "./email-service";
 
 type UserRow = {
   id: number;
   username: string;
   email: string;
   roleName: string | null;
+  suspendedUntil: Date | null;
   createdAt: Date | null;
 };
 
@@ -27,6 +29,7 @@ function mapUserSummary(row: UserRow): UserSummary {
     username: row.username,
     email: row.email,
     roleName: normalizeRoleName(row.roleName),
+    suspendedUntil: row.suspendedUntil?.toISOString() ?? null,
     createdAt: row.createdAt?.toISOString() ?? null,
   };
 }
@@ -73,6 +76,7 @@ export async function getUserByCredentials(input: LoginRequest): Promise<UserSum
       passwordHash: User.password_hash,
       roleId: User.role_id,
       roleName: Role.name,
+      suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
     })
     .from(User)
@@ -99,6 +103,7 @@ export async function getUserById(id: number): Promise<UserSummary> {
       username: User.username,
       email: User.email,
       roleName: Role.name,
+      suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
     })
     .from(User)
@@ -120,6 +125,7 @@ export async function listUsers(): Promise<UserSummary[]> {
       username: User.username,
       email: User.email,
       roleName: Role.name,
+      suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
     })
     .from(User)
@@ -127,4 +133,73 @@ export async function listUsers(): Promise<UserSummary[]> {
     .orderBy(desc(User.created_at));
 
   return rows.map(mapUserSummary);
+}
+
+export async function updateUserRole(userId: number, roleName: "ADMIN" | "PLAYER" | "USER"): Promise<UserSummary> {
+  const [role] = await db
+    .select({ id: Role.id })
+    .from(Role)
+    .where(inArray(Role.name, [roleName, roleName.toLowerCase(), roleName.charAt(0) + roleName.slice(1).toLowerCase()]))
+    .limit(1);
+
+  if (!role) {
+    throw new HttpError(400, `Role ${roleName} is not configured`);
+  }
+
+  const [updated] = await db
+    .update(User)
+    .set({ role_id: role.id })
+    .where(eq(User.id, userId))
+    .returning({ id: User.id });
+
+  if (!updated) {
+    throw new HttpError(404, "User not found");
+  }
+
+  return getUserById(userId);
+}
+
+export async function suspendUser(
+  userId: number,
+  durationValue: number,
+  durationUnit: "hours" | "days" | "months",
+): Promise<UserSummary> {
+  const suspensionUntil = new Date();
+
+  if (durationUnit === "hours") {
+    suspensionUntil.setHours(suspensionUntil.getHours() + durationValue);
+  } else if (durationUnit === "days") {
+    suspensionUntil.setDate(suspensionUntil.getDate() + durationValue);
+  } else {
+    suspensionUntil.setMonth(suspensionUntil.getMonth() + durationValue);
+  }
+
+  const [updated] = await db
+    .update(User)
+    .set({ suspended_until: suspensionUntil })
+    .where(eq(User.id, userId))
+    .returning({ id: User.id });
+
+  if (!updated) {
+    throw new HttpError(404, "User not found");
+  }
+
+  const user = await getUserById(userId);
+  if (user.suspendedUntil) {
+    await emailClient.sendSuspensionEmail({
+      email: user.email,
+      username: user.username,
+      suspendedUntilIso: user.suspendedUntil,
+    });
+  }
+
+  // TODO: Enforce suspended_until in wager betting endpoints once bet placement flow is finalized.
+  return user;
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  const [deleted] = await db.delete(User).where(eq(User.id, userId)).returning({ id: User.id });
+  if (!deleted) {
+    throw new HttpError(404, "User not found");
+  }
 }

@@ -6,9 +6,18 @@ import {
   listUsersResponseSchema,
   loginRequestSchema,
   loginResponseSchema,
+  suspendUserRequestSchema,
+  updateUserRoleRequestSchema,
+  userDeleteResponseSchema,
+  userMutationResponseSchema,
 } from "../../../shared/src/schemas/user";
-import { createUser, getUserByCredentials, getUserById, listUsers } from "../services/user-service";
+import { createUser, deleteUser, getUserByCredentials, getUserById, listUsers, suspendUser, updateUserRole } from "../services/user-service";
 import { HttpError } from "../errors";
+import { z } from "zod";
+
+const userIdParamsSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
 
 // Setup Auth context with JWT and Cookie
 export const userRoutes = new Elysia({ prefix: "/users" })
@@ -86,4 +95,45 @@ export const userRoutes = new Elysia({ prefix: "/users" })
     await getCurrentUser(); // Guard
     const data = await listUsers();
     return listUsersResponseSchema.parse({ data });
+  })
+
+  // Protected: Admin role update
+  .patch("/:id/role", async ({ getCurrentUser, params, body }) => {
+    const actor = await getCurrentUser();
+    if (actor.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = userIdParamsSchema.parse(params);
+    const parsedBody = updateUserRoleRequestSchema.parse(body);
+    if (parsedParams.id === actor.id && parsedBody.roleName !== "ADMIN") {
+      throw new HttpError(400, "Cannot demote yourself");
+    }
+    const data = await updateUserRole(parsedParams.id, parsedBody.roleName);
+    return userMutationResponseSchema.parse({ data });
+  })
+
+  // Protected: Admin suspension
+  .patch("/:id/suspend", async ({ getCurrentUser, params, body }) => {
+    const actor = await getCurrentUser();
+    if (actor.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = userIdParamsSchema.parse(params);
+    const parsedBody = suspendUserRequestSchema.parse(body);
+    const data = await suspendUser(parsedParams.id, parsedBody.durationValue, parsedBody.durationUnit);
+    return userMutationResponseSchema.parse({ data });
+  })
+
+  // Protected: Admin delete
+  .delete("/:id", async ({ getCurrentUser, params }) => {
+    const actor = await getCurrentUser();
+    if (actor.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = userIdParamsSchema.parse(params);
+    await deleteUser(parsedParams.id);
+    return userDeleteResponseSchema.parse({ message: "User deleted successfully" });
   });

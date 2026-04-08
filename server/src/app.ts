@@ -7,12 +7,14 @@ import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
 import { userRoutes } from "./routes/users";
+import { emailRoutes } from "./routes/email";
 
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
     .use(wagerRoutes)
-    .use(userRoutes);
+    .use(userRoutes)
+    .use(emailRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))
