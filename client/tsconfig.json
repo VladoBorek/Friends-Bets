@@ -1,7 +1,8 @@
 {
   "extends": "../tsconfig.app.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node", "vite/client"]
   },
   "include": ["src", "../shared/src"]
 }
