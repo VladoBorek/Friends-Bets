@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Ellipsis, LayoutDashboard, ShieldAlert, Tags, Trash2, UserRound, Users } from "lucide-react";
+import { Ellipsis, KeyRound, LayoutDashboard, ShieldAlert, Tags, Trash2, UserRound, Users } from "lucide-react";
 import type { UserSummary } from "../../../shared/src/schemas/user";
 import { PremiumCard, PremiumCardLabel, PremiumCardValue } from "../components/ui/card";
 import { useAuth } from "../lib/auth-context";
@@ -13,6 +13,7 @@ export function TerminalPage() {
   const [suspensionEditorForUserId, setSuspensionEditorForUserId] = useState<number | null>(null);
   const [suspensionValue, setSuspensionValue] = useState("24");
   const [suspensionUnit, setSuspensionUnit] = useState<"hours" | "days" | "months">("hours");
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -32,7 +33,8 @@ export function TerminalPage() {
     }
   };
 
-  const filteredUsers = users.filter((entry) => {
+  const filteredUsers = users
+    .filter((entry) => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return true;
 
@@ -41,7 +43,12 @@ export function TerminalPage() {
       entry.email.toLowerCase().includes(normalizedQuery) ||
       entry.roleName.toLowerCase().includes(normalizedQuery)
     );
-  });
+    })
+    .sort((a, b) => {
+      if (a.roleName === "ADMIN" && b.roleName !== "ADMIN") return -1;
+      if (a.roleName !== "ADMIN" && b.roleName === "ADMIN") return 1;
+      return a.username.localeCompare(b.username);
+    });
 
   const totalUsers = users.length;
   const adminUsers = users.filter((entry) => entry.roleName === "ADMIN").length;
@@ -73,19 +80,27 @@ export function TerminalPage() {
     await fetchUsers();
   };
 
-  const handleDeleteUser = async (user: UserSummary) => {
+  const clearMenuState = () => {
     setOpenMenuForUserId(null);
+    setSuspensionEditorForUserId(null);
+  };
+
+  const handleDeleteUser = async (user: UserSummary) => {
+    clearMenuState();
+    setFeedback(null);
     const res = await fetch(`/api/users/${user.id}`, { method: "DELETE" });
     if (!res.ok) {
       const message = (await res.json().catch(() => null)) as { message?: string } | null;
-      window.alert(message?.message ?? "Failed to delete user.");
+      setFeedback({ type: "error", message: message?.message ?? "Failed to delete user." });
       return;
     }
+    setFeedback({ type: "success", message: `User ${user.username} deleted.` });
     await refreshUsers();
   };
 
   const handleRoleChange = async (user: UserSummary, roleName: "ADMIN" | "USER") => {
-    setOpenMenuForUserId(null);
+    clearMenuState();
+    setFeedback(null);
     const res = await fetch(`/api/users/${user.id}/role`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -93,16 +108,18 @@ export function TerminalPage() {
     });
     if (!res.ok) {
       const message = (await res.json().catch(() => null)) as { message?: string } | null;
-      window.alert(message?.message ?? "Failed to update role.");
+      setFeedback({ type: "error", message: message?.message ?? "Failed to update role." });
       return;
     }
+    setFeedback({ type: "success", message: `Role updated for ${user.username}.` });
     await refreshUsers();
   };
 
   const handleSuspendUser = async (user: UserSummary) => {
+    setFeedback(null);
     const durationValue = Number(suspensionValue);
     if (!Number.isFinite(durationValue) || durationValue <= 0) {
-      window.alert("Duration must be a positive number.");
+      setFeedback({ type: "error", message: "Duration must be a positive number." });
       return;
     }
 
@@ -114,19 +131,64 @@ export function TerminalPage() {
 
     if (!res.ok) {
       const message = (await res.json().catch(() => null)) as { message?: string } | null;
-      window.alert(message?.message ?? "Failed to suspend user.");
+      setFeedback({ type: "error", message: message?.message ?? "Failed to suspend user." });
       return;
     }
 
-    setOpenMenuForUserId(null);
-    setSuspensionEditorForUserId(null);
+    clearMenuState();
+    setFeedback({ type: "success", message: `User ${user.username} suspended.` });
     await refreshUsers();
+  };
+
+  const handleResendVerification = async (user: UserSummary) => {
+    clearMenuState();
+    setFeedback(null);
+    const res = await fetch(`/api/users/${user.id}/resend-verification`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      const message = (await res.json().catch(() => null)) as { message?: string } | null;
+      setFeedback({ type: "error", message: message?.message ?? "Failed to resend verification email." });
+      return;
+    }
+
+    setFeedback({ type: "success", message: `Verification email resent to ${user.email}.` });
+  };
+
+  const handleUnsuspendUser = async (user: UserSummary) => {
+    clearMenuState();
+    setFeedback(null);
+    const res = await fetch(`/api/users/${user.id}/unsuspend`, {
+      method: "PATCH",
+    });
+    if (!res.ok) {
+      const message = (await res.json().catch(() => null)) as { message?: string } | null;
+      setFeedback({ type: "error", message: message?.message ?? "Failed to unsuspend user." });
+      return;
+    }
+    setFeedback({ type: "success", message: `User ${user.username} unsuspended.` });
+    await refreshUsers();
+  };
+
+  const handleAdminResetPassword = async (user: UserSummary) => {
+    clearMenuState();
+    setFeedback(null);
+    const res = await fetch(`/api/users/${user.id}/reset-password`, {
+      method: "POST",
+    });
+    const message = (await res.json().catch(() => null)) as { message?: string } | null;
+    if (!res.ok) {
+      setFeedback({ type: "error", message: message?.message ?? "Failed to send password reset email." });
+      return;
+    }
+    setFeedback({ type: "success", message: message?.message ?? `Password reset email sent to ${user.email}.` });
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto grid w-full max-w-[90rem] gap-6 px-6 pb-6 pt-1 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8 lg:pb-8 lg:pt-2">
-        <main onClick={() => setOpenMenuForUserId(null)}>
+        <main onClick={clearMenuState}>
           <header className="mb-6">
             <p className="text-xs uppercase tracking-[0.32em] text-cyan-300/80">Admin</p>
             <h1 className="mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight text-slate-100">
@@ -172,6 +234,17 @@ export function TerminalPage() {
           </section>
 
           <section className="rounded-2xl border border-cyan-500/15 bg-gradient-to-br from-slate-900/88 via-slate-900/82 to-cyan-950/18 p-4 shadow-lg shadow-slate-950/25 transition-shadow duration-200 hover:shadow-[0_20px_44px_-26px_rgba(8,145,178,0.65)]">
+            {feedback && (
+              <div
+                className={`mb-4 rounded-xl border px-3 py-2 text-sm ${
+                  feedback.type === "success"
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                    : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                }`}
+              >
+                {feedback.message}
+              </div>
+            )}
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-semibold text-slate-100">Users Table</h2>
               <input
@@ -251,7 +324,9 @@ export function TerminalPage() {
 
                             {openMenuForUserId === entry.id && (
                               <div
-                                className={`absolute right-0 z-20 w-52 rounded-lg border border-slate-700 bg-slate-950/95 p-1.5 shadow-xl shadow-slate-950/60 ${
+                                className={`absolute right-0 z-20 rounded-lg border border-slate-700 bg-slate-950/95 p-1.5 shadow-xl shadow-slate-950/60 ${
+                                  suspensionEditorForUserId === entry.id ? "w-72 -translate-x-3" : "w-52"
+                                } ${
                                   index < 2 ? "top-9" : "bottom-9"
                                 }`}
                               >
@@ -285,20 +360,48 @@ export function TerminalPage() {
                                   <Users className="h-4 w-4 text-cyan-300" />
                                   Suspend User
                                 </button>
+                                {getUserStatus(entry) === "suspended" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUnsuspendUser(entry)}
+                                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-emerald-200 transition-colors hover:bg-emerald-500/10"
+                                  >
+                                    <Users className="h-4 w-4 text-emerald-300" />
+                                    Unsuspend User
+                                  </button>
+                                )}
+                                {!entry.isVerified && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResendVerification(entry)}
+                                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-amber-200 transition-colors hover:bg-amber-500/10"
+                                  >
+                                    <ShieldAlert className="h-4 w-4 text-amber-300" />
+                                    Resend Verification Email
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleAdminResetPassword(entry)}
+                                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-cyan-200 transition-colors hover:bg-cyan-500/10"
+                                >
+                                  <KeyRound className="h-4 w-4 text-cyan-300" />
+                                  Reset Password
+                                </button>
                                 {suspensionEditorForUserId === entry.id && (
                                   <div className="my-1 rounded-md border border-slate-700 bg-slate-900/70 p-2">
-                                    <div className="flex items-center gap-2">
+                                    <div className="grid grid-cols-[5rem_1fr_auto] items-center gap-2">
                                       <input
                                         type="number"
                                         min={1}
                                         value={suspensionValue}
                                         onChange={(event) => setSuspensionValue(event.target.value)}
-                                        className="w-20 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
+                                        className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
                                       />
                                       <select
                                         value={suspensionUnit}
                                         onChange={(event) => setSuspensionUnit(event.target.value as "hours" | "days" | "months")}
-                                        className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
+                                        className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
                                       >
                                         <option value="hours">hours</option>
                                         <option value="days">days</option>
@@ -307,7 +410,7 @@ export function TerminalPage() {
                                       <button
                                         type="button"
                                         onClick={() => handleSuspendUser(entry)}
-                                        className="rounded border border-cyan-500/30 px-2 py-1 text-xs text-cyan-200 hover:bg-cyan-500/10"
+                                        className="whitespace-nowrap rounded border border-cyan-500/30 px-2 py-1 text-xs text-cyan-200 hover:bg-cyan-500/10"
                                       >
                                         Apply
                                       </button>

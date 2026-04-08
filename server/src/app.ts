@@ -2,6 +2,7 @@ import { cors } from "@elysiajs/cors";
 import { node } from "@elysiajs/node";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
+import { NotFoundError } from "elysia/error";
 import { ZodError } from "zod";
 import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
@@ -44,6 +45,11 @@ export function createApp() {
         set.status = error.status;
         console.error("[API HttpError]", error.status, error.message);
         return { message: error.message };
+      }
+
+      if (error instanceof NotFoundError) {
+        set.status = 404;
+        return { message: "Endpoint not found" };
       }
 
       if (error instanceof ZodError) {

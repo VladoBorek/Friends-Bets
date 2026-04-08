@@ -12,9 +12,12 @@ const placeholderNavItems = [{ label: "Friends & Groups" }, { label: "Wallet" }]
 
 export function RootLayout() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isResendLoading, setIsResendLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const isAdmin = user?.roleName === "ADMIN";
+  const isVerified = user?.isVerified ?? false;
 
   const handleLogout = async () => {
     await logout();
@@ -22,10 +25,51 @@ export function RootLayout() {
     await router.navigate({ to: "/login" });
   };
 
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    setIsResendLoading(true);
+    try {
+      const res = await fetch("/api/users/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const json = (await res.json().catch(() => null)) as { message?: string } | null;
+      if (!res.ok) {
+        setFeedback({ type: "error", message: json?.message ?? "Failed to resend verification email." });
+        return;
+      }
+      setFeedback({ type: "success", message: json?.message ?? "Verification email resent." });
+      await refreshUser();
+    } finally {
+      setIsResendLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto flex w-full max-w-[90rem] flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <header className="mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 shadow-xl shadow-cyan-950/20 backdrop-blur md:p-5">
+          {feedback && (
+            <div
+              className={`mb-4 rounded-lg p-3 text-sm ring-1 ${
+                feedback.type === "success"
+                  ? "bg-emerald-500/10 text-emerald-300 ring-emerald-500/25"
+                  : "bg-rose-500/10 text-rose-300 ring-rose-500/25"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span>{feedback.message}</span>
+                <button
+                  type="button"
+                  onClick={() => setFeedback(null)}
+                  className="rounded px-1.5 py-0.5 text-xs text-slate-300 hover:bg-slate-800/60"
+                >
+                  close
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-lg font-bold uppercase tracking-[0.35em] text-cyan-300/80">Gam(bl)ing With Friends</p>
@@ -85,13 +129,25 @@ export function RootLayout() {
                 )}
               </nav>
 
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-200 transition-colors hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
-              >
-                Sign Out
-              </button>
+              <div className="inline-flex items-center gap-2">
+                {!isVerified && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={isResendLoading}
+                    className="rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-200 transition-colors hover:border-amber-400/70 hover:bg-amber-500/15 hover:text-amber-100 disabled:opacity-50"
+                  >
+                    {isResendLoading ? "Resending..." : "Resend Verification"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-200 transition-colors hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           )}
 
@@ -130,13 +186,25 @@ export function RootLayout() {
                   </Link>
                 )}
               </nav>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 transition-colors hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
-              >
-                Sign Out
-              </button>
+              <div className="flex flex-col gap-2">
+                {!isVerified && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={isResendLoading}
+                    className="w-full rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200 transition-colors hover:border-amber-400/70 hover:bg-amber-500/15 hover:text-amber-100 disabled:opacity-50"
+                  >
+                    {isResendLoading ? "Resending..." : "Resend Verification"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 transition-colors hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           )}
         </header>

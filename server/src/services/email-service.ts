@@ -27,6 +27,18 @@ export type RegistrationTemplate = {
   activationUrl: string;
 };
 
+export type VerificationReminderTemplate = {
+  email: string;
+  username: string;
+  verificationUrl: string;
+};
+
+export type PasswordResetTemplate = {
+  email: string;
+  username: string;
+  resetUrl: string;
+};
+
 export type GenericNotificationTemplate = {
   email: string;
   username: string;
@@ -68,12 +80,20 @@ class EmailClient {
   async verify(): Promise<void> {
     if (!this.enabled) return;
     if (this.provider === "smtp" && this.transporter) {
+      console.log("[Email] Verifying SMTP transporter", { provider: this.provider, from: this.from });
       await this.transporter.verify();
+      console.log("[Email] SMTP transporter verified");
     }
   }
 
   async send(template: EmailTemplatePayload): Promise<void> {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      console.warn("[Email] Send skipped because EMAIL_ENABLED=false", {
+        to: template.to,
+        subject: template.subject,
+      });
+      return;
+    }
 
     if (this.provider === "log") {
       console.log("[Email LOG]", {
@@ -90,13 +110,35 @@ class EmailClient {
       throw new HttpError(500, "Email transporter is not initialized");
     }
 
-    await this.transporter.sendMail({
+    console.log("[Email] Sending SMTP mail", {
+      provider: this.provider,
       from: this.from,
       to: template.to,
       subject: template.subject,
-      text: template.text,
-      html: template.html,
     });
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: this.from,
+        to: template.to,
+        subject: template.subject,
+        text: template.text,
+        html: template.html,
+      });
+      console.log("[Email] SMTP send successful", {
+        to: template.to,
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+      });
+    } catch (error) {
+      console.error("[Email] SMTP send failed", {
+        to: template.to,
+        subject: template.subject,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   async sendRegistrationEmail(input: RegistrationTemplate): Promise<void> {
@@ -108,12 +150,30 @@ class EmailClient {
     });
   }
 
+  async sendVerificationReminderEmail(input: VerificationReminderTemplate): Promise<void> {
+    await this.send({
+      to: input.email,
+      subject: "PB138 account verification reminder",
+      text: `Hello ${input.username}, please verify your account here: ${input.verificationUrl}`,
+      html: `<p>Hello <strong>${input.username}</strong>,</p><p>Please verify your account to unlock all PB138 features.</p><p><a href="${input.verificationUrl}">${input.verificationUrl}</a></p>`,
+    });
+  }
+
   async sendPasswordChangedEmail(input: SecurityNotificationTemplate): Promise<void> {
     await this.send({
       to: input.email,
       subject: "PB138 security notification - password changed",
       text: `Hello ${input.username}, your password was changed at ${input.changedAtIso}.`,
       html: `<p>Hello <strong>${input.username}</strong>,</p><p>Your password was changed at <strong>${input.changedAtIso}</strong>.</p><p>If this was not you, contact support immediately.</p>`,
+    });
+  }
+
+  async sendPasswordResetEmail(input: PasswordResetTemplate): Promise<void> {
+    await this.send({
+      to: input.email,
+      subject: "PB138 password reset",
+      text: `Hello ${input.username}, reset your password here: ${input.resetUrl}`,
+      html: `<p>Hello <strong>${input.username}</strong>,</p><p>Use this link to set a new password:</p><p><a href="${input.resetUrl}">${input.resetUrl}</a></p>`,
     });
   }
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 
 export function LoginPage() {
@@ -11,6 +11,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +45,14 @@ export function LoginPage() {
     }
   };
 
+  const handleGoToRegister = () => {
+    setEmail("");
+    setPassword("");
+    setError("");
+    setShowPassword(false);
+    void navigate({ to: "/register" });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
       <div className="w-full max-w-md rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-xl shadow-cyan-950/20 text-slate-100">
@@ -60,7 +69,6 @@ export function LoginPage() {
             {error}
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="email">
@@ -81,15 +89,25 @@ export function LoginPage() {
             <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="password">
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950/50 px-4 py-2.5 text-slate-200 outline-none transition-colors focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border border-slate-700 bg-slate-950/50 px-4 py-2.5 pr-11 text-slate-200 outline-none transition-colors focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute inset-y-0 right-0 inline-flex items-center px-3 text-slate-400 transition-colors hover:text-cyan-200"
+                aria-label={showPassword ? "hide password" : "show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -100,6 +118,14 @@ export function LoginPage() {
             {isLoading ? "Authenticating..." : "Sign In"}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={handleGoToRegister}
+          className="mt-4 w-full rounded-md border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
+        >
+          Create Account
+        </button>
       </div>
     </div>
   );

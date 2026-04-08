@@ -6,12 +6,33 @@ import {
   listUsersResponseSchema,
   loginRequestSchema,
   loginResponseSchema,
+  resetPasswordByAdminResponseSchema,
+  resetPasswordRequestSchema,
+  resendVerificationByEmailRequestSchema,
   suspendUserRequestSchema,
   updateUserRoleRequestSchema,
+  userActionResponseSchema,
   userDeleteResponseSchema,
   userMutationResponseSchema,
+  verifyEmailRequestSchema,
+  verifyEmailResponseSchema,
 } from "../../../shared/src/schemas/user";
-import { createUser, deleteUser, getUserByCredentials, getUserById, listUsers, suspendUser, updateUserRole } from "../services/user-service";
+import {
+  createUser,
+  deleteUser,
+  getUserByCredentials,
+  getUserByEmail,
+  getUserById,
+  listUsers,
+  resendVerificationEmail,
+  resendVerificationEmailByAddress,
+  resetPasswordByToken,
+  suspendUser,
+  unsuspendUser,
+  updateUserRole,
+  verifyEmailToken,
+  sendAdminPasswordReset,
+} from "../services/user-service";
 import { HttpError } from "../errors";
 import { z } from "zod";
 
@@ -71,10 +92,25 @@ export const userRoutes = new Elysia({ prefix: "/users" })
   })
   
   // Register (Often protected, but public for demo if needed. Assuming public for bootstrapping)
-  .post("", async ({ body }) => {
+  .post("", async ({ body, jwt, cookie: { auth_session } }) => {
     const parsedBody = createUserRequestSchema.parse(body);
     const user = await createUser(parsedBody);
-    // You could immediately sign them in, but standard is force login
+
+    const token = await jwt.sign({
+      id: user.id,
+      role: user.roleName,
+      exp: Math.floor(Date.now() / 1000) + (7 * 86400),
+    });
+
+    auth_session.set({
+      value: token,
+      httpOnly: true,
+      path: "/",
+      maxAge: 7 * 86400,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
     return { data: user };
   })
   
@@ -82,6 +118,48 @@ export const userRoutes = new Elysia({ prefix: "/users" })
   .post("/logout", ({ cookie: { auth_session } }) => {
     auth_session.remove();
     return { message: "Logged out" };
+  })
+
+  // Public Email Verification
+  .post("/verify-email", async ({ body, jwt, cookie: { auth_session } }) => {
+    const parsedBody = verifyEmailRequestSchema.parse(body);
+    const data = await verifyEmailToken(parsedBody.token);
+
+    const token = await jwt.sign({
+      id: data.id,
+      role: data.roleName,
+      exp: Math.floor(Date.now() / 1000) + (7 * 86400),
+    });
+
+    auth_session.set({
+      value: token,
+      httpOnly: true,
+      path: "/",
+      maxAge: 7 * 86400,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    return verifyEmailResponseSchema.parse({ message: "Email verified successfully", data });
+  })
+
+  // Public: resend verification by email
+  .post("/resend-verification", async ({ body }) => {
+    const parsedBody = resendVerificationByEmailRequestSchema.parse(body);
+    const targetUser = await getUserByEmail(parsedBody.email);
+    if (targetUser.isVerified) {
+      return userActionResponseSchema.parse({ message: "Account is already verified." });
+    }
+
+    await resendVerificationEmailByAddress(parsedBody.email);
+    return userActionResponseSchema.parse({ message: "Verification email resent." });
+  })
+
+  // Public: reset password by token
+  .post("/reset-password", async ({ body }) => {
+    const parsedBody = resetPasswordRequestSchema.parse(body);
+    await resetPasswordByToken(parsedBody.token, parsedBody.password);
+    return resetPasswordByAdminResponseSchema.parse({ message: "Password reset successful." });
   })
 
   // Protected: Get Me
@@ -124,6 +202,46 @@ export const userRoutes = new Elysia({ prefix: "/users" })
     const parsedBody = suspendUserRequestSchema.parse(body);
     const data = await suspendUser(parsedParams.id, parsedBody.durationValue, parsedBody.durationUnit);
     return userMutationResponseSchema.parse({ data });
+  })
+
+  // Protected: Admin unsuspend
+  .patch("/:id/unsuspend", async ({ getCurrentUser, params }) => {
+    const actor = await getCurrentUser();
+    if (actor.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = userIdParamsSchema.parse(params);
+    const data = await unsuspendUser(parsedParams.id);
+    return userMutationResponseSchema.parse({ data });
+  })
+
+  // Protected: Admin resend verification email
+  .post("/:id/resend-verification", async ({ getCurrentUser, params }) => {
+    const actor = await getCurrentUser();
+    if (actor.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = userIdParamsSchema.parse(params);
+    console.log("[Users Route] Admin resend verification", {
+      actorId: actor.id,
+      targetUserId: parsedParams.id,
+    });
+    await resendVerificationEmail(parsedParams.id);
+    return userActionResponseSchema.parse({ message: "Verification email resent" });
+  })
+
+  // Protected: Admin password reset trigger
+  .post("/:id/reset-password", async ({ getCurrentUser, params }) => {
+    const actor = await getCurrentUser();
+    if (actor.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = userIdParamsSchema.parse(params);
+    await sendAdminPasswordReset(parsedParams.id);
+    return resetPasswordByAdminResponseSchema.parse({ message: "Password reset email sent." });
   })
 
   // Protected: Admin delete

@@ -6,7 +6,7 @@ export interface RouterContext {
   auth: {
     user: UserSummary | null;
     isLoading: boolean;
-    refreshUser: () => Promise<void>;
+    refreshUser: () => Promise<UserSummary | null>;
     logout: () => Promise<void>;
   };
 }
@@ -14,11 +14,10 @@ export interface RouterContext {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   beforeLoad: async ({ context, location }) => {
-    if (context.auth.isLoading) {
-      await context.auth.refreshUser();
-    }
+    const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
+    const refreshedUser = await context.auth.refreshUser();
 
-    if (!context.auth.user && location.pathname !== "/login") {
+    if (!refreshedUser && !publicPaths.has(location.pathname)) {
       throw redirect({
         to: "/login",
         search: {
@@ -27,13 +26,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       });
     }
 
-    if (context.auth.user && location.pathname === "/login") {
-      throw redirect({
-        to: "/",
-      });
+    if (refreshedUser && (location.pathname === "/login" || location.pathname === "/register")) {
+      throw redirect({ to: "/" });
     }
 
-    if (location.pathname === "/terminal" && context.auth.user?.roleName !== "ADMIN") {
+    if (location.pathname === "/terminal" && refreshedUser?.roleName !== "ADMIN") {
       throw redirect({
         to: "/",
       });

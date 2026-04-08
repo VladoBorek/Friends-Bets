@@ -14,6 +14,15 @@ export const loginRequestSchema = z.object({
   password: z.string().min(1),
 });
 
+export const resendVerificationByEmailRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordRequestSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(4),
+});
+
 export const userSummarySchema = z.object({
   id: z.number().int(),
   username: z.string(),
@@ -35,11 +44,28 @@ export const suspendUserRequestSchema = z.object({
   durationUnit: z.enum(["hours", "days", "months"]),
 });
 
+export const verifyEmailRequestSchema = z.object({
+  token: z.string().min(1),
+});
+
 export const userMutationResponseSchema = z.object({
   data: userSummarySchema,
 });
 
 export const userDeleteResponseSchema = z.object({
+  message: z.string(),
+});
+
+export const userActionResponseSchema = z.object({
+  message: z.string(),
+});
+
+export const verifyEmailResponseSchema = z.object({
+  message: z.string(),
+  data: userSummarySchema,
+});
+
+export const resetPasswordByAdminResponseSchema = z.object({
   message: z.string(),
 });
 
@@ -62,3 +88,6 @@ export type UserSummary = z.infer<typeof userSummarySchema>;
 export type UserDetail = z.infer<typeof userDetailSchema>;
 export type UpdateUserRoleRequest = z.infer<typeof updateUserRoleRequestSchema>;
 export type SuspendUserRequest = z.infer<typeof suspendUserRequestSchema>;
+export type VerifyEmailRequest = z.infer<typeof verifyEmailRequestSchema>;
+export type ResendVerificationByEmailRequest = z.infer<typeof resendVerificationByEmailRequestSchema>;
+export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;

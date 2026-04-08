@@ -29,6 +29,13 @@
       "when": 1775677547077,
       "tag": "0003_actual_user_verification",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775681536133,
+      "tag": "0004_soft_fat_cobra",
+      "breakpoints": true
     }
   ]
 }
