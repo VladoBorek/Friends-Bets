@@ -5,6 +5,9 @@ export const router = createRouter({
   routeTree,
   defaultPreload: "intent",
   defaultPreloadStaleTime: 0,
+  context: {
+    auth: undefined!, // injected by main.tsx
+  },
 });
 
 declare module "@tanstack/react-router" {
