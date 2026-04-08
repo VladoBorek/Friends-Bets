@@ -9,12 +9,7 @@ default:
   tags:
     - shared-fi
   cache:
-    key:
-      files:
-        - package-lock.json
-        - client/package-lock.json
-        - server/package-lock.json
-        - shared/package-lock.json
+    key: "${CI_PROJECT_PATH_SLUG}-${CI_COMMIT_REF_SLUG}-node24"
     paths:
       - node_modules/
       - client/node_modules/
