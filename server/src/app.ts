@@ -6,11 +6,13 @@ import { ZodError } from "zod";
 import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
+import { userRoutes } from "./routes/users";
 
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
-    .use(wagerRoutes);
+    .use(wagerRoutes)
+    .use(userRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))
