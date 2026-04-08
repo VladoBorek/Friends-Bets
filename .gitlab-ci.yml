@@ -1,0 +1,44 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
+
+default:
+  image: node:24
+  tags:
+    - shared-fi
+  cache:
+    key:
+      files:
+        - package-lock.json
+        - client/package-lock.json
+        - server/package-lock.json
+        - shared/package-lock.json
+    paths:
+      - node_modules/
+      - client/node_modules/
+      - server/node_modules/
+      - shared/node_modules/
+    policy: pull-push
+
+stages:
+  - validate
+
+lint:
+  stage: validate
+  script:
+    - npm ci
+    - npm --prefix client ci
+    - npm --prefix server ci
+    - npm --prefix shared ci
+    - npm run lint
+
+build:
+  stage: validate
+  script:
+    - npm ci
+    - npm --prefix client ci
+    - npm --prefix server ci
+    - npm --prefix shared ci
+    - npm run build
