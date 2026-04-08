@@ -16,6 +16,7 @@ import {
 	Wager,
 	WagerVisibility,
 } from "./schema";
+import bcrypt from "bcrypt";
 
 const config = {
 	users: ["You", "Sarah", "Mike", "Joe", "Dave", "Pete", "Lisa", "Tom", "Anna", "Greg", "Kate", "Sam", "Richard"],
@@ -163,18 +164,39 @@ async function seedRoles() {
 }
 
 async function seedUsers(userRoleId: number, adminRoleId: number) {
-	const inserted = await db
-		.insert(User)
-		.values(
-			config.users.map((name) => ({
-				username: normalizeUsername(name),
-				email: `${normalizeUsername(name)}@midnight-wager.club`,
-				password_hash: faker.internet.password({ length: 24 }),
+	// Make a deterministic set of test credentials so contributors can log in easily.
+	// Choose a small set of admin accounts and the rest are normal users.
+	const adminUsernames = new Set(["you", "sarah"]);
+	const defaultUserPassword = "UserPass123!"; // easy, non-secret test password
+	const defaultAdminPassword = "AdminPass123!"; // admin test password
+
+	const rows = await Promise.all(
+		config.users.map(async (name) => {
+			const username = normalizeUsername(name);
+			const isAdmin = adminUsernames.has(username);
+			const plainPassword = isAdmin ? defaultAdminPassword : defaultUserPassword;
+			// Hash the password using Bun's password utilities to match production verification
+			const passwordHash = await bcrypt.hash(plainPassword, 10);
+			return {
+				username,
+				email: `${username}@midnight-wager.club`,
+				password_hash: passwordHash,
 				avatar_url: faker.image.avatar(),
-				role_id: normalizeUsername(name) === "you" ? adminRoleId : userRoleId,
-			})),
-		)
-		.returning();
+				role_id: isAdmin ? adminRoleId : userRoleId,
+			};
+		}),
+	);
+
+	const inserted = await db.insert(User).values(rows).returning();
+
+	// Log the plain credentials so operators running the seed can see them in console.
+	console.log("Seeded test users (email:password):");
+	for (const name of config.users) {
+		const username = normalizeUsername(name);
+		const isAdmin = adminUsernames.has(username);
+		const pwd = isAdmin ? defaultAdminPassword : defaultUserPassword;
+		console.log(`- ${username}@midnight-wager.club : ${pwd} ${isAdmin ? "(admin)" : ""}`);
+	}
 
 	return inserted;
 }
