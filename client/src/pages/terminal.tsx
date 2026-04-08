@@ -41,7 +41,7 @@ export function TerminalPage() {
     return (
       entry.username.toLowerCase().includes(normalizedQuery) ||
       entry.email.toLowerCase().includes(normalizedQuery) ||
-      entry.roleName.toLowerCase().includes(normalizedQuery)
+      (entry.roleName ?? "").toLowerCase().includes(normalizedQuery)
     );
     })
     .sort((a, b) => {
