@@ -261,7 +261,15 @@ export function TerminalPage() {
               ) : filteredUsers.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">No matching users found.</div>
               ) : (
-                <table className="w-full text-left text-sm">
+                <table className="w-full table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[80px]" />
+                    <col />
+                    <col className="w-[120px]" />
+                    <col className="w-[120px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[72px]" />
+                  </colgroup>
                   <thead className="border-b border-slate-800 bg-slate-900/80">
                     <tr>
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">User ID</th>
@@ -269,7 +277,7 @@ export function TerminalPage() {
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Role</th>
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Registered</th>
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Status</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Actions</th>
+                      <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50">
@@ -308,7 +316,7 @@ export function TerminalPage() {
                             );
                           })()}
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-2 py-4 text-right">
                           <div className="relative inline-flex" onClick={(event) => event.stopPropagation()}>
                             <button
                               type="button"
