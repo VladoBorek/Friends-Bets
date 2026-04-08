@@ -47,6 +47,28 @@ export function TerminalPage() {
   const adminUsers = users.filter((entry) => entry.roleName === "ADMIN").length;
   const standardUsers = totalUsers - adminUsers;
 
+  const getUserStatus = (entry: UserSummary): "active" | "non-verified" | "suspended" => {
+    if (entry.suspendedUntil && new Date(entry.suspendedUntil) > new Date()) {
+      return "suspended";
+    }
+    if (!entry.isVerified) {
+      return "non-verified";
+    }
+    return "active";
+  };
+
+  const statusBadgeStyles: Record<"active" | "non-verified" | "suspended", string> = {
+    active: "border-emerald-500/30 bg-emerald-500/12 text-emerald-300",
+    "non-verified": "border-amber-500/30 bg-amber-500/12 text-amber-300",
+    suspended: "border-rose-500/30 bg-rose-500/12 text-rose-300",
+  };
+
+  const statusLabel: Record<"active" | "non-verified" | "suspended", string> = {
+    active: "Active",
+    "non-verified": "Non-Verified",
+    suspended: "Suspended",
+  };
+
   const refreshUsers = async () => {
     await fetchUsers();
   };
@@ -173,8 +195,7 @@ export function TerminalPage() {
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Identity</th>
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Role</th>
                       <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Registered</th>
-                      <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Suspended Until</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Status</th>
+                      <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Status</th>
                       <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Actions</th>
                     </tr>
                   </thead>
@@ -202,11 +223,17 @@ export function TerminalPage() {
                         <td className="px-6 py-4 text-slate-400">
                           {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : "N/A"}
                         </td>
-                        <td className="px-6 py-4 text-slate-400">
-                          {entry.suspendedUntil ? new Date(entry.suspendedUntil).toLocaleString() : "Active"}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        <td className="px-6 py-4">
+                          {(() => {
+                            const status = getUserStatus(entry);
+                            return (
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusBadgeStyles[status]}`}
+                              >
+                                {statusLabel[status]}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-4 text-right">
                           <div className="relative inline-flex" onClick={(event) => event.stopPropagation()}>

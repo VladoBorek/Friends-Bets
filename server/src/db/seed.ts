@@ -167,6 +167,7 @@ async function seedUsers(userRoleId: number, adminRoleId: number) {
 	// Make a deterministic set of test credentials so contributors can log in easily.
 	// Choose a small set of admin accounts and the rest are normal users.
 	const adminUsernames = new Set(["you", "sarah"]);
+	const nonVerifiedUsernames = new Set(["richard"]);
 	const defaultUserPassword = "UserPass123!"; // easy, non-secret test password
 	const defaultAdminPassword = "AdminPass123!"; // admin test password
 
@@ -174,15 +175,18 @@ async function seedUsers(userRoleId: number, adminRoleId: number) {
 		config.users.map(async (name) => {
 			const username = normalizeUsername(name);
 			const isAdmin = adminUsernames.has(username);
+			const isVerified = !nonVerifiedUsernames.has(username);
 			const plainPassword = isAdmin ? defaultAdminPassword : defaultUserPassword;
 			// Hash the password using Bun's password utilities to match production verification
 			const passwordHash = await bcrypt.hash(plainPassword, 10);
+			const email = username === "richard" ? "risac13@seznam.cz" : `${username}@midnight-wager.club`;
 			return {
 				username,
-				email: `${username}@midnight-wager.club`,
+				email,
 				password_hash: passwordHash,
 				avatar_url: faker.image.avatar(),
 				role_id: isAdmin ? adminRoleId : userRoleId,
+				is_verified: isVerified,
 			};
 		}),
 	);
@@ -195,7 +199,9 @@ async function seedUsers(userRoleId: number, adminRoleId: number) {
 		const username = normalizeUsername(name);
 		const isAdmin = adminUsernames.has(username);
 		const pwd = isAdmin ? defaultAdminPassword : defaultUserPassword;
-		console.log(`- ${username}@midnight-wager.club : ${pwd} ${isAdmin ? "(admin)" : ""}`);
+		const email = username === "richard" ? "risac13@seznam.cz" : `${username}@midnight-wager.club`;
+		const verificationLabel = nonVerifiedUsernames.has(username) ? "(non-verified)" : "(verified)";
+		console.log(`- ${email} : ${pwd} ${isAdmin ? "(admin)" : ""} ${verificationLabel}`);
 	}
 
 	return inserted;

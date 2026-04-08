@@ -11,6 +11,7 @@ type UserRow = {
   username: string;
   email: string;
   roleName: string | null;
+  isVerified: boolean | null;
   suspendedUntil: Date | null;
   createdAt: Date | null;
 };
@@ -29,6 +30,7 @@ function mapUserSummary(row: UserRow): UserSummary {
     username: row.username,
     email: row.email,
     roleName: normalizeRoleName(row.roleName),
+    isVerified: row.isVerified ?? false,
     suspendedUntil: row.suspendedUntil?.toISOString() ?? null,
     createdAt: row.createdAt?.toISOString() ?? null,
   };
@@ -76,6 +78,7 @@ export async function getUserByCredentials(input: LoginRequest): Promise<UserSum
       passwordHash: User.password_hash,
       roleId: User.role_id,
       roleName: Role.name,
+      isVerified: User.is_verified,
       suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
     })
@@ -103,6 +106,7 @@ export async function getUserById(id: number): Promise<UserSummary> {
       username: User.username,
       email: User.email,
       roleName: Role.name,
+      isVerified: User.is_verified,
       suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
     })
@@ -125,6 +129,7 @@ export async function listUsers(): Promise<UserSummary[]> {
       username: User.username,
       email: User.email,
       roleName: Role.name,
+      isVerified: User.is_verified,
       suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
     })

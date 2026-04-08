@@ -13,10 +13,9 @@ export interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
-  beforeLoad: ({ context, location }) => {
-    // Wait for auth to load before deciding
+  beforeLoad: async ({ context, location }) => {
     if (context.auth.isLoading) {
-      return; 
+      await context.auth.refreshUser();
     }
 
     if (!context.auth.user && location.pathname !== "/login") {

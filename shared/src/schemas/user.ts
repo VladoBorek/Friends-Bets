@@ -19,6 +19,7 @@ export const userSummarySchema = z.object({
   username: z.string(),
   email: z.string(),
   roleName: z.string().nullable(),
+  isVerified: z.boolean().optional(),
   createdAt: z.string().nullable(),
   suspendedUntil: z.string().nullable().optional(),
 });
