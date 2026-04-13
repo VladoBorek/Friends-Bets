@@ -23,8 +23,5 @@
     "globals": "^17.4.0",
     "tsx": "^4.20.6",
     "typescript-eslint": "^8.56.1"
-  },
-  "dependencies": {
-    "bcrypt": "^6.0.0"
   }
 }

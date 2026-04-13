@@ -3,11 +3,11 @@
 * Do not edit manually.
 */
 
+import type { ListWagersQueryResponse } from "../models/ListWagers.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from "@tanstack/react-query";
-import type { ListWagersQueryResponse } from "../models/ListWagers.ts";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { listWagers } from "../client/listWagers.ts";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 
 export const listWagersSuspenseQueryKey = () => [{ url: '/api/wagers' }] as const
 

@@ -12,7 +12,7 @@ const RESET = "\x1b[0m";
 async function showStats() {
   try {
     console.log(`${BLUE}╭──────────────────────────────────────╮${RESET}`);
-    console.log(`${BLUE}│  Database Query Report                │${RESET}`);
+    console.log(`${BLUE}│  Database Query Report               │${RESET}`);
     console.log(`${BLUE}╰──────────────────────────────────────╯${RESET}\n`);
 
     console.log(`${GREEN}Open Wagers:${RESET}`);

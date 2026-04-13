@@ -4,8 +4,8 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/fetch";
-import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { CreateWagerMutationRequest, CreateWagerMutationResponse, CreateWager400 } from "../models/CreateWager.ts";
+import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 
 function getCreateWagerUrl() {
   const res = { method: 'POST', url: `/api/wagers` as const }

@@ -254,8 +254,8 @@ async function main() {
 
   console.log(`${GREEN}✓ Setup completed successfully!${RESET}`);
   console.log(`\n${YELLOW}Next steps:${RESET}`);
-  console.log(`  1. Run API server:   npm run start`);
-  console.log(`  2. Run frontend:     npm run dev`);
+  console.log(`  1. Run API server:   npm run server`);
+  console.log(`  2. Run frontend:     npm run client`);
   console.log(`\nAPI runs on http://localhost:3000`);
   console.log(`Frontend runs on http://localhost:5173`);
   console.log(`\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}`);

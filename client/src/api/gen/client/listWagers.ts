@@ -4,8 +4,8 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/fetch";
-import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { ListWagersQueryResponse } from "../models/ListWagers.ts";
+import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 
 function getListWagersUrl() {
   const res = { method: 'GET', url: `/api/wagers` as const }

@@ -4,8 +4,8 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/fetch";
-import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { GetHealthQueryResponse } from "../models/GetHealth.ts";
+import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 
 function getGetHealthUrl() {
   const res = { method: 'GET', url: `/api/health` as const }
