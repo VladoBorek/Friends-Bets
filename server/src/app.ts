@@ -9,13 +9,15 @@ import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
 import { userRoutes } from "./routes/users";
 import { emailRoutes } from "./routes/email";
+import { walletRoutes } from "./routes/wallet";
 
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
     .use(wagerRoutes)
     .use(userRoutes)
-    .use(emailRoutes);
+    .use(emailRoutes)
+    .use(walletRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))
@@ -30,11 +32,11 @@ export function createApp() {
           tags: [
             { name: "Health", description: "Service health endpoints" },
             { name: "Wagers", description: "Wager management endpoints" },
+            { name: "Wallet", description: "Wallet and balance endpoints" },
           ],
         },
       }),
     )
-    .use(api)
     .onError(({ error, set }) => {
       console.error("[API Error]", { error });
       set.headers = {
@@ -66,7 +68,8 @@ export function createApp() {
       return {
         message: "Unexpected server error",
       };
-    });
+    })
+    .use(api);
 }
 
 export type App = ReturnType<typeof createApp>;

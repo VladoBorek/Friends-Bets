@@ -108,13 +108,12 @@ function runCommand(cmd: string, args: string[], cwd?: string, silent = false): 
   });
 }
 
-async function ensurePostgresContainer(): Promise<boolean> {
+async function ensurePostgresContainer(): Promise<void> {
   console.log(`\n${BLUE}[prep] Docker PostgreSQL${RESET}`);
 
   const dockerVersion = await runCommand(dockerCmd, ["--version"]);
   if (dockerVersion !== 0) {
-    console.warn(`${YELLOW}⚠ Docker is not available. Skipping automatic PostgreSQL container setup.${RESET}`);
-    return true;
+    throw new Error("Docker is not available or failed to report its version.");
   }
 
   // Check whether container exists.
@@ -124,11 +123,10 @@ async function ensurePostgresContainer(): Promise<boolean> {
     const startExit = await runCommand(dockerCmd, ["start", "pb138"]);
     if (startExit === 0) {
       console.log(`${GREEN}✓ PostgreSQL container 'pb138' is running${RESET}`);
-      return true;
+      return;
     }
 
-    console.error(`${RED}✗ Failed to start existing Docker container 'pb138'.${RESET}`);
-    return false;
+    throw new Error("Failed to start existing Docker container 'pb138'.");
   }
 
   const runExit = await runCommand(dockerCmd, [
@@ -148,14 +146,10 @@ async function ensurePostgresContainer(): Promise<boolean> {
   ]);
 
   if (runExit !== 0) {
-    console.error(
-      `${RED}✗ Failed to create Docker container 'pb138'. Ensure Docker daemon is running and port 5432 is free.${RESET}`,
-    );
-    return false;
+    throw new Error("Failed to create Docker container 'pb138'. Ensure Docker daemon is running and port 5432 is free.");
   }
 
   console.log(`${GREEN}✓ PostgreSQL container 'pb138' created and started${RESET}`);
-  return true;
 }
 
 async function runStep(step: Step, stepNumber: number, totalSteps: number, packageManager: "bun" | "npm"): Promise<boolean> {
@@ -231,10 +225,7 @@ async function main() {
     console.log(`${GREEN}✓ .env file found${RESET}`);
   }
 
-  const dbReady = await ensurePostgresContainer();
-  if (!dbReady) {
-    process.exit(1);
-  }
+  await ensurePostgresContainer();
 
   let failed = false;
   for (let i = 0; i < steps.length; i++) {

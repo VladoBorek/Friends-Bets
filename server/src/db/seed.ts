@@ -54,7 +54,7 @@ const wagerTemplates: SeedWager[] = [
 		outcomes: ["Yes", "No", "Needs Extension"],
 		outcomeSplit: [55, 30, 15],
 		participants: [
-			{ name: "You", amount: "30", outcome: "Yes" },
+			{ name: "Lisa", amount: "30", outcome: "Yes" },
 			{ name: "Sarah", amount: "25", outcome: "No" },
 			{ name: "Mike", amount: "40", outcome: "Yes" },
 			{ name: "Joe", amount: "25", outcome: "Needs Extension" },
@@ -70,7 +70,7 @@ const wagerTemplates: SeedWager[] = [
 		outcomes: ["Dave", "Pete", "Both DNF"],
 		outcomeSplit: [45, 45, 10],
 		participants: [
-			{ name: "You", amount: "50", outcome: "Dave" },
+			{ name: "Mike", amount: "50", outcome: "Dave" },
 			{ name: "Lisa", amount: "50", outcome: "Pete" },
 			{ name: "Tom", amount: "50", outcome: "Dave" },
 			{ name: "Anna", amount: "50", outcome: "Pete" },
@@ -87,7 +87,7 @@ const wagerTemplates: SeedWager[] = [
 		outcomeSplit: [20, 50, 30],
 		participants: [
 			{ name: "Greg", amount: "20", outcome: "4-6" },
-			{ name: "You", amount: "25", outcome: "7+" },
+			{ name: "Tom", amount: "25", outcome: "7+" },
 			{ name: "Kate", amount: "20", outcome: "4-6" },
 			{ name: "Sam", amount: "20", outcome: "1-3" },
 		],
@@ -140,13 +140,13 @@ function randomInviteCode(): string {
 
 async function truncateAll() {
 	await db.delete(Bet);
+	await db.delete(Transaction);
 	await db.delete(Comment);
 	await db.delete(Notification);
 	await db.delete(WagerVisibility);
 	await db.delete(Outcome);
 	await db.delete(Wager);
 	await db.delete(GroupMembership);
-	await db.delete(Transaction);
 	await db.delete(Wallet);
 	await db.delete(Group);
 	await db.delete(User);
@@ -336,6 +336,7 @@ async function seedWagers(params: {
 
 			await db.insert(Bet).values({
 				user_id: user.id,
+				wager_id: wager.id,
 				outcome_id: outcome.id,
 				amount: participant.amount,
 			});
@@ -396,18 +397,62 @@ async function seedNotifications(users: Array<{ id: number }>) {
 }
 
 async function seedTransactions(params: {
-	houseWallet: { id: number };
 	userWallets: Array<{ id: number; user_id: number | null }>;
 }) {
-	const deposits = params.userWallets.map((wallet) => ({
-		from_wallet_id: params.houseWallet.id,
-		to_wallet_id: wallet.id,
-		type: "deposit",
-		amount: faker.number.int({ min: 300, max: 1500 }).toString(),
-		reference_id: null,
-	}));
+	const walletByUserId = new Map(
+		params.userWallets
+			.filter((wallet): wallet is { id: number; user_id: number } => wallet.user_id !== null)
+			.map((wallet) => [wallet.user_id, wallet.id]),
+	);
 
-	await db.insert(Transaction).values(deposits);
+	const seededBets = await db
+		.select({
+			id: Bet.id,
+			userId: Bet.user_id,
+			wagerId: Bet.wager_id,
+			outcomeId: Bet.outcome_id,
+			amount: Bet.amount,
+		})
+		.from(Bet)
+		.limit(60);
+
+	const betTransactions = seededBets
+		.map((bet) => {
+			const walletId = walletByUserId.get(bet.userId);
+			if (!walletId) return null;
+
+			return {
+				wallet_id: walletId,
+				wager_id: bet.wagerId,
+				outcome_id: bet.outcomeId,
+				type: "bet" as const,
+				amount: `-${bet.amount}`,
+				reference_id: bet.id,
+			};
+		})
+		.filter((row): row is NonNullable<typeof row> => row !== null);
+
+	const payoutTransactions = seededBets
+		.slice(0, Math.floor(seededBets.length / 3))
+		.map((bet) => {
+			const walletId = walletByUserId.get(bet.userId);
+			if (!walletId) return null;
+
+			const amount = Number(bet.amount ?? "0");
+			return {
+				wallet_id: walletId,
+				wager_id: bet.wagerId,
+				outcome_id: bet.outcomeId,
+				type: "payout" as const,
+				amount: (amount * faker.number.float({ min: 1.3, max: 2.1, fractionDigits: 2 })).toFixed(2),
+				reference_id: bet.id,
+			};
+		})
+		.filter((row): row is NonNullable<typeof row> => row !== null);
+
+	if (betTransactions.length > 0 || payoutTransactions.length > 0) {
+		await db.insert(Transaction).values([...betTransactions, ...payoutTransactions]);
+	}
 }
 
 async function main() {
@@ -424,7 +469,7 @@ async function main() {
 		const createdWagers = await seedWagers({ users, categories, groups });
 		await seedVisibilityAndComments({ createdWagers, groups });
 		await seedNotifications(users);
-		await seedTransactions({ houseWallet: wallets.houseWallet, userWallets: wallets.userWallets });
+		await seedTransactions({ userWallets: wallets.userWallets });
 
 		console.log(`Seed completed successfully. Wagers: ${createdWagers.length}, Users: ${users.length}`);
 	} catch (error) {

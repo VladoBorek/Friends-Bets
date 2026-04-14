@@ -1,25 +1,62 @@
 import { Link } from "@tanstack/react-router";
-import { useListWagers } from "../api/gen/hooks";
+import { useEffect, useState } from "react";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
+import type { WagerSummary } from "../../../shared/src/schemas/wager";
+
+function formatMoney(value: string): string {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue.toFixed(2) : value;
+}
 
 export function WagersPage() {
-  const wagers = useListWagers();
+  const [wagers, setWagers] = useState<WagerSummary[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (wagers.isLoading) {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadWagers() {
+      try {
+        const response = await fetch("/api/wagers", { signal: controller.signal });
+        const json = (await response.json().catch(() => null)) as { data?: WagerSummary[]; message?: string } | null;
+
+        if (!response.ok) {
+          throw new Error(json?.message ?? "Unable to load wagers");
+        }
+
+        setWagers(json?.data ?? []);
+      } catch (loadError) {
+        if (loadError instanceof DOMException && loadError.name === "AbortError") {
+          return;
+        }
+
+        setError(loadError instanceof Error ? loadError.message : "Unable to load wagers");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadWagers();
+
+    return () => controller.abort();
+  }, []);
+
+  if (isLoading) {
     return <p className="text-slate-300">Loading wagers...</p>;
   }
 
-  if (wagers.error) {
-    return <p className="text-rose-300">Unable to load wagers.</p>;
+  if (error) {
+    return <p className="text-rose-300">{error}</p>;
   }
 
-  if (!wagers.data?.data.length) {
+  if (!wagers?.length) {
     return <p className="text-slate-300">No wagers found. Seed the database and create your first wager.</p>;
   }
 
   return (
     <div className="grid gap-4">
-      {wagers.data.data.map((wager) => (
+      {wagers.map((wager) => (
         <Card key={wager.id} className="transition-colors hover:border-cyan-500/40">
           <CardTitle>{wager.title}</CardTitle>
           <CardDescription className="mt-2">
@@ -29,6 +66,23 @@ export function WagersPage() {
             <span className="rounded-full border border-slate-700 px-2 py-1">{wager.status}</span>
             <span>Category: {wager.categoryName}</span>
             <span>Creator: {wager.creatorName}</span>
+            <span>Total pool: {formatMoney(wager.totalPool)}</span>
+            {wager.currentUserBetAmount && (
+              <span className="rounded-full border border-emerald-500/40 px-2 py-1 text-emerald-300">
+                Your bet: {formatMoney(wager.currentUserBetAmount)} on {wager.currentUserBetOutcomeTitle ?? "selected outcome"}
+              </span>
+            )}
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {wager.outcomes.map((outcome) => (
+              <div key={outcome.id} className="rounded-md border border-slate-800 bg-slate-950/50 p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-slate-100">{outcome.title}</span>
+                  <span className="text-cyan-300">{outcome.odds ? `${outcome.odds}x` : "n/a"}</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-400">Bet volume: {formatMoney(outcome.totalBet)}</p>
+              </div>
+            ))}
           </div>
           <Link
             to="/wagers/$wagerId"

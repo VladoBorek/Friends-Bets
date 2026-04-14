@@ -8,6 +8,7 @@ import {
   decimal,
   boolean,
   json,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -89,18 +90,22 @@ export const Outcome = pgTable("outcome", {
 export const Bet = pgTable("bet", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id").references(() => User.id).notNull(),
+  wager_id: integer("wager_id").references(() => Wager.id).notNull(),
   outcome_id: integer("outcome_id").references(() => Outcome.id).notNull(),
   amount: decimal("amount").notNull(),
   created_at: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userWagerUnique: uniqueIndex("bet_user_wager_unique").on(table.user_id, table.wager_id),
+}));
 
 export const Transaction = pgTable("transaction", {
   id: serial("id").primaryKey(),
-  from_wallet_id: integer("from_wallet_id").references(() => Wallet.id),
-  to_wallet_id: integer("to_wallet_id").references(() => Wallet.id),
+  wallet_id: integer("wallet_id").references(() => Wallet.id).notNull(),
+  wager_id: integer("wager_id").references(() => Wager.id),
+  outcome_id: integer("outcome_id").references(() => Outcome.id),
   type: varchar("type").notNull(),
   amount: decimal("amount").notNull(),
-  reference_id: integer("reference_id"), 
+  reference_id: integer("reference_id"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
@@ -135,13 +140,13 @@ export const UserRelations = relations(User, ({ one, many }) => ({
 
 export const WalletRelations = relations(Wallet, ({ one, many }) => ({
   user: one(User, { fields: [Wallet.user_id], references: [User.id] }),
-  outgoing_transactions: many(Transaction, { relationName: "from_wallet" }),
-  incoming_transactions: many(Transaction, { relationName: "to_wallet" }),
+  transactions: many(Transaction),
 }));
 
 export const TransactionRelations = relations(Transaction, ({ one }) => ({
-  from_wallet: one(Wallet, { fields: [Transaction.from_wallet_id], references: [Wallet.id], relationName: "from_wallet" }),
-  to_wallet: one(Wallet, { fields: [Transaction.to_wallet_id], references: [Wallet.id], relationName: "to_wallet" }),
+  wallet: one(Wallet, { fields: [Transaction.wallet_id], references: [Wallet.id] }),
+  wager: one(Wager, { fields: [Transaction.wager_id], references: [Wager.id] }),
+  outcome: one(Outcome, { fields: [Transaction.outcome_id], references: [Outcome.id] }),
 }));
 
 export const RoleRelations = relations(Role, ({ many }) => ({
@@ -181,6 +186,7 @@ export const OutcomeRelations = relations(Outcome, ({ one, many }) => ({
 
 export const BetRelations = relations(Bet, ({ one }) => ({
   user: one(User, { fields: [Bet.user_id], references: [User.id] }),
+  wager: one(Wager, { fields: [Bet.wager_id], references: [Wager.id] }),
   outcome: one(Outcome, { fields: [Bet.outcome_id], references: [Outcome.id] }),
 }));
 

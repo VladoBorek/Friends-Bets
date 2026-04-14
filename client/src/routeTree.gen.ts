@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -19,6 +20,11 @@ import { Route as WagersIndexRouteImport } from './routes/wagers/index'
 import { Route as WagersNewRouteImport } from './routes/wagers/new'
 import { Route as WagersWagerIdRouteImport } from './routes/wagers/$wagerId'
 
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/terminal': typeof TerminalRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/wallet': typeof WalletRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/terminal': typeof TerminalRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/wallet': typeof WalletRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers': typeof WagersIndexRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/terminal': typeof TerminalRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/wallet': typeof WalletRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terminal'
     | '/verify-email'
+    | '/wallet'
     | '/wagers/$wagerId'
     | '/wagers/new'
     | '/wagers/'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terminal'
     | '/verify-email'
+    | '/wallet'
     | '/wagers/$wagerId'
     | '/wagers/new'
     | '/wagers'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terminal'
     | '/verify-email'
+    | '/wallet'
     | '/wagers/$wagerId'
     | '/wagers/new'
     | '/wagers/'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TerminalRoute: typeof TerminalRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  WalletRoute: typeof WalletRoute
   WagersWagerIdRoute: typeof WagersWagerIdRoute
   WagersNewRoute: typeof WagersNewRoute
   WagersIndexRoute: typeof WagersIndexRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify-email': {
       id: '/verify-email'
       path: '/verify-email'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TerminalRoute: TerminalRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  WalletRoute: WalletRoute,
   WagersWagerIdRoute: WagersWagerIdRoute,
   WagersNewRoute: WagersNewRoute,
   WagersIndexRoute: WagersIndexRoute,
