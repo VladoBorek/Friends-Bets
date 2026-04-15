@@ -31,7 +31,7 @@ export const User = pgTable("user", {
 
 export const Wallet = pgTable("wallet", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").unique().references(() => User.id), // Null for House Wallet
+  user_id: integer("user_id").unique().references(() => User.id),
   balance: decimal("balance").default("0"),
   updated_at: timestamp("updated_at").defaultNow(),
 });

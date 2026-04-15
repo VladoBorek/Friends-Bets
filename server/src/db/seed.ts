@@ -218,15 +218,7 @@ async function seedWallets(users: Array<{ id: number; username: string }>) {
 		)
 		.returning();
 
-	const [houseWallet] = await db
-		.insert(Wallet)
-		.values({
-			user_id: null,
-			balance: "100000",
-		})
-		.returning();
-
-	return { userWallets, houseWallet };
+	return { userWallets };
 }
 
 async function seedCategories() {

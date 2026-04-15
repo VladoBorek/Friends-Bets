@@ -72,17 +72,17 @@ export const listCategoriesResponseSchema = z.object({
   data: z.array(categorySummarySchema),
 });
 
-const betAmountValidationMessage = "Bet amount must be greater than 0.";
+export const BET_AMOUNT_ERROR_MESSAGE = "Bet amount must be at least 0.01.";
 
 export const placeBetRequestSchema = z.object({
   outcomeId: z.coerce.number().int().positive(),
   amount: z.coerce
     .number()
     .refine((value) => Number.isFinite(value) && value >= 0.01, {
-      message: betAmountValidationMessage,
+      message: BET_AMOUNT_ERROR_MESSAGE,
     })
     .refine((value) => Number.isInteger(value * 100), {
-      message: betAmountValidationMessage,
+      message: BET_AMOUNT_ERROR_MESSAGE,
     }),
 });
 

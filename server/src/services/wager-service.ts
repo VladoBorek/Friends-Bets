@@ -1,4 +1,4 @@
-import { asc, desc, eq, isNull, sql, and } from "drizzle-orm";
+import { asc, desc, eq, sql, and } from "drizzle-orm";
 import { db } from "../db/db";
 import { Bet, Category, Outcome, Transaction, User, Wallet, Wager } from "../db/schema";
 import { HttpError } from "../errors";
@@ -319,20 +319,6 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
     throw new HttpError(409, "You have already placed a bet on this wager");
   }
 
-  const [userWallet] = await db
-    .select({ id: Wallet.id, balance: Wallet.balance })
-    .from(Wallet)
-    .where(eq(Wallet.user_id, userId))
-    .limit(1);
-
-  if (!userWallet) {
-    throw new HttpError(404, "Wallet not found");
-  }
-
-  if (parseMoney(userWallet.balance) < input.amount) {
-    throw new HttpError(400, "Insufficient balance to place this bet.");
-  }
-
   const created = await db.transaction(async (tx) => {
     const [currentUserWallet] = await tx
       .select({ id: Wallet.id, balance: Wallet.balance })
@@ -340,18 +326,8 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
       .where(eq(Wallet.user_id, userId))
       .limit(1);
 
-    const [currentHouseWallet] = await tx
-      .select({ id: Wallet.id, balance: Wallet.balance })
-      .from(Wallet)
-      .where(isNull(Wallet.user_id))
-      .limit(1);
-
     if (!currentUserWallet) {
       throw new HttpError(404, "Wallet not found");
-    }
-
-    if (!currentHouseWallet) {
-      throw new HttpError(500, "House wallet not configured");
     }
 
     if (parseMoney(currentUserWallet.balance) < input.amount) {
@@ -375,10 +351,8 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
       });
 
     const nextUserBalance = formatMoney(parseMoney(currentUserWallet.balance) - input.amount);
-    const nextHouseBalance = formatMoney(parseMoney(currentHouseWallet.balance) + input.amount);
 
     await tx.update(Wallet).set({ balance: nextUserBalance }).where(eq(Wallet.id, currentUserWallet.id));
-    await tx.update(Wallet).set({ balance: nextHouseBalance }).where(eq(Wallet.id, currentHouseWallet.id));
 
     await tx.insert(Transaction).values({
       wallet_id: currentUserWallet.id,
@@ -443,18 +417,6 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
     const winningOutcomeTotal = outcomes.find((outcome) => outcome.id === input.outcomeId);
     const winningPool = parseMoney(winningOutcomeTotal?.totalBet ?? 0);
 
-    const [houseWallet] = await tx
-      .select({ id: Wallet.id, balance: Wallet.balance })
-      .from(Wallet)
-      .where(isNull(Wallet.user_id))
-      .limit(1);
-
-    if (!houseWallet) {
-      throw new HttpError(500, "House wallet not configured");
-    }
-
-    let nextHouseBalance = parseMoney(houseWallet.balance);
-
     const winningBets = await tx
       .select({
         id: Bet.id,
@@ -483,10 +445,8 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
         const stake = parseMoney(betRow.amount);
         const payout = Number(((totalPool * stake) / winningPool).toFixed(2));
         const nextUserBalance = formatMoney(parseMoney(userWallet.balance) + payout);
-        nextHouseBalance -= payout;
 
         await tx.update(Wallet).set({ balance: nextUserBalance }).where(eq(Wallet.id, userWallet.id));
-        await tx.update(Wallet).set({ balance: formatMoney(nextHouseBalance) }).where(eq(Wallet.id, houseWallet.id));
 
         await tx.insert(Transaction).values({
           wallet_id: userWallet.id,

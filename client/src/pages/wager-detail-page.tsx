@@ -3,13 +3,11 @@ import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
-import type { WagerDetail } from "../../../shared/src/schemas/wager";
+import { BET_AMOUNT_ERROR_MESSAGE, type WagerDetail } from "../../../shared/src/schemas/wager";
 
 interface WagerDetailPageProps {
   wagerId: number;
 }
-
-const BET_AMOUNT_ERROR_MESSAGE = "Bet amount must be greater than 0.";
 
 function formatMoney(value: string): string {
   const numericValue = Number(value);
