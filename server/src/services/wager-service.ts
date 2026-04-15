@@ -76,6 +76,7 @@ function mapWagerSummary(row: WagerBaseRow, outcomes: WagerOutcomeRow[]): WagerS
       parseMoney(outcome.totalBet),
     ),
     totalBet: formatMoney(parseMoney(outcome.totalBet)),
+    isWinner: outcome.isWinner ?? false,
   }));
   const totalPool = normalizedOutcomes.reduce((sum, outcome) => sum + parseMoney(outcome.totalBet), 0);
 

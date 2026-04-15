@@ -20,6 +20,7 @@ export const wagerOutcomeSummarySchema = z.object({
   title: z.string(),
   odds: z.string().nullable(),
   totalBet: z.string(),
+  isWinner: z.boolean(),
 });
 
 export const wagerSummarySchema = z.object({
