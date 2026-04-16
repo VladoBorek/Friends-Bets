@@ -8,8 +8,10 @@ import {
   decimal,
   boolean,
   json,
+  check,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 export const Role = pgTable("role", {
   id: serial("id").primaryKey(),
@@ -121,6 +123,23 @@ export const Comment = pgTable("comment", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+export const Friendship = pgTable(
+  "friendship",
+  {
+    id: serial("id").primaryKey(),
+    requester_id: integer("requester_id").references(() => User.id).notNull(),
+    addressee_id: integer("addressee_id").references(() => User.id).notNull(),
+    status: varchar("status").notNull(), // PENDING | ACCEPTED | REJECTED
+    created_at: timestamp("created_at").defaultNow(),
+    responded_at: timestamp("responded_at"),
+  },
+  (table) => [
+    check("friendship_not_self_check", sql`${table.requester_id} <> ${table.addressee_id}`),
+    uniqueIndex("friendship_requester_addressee_unique").on(table.requester_id, table.addressee_id),
+  ],
+);
+
+
 // Relationships configuration
 export const UserRelations = relations(User, ({ one, many }) => ({
   role: one(Role, { fields: [User.role_id], references: [Role.id] }),
@@ -131,6 +150,8 @@ export const UserRelations = relations(User, ({ one, many }) => ({
   notifications: many(Notification),
   comments: many(Comment),
   wager_invites: many(WagerVisibility),
+  sent_friend_requests: many(Friendship, { relationName: "friendship_requester" }),
+  received_friend_requests: many(Friendship, { relationName: "friendship_addressee" }),
 }));
 
 export const WalletRelations = relations(Wallet, ({ one, many }) => ({
@@ -191,4 +212,17 @@ export const NotificationRelations = relations(Notification, ({ one }) => ({
 export const CommentRelations = relations(Comment, ({ one }) => ({
   wager: one(Wager, { fields: [Comment.wager_id], references: [Wager.id] }),
   user: one(User, { fields: [Comment.user_id], references: [User.id] }),
+}));
+
+export const FriendshipRelations = relations(Friendship, ({ one }) => ({
+  requester: one(User, {
+    fields: [Friendship.requester_id],
+    references: [User.id],
+    relationName: "friendship_requester",
+  }),
+  addressee: one(User, {
+    fields: [Friendship.addressee_id],
+    references: [User.id],
+    relationName: "friendship_addressee",
+  }),
 }));
