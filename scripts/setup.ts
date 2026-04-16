@@ -80,7 +80,11 @@ const steps: Step[] = [
 
 function runCommand(cmd: string, args: string[], cwd?: string, silent = false): Promise<number> {
   return new Promise((resolve) => {
-    const proc = spawn(cmd, args, {
+    // Escape arguments with spaces
+    const escapedArgs = args.map(arg => arg.includes(" ") ? `"${arg}"` : arg);
+    const fullCmd = [cmd, ...escapedArgs].join(" ");
+
+    const proc = spawn(fullCmd, {
       cwd: cwd || process.cwd(),
       stdio: silent ? "ignore" : "inherit",
       shell: true,
@@ -160,7 +164,11 @@ async function runStep(step: Step, stepNumber: number, totalSteps: number, packa
   }
 
   return new Promise((resolve) => {
-    const proc = spawn(cmd, args, {
+    // Escape arguments with spaces
+    const escapedArgs = args.map(arg => arg.includes(" ") ? `"${arg}"` : arg);
+    const fullCmd = [cmd, ...escapedArgs].join(" ");
+
+    const proc = spawn(fullCmd, {
       cwd: process.cwd(),
       stdio: "inherit",
       shell: true,

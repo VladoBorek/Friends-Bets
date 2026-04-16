@@ -1,22 +1,14 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { UserSummary } from "@pb138/shared/schemas/user";
-
-interface AuthState {
-  user: UserSummary | null;
-  isLoading: boolean;
-  refreshUser: () => Promise<UserSummary | null>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthState | null>(null);
+import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isBootstrapped, setIsBootstrapped] = useState(false);
+  const isBootstrapped = useRef(false);
 
-  const fetchMe = async (): Promise<UserSummary | null> => {
-    if (!isBootstrapped) {
+  const fetchMe = useCallback(async (): Promise<UserSummary | null> => {
+    if (!isBootstrapped.current) {
       setIsLoading(true);
     }
     try {
@@ -35,30 +27,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     } finally {
       setIsLoading(false);
-      setIsBootstrapped(true);
+      isBootstrapped.current = true;
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await fetch("/api/users/logout", { method: "POST" });
     setUser(null);
-  };
+  }, []);
 
   useEffect(() => {
     fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, refreshUser: fetchMe, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }
