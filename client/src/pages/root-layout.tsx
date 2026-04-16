@@ -2,6 +2,7 @@ import { Link, Outlet, useRouter } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
+import { Button } from "../components/ui/button";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
@@ -60,13 +61,14 @@ export function RootLayout() {
             >
               <div className="flex items-center justify-between gap-3">
                 <span>{feedback.message}</span>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setFeedback(null)}
-                  className="rounded px-1.5 py-0.5 text-xs text-slate-300 hover:bg-slate-800/60"
+                  className="h-auto px-1.5 py-0.5 text-xs text-slate-300 hover:bg-slate-800/60"
                 >
                   close
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -76,15 +78,16 @@ export function RootLayout() {
             </div>
 
             {user && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setMenuOpen((open) => !open)}
-                className="inline-flex items-center justify-center rounded-md border border-slate-700 p-2 text-slate-200 transition-colors hover:border-cyan-400/50 hover:text-cyan-200 md:hidden"
+                className="md:hidden"
                 aria-label={menuOpen ? "close navigation" : "open navigation"}
                 aria-expanded={menuOpen}
               >
                 {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -131,22 +134,24 @@ export function RootLayout() {
 
               <div className="inline-flex items-center gap-2">
                 {!isVerified && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={handleResendVerification}
                     disabled={isResendLoading}
-                    className="rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-200 transition-colors hover:border-amber-400/70 hover:bg-amber-500/15 hover:text-amber-100 disabled:opacity-50"
+                    className="border-amber-500/35 bg-amber-500/10 text-amber-200 hover:border-amber-400/70 hover:bg-amber-500/15 hover:text-amber-100"
                   >
                     {isResendLoading ? "Resending..." : "Resend Verification"}
-                  </button>
+                  </Button>
                 )}
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={handleLogout}
-                  className="rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-200 transition-colors hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
+                  className="border-rose-500/30 bg-rose-500/10 text-rose-200 hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
                 >
                   Sign Out
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -188,22 +193,24 @@ export function RootLayout() {
               </nav>
               <div className="flex flex-col gap-2">
                 {!isVerified && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={handleResendVerification}
                     disabled={isResendLoading}
-                    className="w-full rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200 transition-colors hover:border-amber-400/70 hover:bg-amber-500/15 hover:text-amber-100 disabled:opacity-50"
+                    className="w-full border-amber-500/35 bg-amber-500/10 text-amber-200 hover:border-amber-400/70 hover:bg-amber-500/15 hover:text-amber-100"
                   >
                     {isResendLoading ? "Resending..." : "Resend Verification"}
-                  </button>
+                  </Button>
                 )}
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={handleLogout}
-                  className="w-full rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 transition-colors hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
+                  className="w-full border-rose-500/30 bg-rose-500/10 text-rose-200 hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
                 >
                   Sign Out
-                </button>
+                </Button>
               </div>
             </div>
           )}

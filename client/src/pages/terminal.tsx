@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Ellipsis, KeyRound, LayoutDashboard, ShieldAlert, Tags, Trash2, UserRound, Users } from "lucide-react";
 import type { UserSummary } from "@pb138/shared/schemas/user";
-import { PremiumCard, PremiumCardLabel, PremiumCardValue } from "../components/ui/card";
+import { Card, PremiumCard, PremiumCardLabel, PremiumCardValue } from "../components/ui/card";
 import { useAuth } from "../lib/auth-context";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 export function TerminalPage() {
   const { user: currentUser } = useAuth();
@@ -197,25 +199,19 @@ export function TerminalPage() {
             <p className="mt-1 text-sm text-slate-400">Manage users, review system activity, and monitor administration flows.</p>
           </header>
 
-          <nav className="mb-6 inline-flex flex-wrap items-center gap-1 rounded-xl border border-slate-700/70 bg-slate-900/55 p-1">
-            <button className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/16 px-3 py-1.5 text-sm font-medium text-cyan-100">
+          <nav className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/55 p-1">
+            <Button variant="default" size="sm" className="gap-2">
               <UserRound className="h-4 w-4" />
               <span>Users</span>
-            </button>
-            <button
-              disabled
-              className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 text-sm font-medium text-slate-500"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" disabled className="gap-2 text-slate-500">
               <Users className="h-4 w-4" />
               <span>Groups</span>
-            </button>
-            <button
-              disabled
-              className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 text-sm font-medium text-slate-500"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" disabled className="gap-2 text-slate-500">
               <Tags className="h-4 w-4" />
               <span>Categories</span>
-            </button>
+            </Button>
           </nav>
 
           <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -233,7 +229,7 @@ export function TerminalPage() {
             </PremiumCard>
           </section>
 
-          <section className="rounded-2xl border border-cyan-500/15 bg-gradient-to-br from-slate-900/88 via-slate-900/82 to-cyan-950/18 p-4 shadow-lg shadow-slate-950/25 transition-shadow duration-200 hover:shadow-[0_20px_44px_-26px_rgba(8,145,178,0.65)]">
+          <PremiumCard className="mb-6 p-4">
             {feedback && (
               <div
                 className={`mb-4 rounded-xl border px-3 py-2 text-sm ${
@@ -247,11 +243,11 @@ export function TerminalPage() {
             )}
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-semibold text-slate-100">Users Table</h2>
-              <input
+              <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="select user, role, email..."
-                className="w-full rounded-md border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-cyan-400/60 sm:max-w-xs"
+                className="sm:max-w-xs"
               />
             </div>
 
@@ -318,17 +314,18 @@ export function TerminalPage() {
                         </td>
                         <td className="px-2 py-4 text-right">
                           <div className="relative inline-flex" onClick={(event) => event.stopPropagation()}>
-                            <button
-                              type="button"
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 setOpenMenuForUserId((current) => (current === entry.id ? null : entry.id));
                               }}
-                              className="inline-flex items-center px-1 py-1 text-slate-400 transition-colors hover:text-cyan-100"
+                              className="px-1 py-1 text-slate-400 hover:text-cyan-100"
                               aria-label={`open actions for ${entry.username}`}
                             >
                               <Ellipsis className="h-4 w-4" />
-                            </button>
+                            </Button>
 
                             {openMenuForUserId === entry.id && (
                               <div
@@ -415,13 +412,13 @@ export function TerminalPage() {
                                         <option value="days">days</option>
                                         <option value="months">months</option>
                                       </select>
-                                      <button
-                                        type="button"
+                                      <Button
+                                        size="sm"
                                         onClick={() => handleSuspendUser(entry)}
-                                        className="whitespace-nowrap rounded border border-cyan-500/30 px-2 py-1 text-xs text-cyan-200 hover:bg-cyan-500/10"
+                                        className="h-7 px-2 text-xs"
                                       >
                                         Apply
-                                      </button>
+                                      </Button>
                                     </div>
                                   </div>
                                 )}
@@ -443,11 +440,11 @@ export function TerminalPage() {
                 </table>
               )}
             </div>
-          </section>
+          </PremiumCard>
         </main>
 
         <aside className="lg:sticky lg:top-8 lg:h-fit">
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/65 p-4">
+          <Card className="p-4">
             <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               <ShieldAlert className="h-4 w-4 text-cyan-300" /> Audit Log
             </h2>
@@ -465,7 +462,7 @@ export function TerminalPage() {
                 <p className="mt-1 text-xs text-slate-600">Under Construction</p>
               </div>
             </div>
-          </section>
+          </Card>
         </aside>
       </div>
     </div>

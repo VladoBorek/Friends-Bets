@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import { useGetWagerById, usePlaceBet } from "../api/gen/hooks";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 type WagerDetailPageProps = {
   wagerId: number;
@@ -133,21 +135,26 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       <Card>
         <CardTitle>Place a bet</CardTitle>
         <form className="mt-4 grid gap-3" onSubmit={submitBet}>
-          <label className="flex flex-col gap-1 text-xs text-slate-300">
-            User ID
-            <input
+          <div className="grid gap-2">
+            <label className="text-xs text-slate-300" htmlFor="userId">
+              User ID
+            </label>
+            <Input
+              id="userId"
               value={userId}
               onChange={(event) => setUserId(event.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 p-2 text-white"
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-1 text-xs text-slate-300">
-            Outcome
+          <div className="grid gap-2">
+            <label className="text-xs text-slate-300" htmlFor="outcome">
+              Outcome
+            </label>
             <select
+              id="outcome"
               value={selectedOutcomeId ?? ""}
               onChange={(event) => setSelectedOutcomeId(Number(event.target.value))}
-              className="rounded border border-slate-700 bg-slate-900 p-2 text-white"
+              className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
             >
               {detail.outcomes.map((outcome) => (
                 <option key={outcome.id} value={outcome.id}>
@@ -155,30 +162,32 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-1 text-xs text-slate-300">
-            Amount
-            <input
+          <div className="grid gap-2">
+            <label className="text-xs text-slate-300" htmlFor="amount">
+              Amount
+            </label>
+            <Input
+              id="amount"
               value={betAmount}
               onChange={(event) => setBetAmount(event.target.value)}
               type="number"
               step="0.01"
               min="0"
-              className="rounded border border-slate-700 bg-slate-900 p-2 text-white"
             />
-          </label>
+          </div>
 
           {message && <p className="text-emerald-300">{message}</p>}
           {error && <p className="text-rose-300">{error}</p>}
 
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting || detail.status !== "OPEN"}
-            className="rounded bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-500 disabled:opacity-60"
+            className="w-full"
           >
             {isSubmitting ? "Placing bet..." : "Place Bet"}
-          </button>
+          </Button>
 
           {detail.status !== "OPEN" && (
             <p className="text-xs text-slate-400">Cannot place bets on wagers that are not OPEN.</p>

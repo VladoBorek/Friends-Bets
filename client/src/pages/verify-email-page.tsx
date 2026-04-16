@@ -2,6 +2,7 @@ import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuth } from "../lib/auth-context";
+import { Card, CardTitle, CardDescription } from "../components/ui/card";
 
 type VerifyState = "loading" | "success" | "error";
 
@@ -52,20 +53,20 @@ export function VerifyEmailPage() {
 
   return (
     <div className="mx-auto w-full max-w-xl px-4 py-6">
-      <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-6 shadow-xl shadow-cyan-950/20">
+      <Card className="p-6">
         <div className="mb-4 flex items-center gap-2 text-cyan-200">
           {state === "loading" && <Loader2 className="h-5 w-5 animate-spin" />}
           {state === "success" && <CheckCircle2 className="h-5 w-5 text-emerald-300" />}
           {state === "error" && <ShieldAlert className="h-5 w-5 text-rose-300" />}
-          <h1 className="text-lg font-semibold">Email Verification</h1>
+          <CardTitle className="text-lg font-semibold">Email Verification</CardTitle>
         </div>
 
-        <p className="text-sm text-slate-300">{message}</p>
+        <CardDescription className="text-sm text-slate-300">{message}</CardDescription>
 
         {state === "success" && (
           <p className="mt-3 text-xs text-slate-400">Redirecting you to Dashboard...</p>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
