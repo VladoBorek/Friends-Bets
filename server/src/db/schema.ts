@@ -30,7 +30,7 @@ export const User = pgTable("user", {
 
 export const Wallet = pgTable("wallet", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").unique().references(() => User.id), // Null for House Wallet
+  user_id: integer("user_id").unique().references(() => User.id, { onDelete: "cascade" }), // Null for House Wallet
   balance: decimal("balance").default("0"),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -45,8 +45,8 @@ export const Group = pgTable("group", {
 
 export const GroupMembership = pgTable("group_membership", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => User.id).notNull(),
-  group_id: integer("group_id").references(() => Group.id).notNull(),
+  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+  group_id: integer("group_id").references(() => Group.id, { onDelete: "cascade" }).notNull(),
   role: varchar("role").notNull(), // OWNER, MEMBER
   joined_at: timestamp("joined_at").defaultNow(),
 });
@@ -62,7 +62,7 @@ export const Wager = pgTable("wager", {
   description: text("description"),
   status: varchar("status").default("OPEN"), // OPEN, PENDING, CLOSED
   category_id: integer("category_id").references(() => Category.id).notNull(),
-  created_by_id: integer("created_by_id").references(() => User.id).notNull(),
+  created_by_id: integer("created_by_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
   is_public: boolean("is_public").default(false),
   created_at: timestamp("created_at").defaultNow(),
   // Extended UI fields
@@ -73,14 +73,14 @@ export const Wager = pgTable("wager", {
 
 export const WagerVisibility = pgTable("wager_visibility", {
   id: serial("id").primaryKey(),
-  wager_id: integer("wager_id").references(() => Wager.id).notNull(),
-  user_id: integer("user_id").references(() => User.id).notNull(),
+  wager_id: integer("wager_id").references(() => Wager.id, { onDelete: "cascade" }).notNull(),
+  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
   invited_at: timestamp("invited_at").defaultNow(),
 });
 
 export const Outcome = pgTable("outcome", {
   id: serial("id").primaryKey(),
-  wager_id: integer("wager_id").references(() => Wager.id).notNull(),
+  wager_id: integer("wager_id").references(() => Wager.id, { onDelete: "cascade" }).notNull(),
   title: varchar("title").notNull(),
   odds: decimal("odds"),
   is_winner: boolean("is_winner").default(false),
@@ -88,16 +88,16 @@ export const Outcome = pgTable("outcome", {
 
 export const Bet = pgTable("bet", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => User.id).notNull(),
-  outcome_id: integer("outcome_id").references(() => Outcome.id).notNull(),
+  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+  outcome_id: integer("outcome_id").references(() => Outcome.id, { onDelete: "cascade" }).notNull(),
   amount: decimal("amount").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
 
 export const Transaction = pgTable("transaction", {
   id: serial("id").primaryKey(),
-  from_wallet_id: integer("from_wallet_id").references(() => Wallet.id),
-  to_wallet_id: integer("to_wallet_id").references(() => Wallet.id),
+  from_wallet_id: integer("from_wallet_id").references(() => Wallet.id, { onDelete: "cascade" }),
+  to_wallet_id: integer("to_wallet_id").references(() => Wallet.id, { onDelete: "cascade" }),
   type: varchar("type").notNull(),
   amount: decimal("amount").notNull(),
   reference_id: integer("reference_id"), 
@@ -106,7 +106,7 @@ export const Transaction = pgTable("transaction", {
 
 export const Notification = pgTable("notification", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => User.id).notNull(),
+  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
   message: text("message").notNull(),
   type: varchar("type").notNull(),
   is_read: boolean("is_read").default(false),
@@ -115,8 +115,8 @@ export const Notification = pgTable("notification", {
 
 export const Comment = pgTable("comment", {
   id: serial("id").primaryKey(),
-  wager_id: integer("wager_id").references(() => Wager.id).notNull(),
-  user_id: integer("user_id").references(() => User.id).notNull(),
+  wager_id: integer("wager_id").references(() => Wager.id, { onDelete: "cascade" }).notNull(),
+  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
   content: text("content").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
