@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import type { UserSummary } from "../../../shared/src/schemas/user";
+import type { UserSummary } from "@pb138/shared/schemas/user";
 
 interface AuthState {
   user: UserSummary | null;

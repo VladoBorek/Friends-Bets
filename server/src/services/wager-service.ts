@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "../db/db";
 import { Bet, Category, Outcome, User, Wager } from "../db/schema";
-import type { Bet as BetType, CreateWagerRequest, PlaceBetRequest, WagerDetail, WagerSummary } from "../../../shared/src/schemas/wager";
+import type { Bet as BetType, CreateWagerRequest, PlaceBetRequest, WagerDetail, WagerSummary } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../errors";
 
 function normalizeStatus(value: string | null): "OPEN" | "PENDING" | "CLOSED" {

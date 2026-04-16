@@ -16,7 +16,7 @@ import {
   userMutationResponseSchema,
   verifyEmailRequestSchema,
   verifyEmailResponseSchema,
-} from "../../../shared/src/schemas/user";
+} from "@pb138/shared/schemas/user";
 import {
   createUser,
   deleteUser,

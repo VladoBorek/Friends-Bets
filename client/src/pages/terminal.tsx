@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Ellipsis, KeyRound, LayoutDashboard, ShieldAlert, Tags, Trash2, UserRound, Users } from "lucide-react";
-import type { UserSummary } from "../../../shared/src/schemas/user";
+import type { UserSummary } from "@pb138/shared/schemas/user";
 import { PremiumCard, PremiumCardLabel, PremiumCardValue } from "../components/ui/card";
 import { useAuth } from "../lib/auth-context";
 

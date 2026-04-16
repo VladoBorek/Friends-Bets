@@ -22,7 +22,12 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pb138/shared": ["./shared/src/index.ts"],
+      "@pb138/shared/*": ["./shared/src/*"]
+    }
   },
   "include": ["src", "client/src", "server/src", "shared/src"]
 }
