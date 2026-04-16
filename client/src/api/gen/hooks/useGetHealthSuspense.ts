@@ -3,11 +3,11 @@
 * Do not edit manually.
 */
 
-import type { GetHealthQueryResponse } from "../models/GetHealth.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from "@tanstack/react-query";
-import { getHealth } from "../client/getHealth.ts";
+import type { GetHealthQueryResponse } from "../models/GetHealth.ts";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { getHealth } from "../client/getHealth.ts";
 
 export const getHealthSuspenseQueryKey = () => [{ url: '/api/health' }] as const
 

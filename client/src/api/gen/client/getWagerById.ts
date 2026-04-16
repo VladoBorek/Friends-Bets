@@ -4,8 +4,8 @@
 */
 
 import fetch from "@kubb/plugin-client/clients/fetch";
-import type { GetWagerByIdQueryResponse, GetWagerByIdPathParams, GetWagerById404 } from "../models/GetWagerById.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
+import type { GetWagerByIdQueryResponse, GetWagerByIdPathParams, GetWagerById404 } from "../models/GetWagerById.ts";
 
 function getGetWagerByIdUrl(id: GetWagerByIdPathParams["id"]) {
   const res = { method: 'GET', url: `/api/wagers/${id}` as const }

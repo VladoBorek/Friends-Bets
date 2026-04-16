@@ -1,26 +1,34 @@
 {
-  "name": "backend-setup",
+  "name": "pb138-project",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
   "scripts": {
-    "client": "npm --prefix client run dev",
-    "build": "npm --prefix client run build && npm --prefix server run build",
-    "lint": "npm --prefix client run lint && npm --prefix server run lint && eslint scripts",
-    "preview": "npm --prefix client run preview",
-    "api:generate": "npm --prefix client run api:generate",
-    "db:generate": "npm --prefix server run db:generate",
-    "db:migrate": "npm --prefix server run db:migrate",
-    "db:seed": "npm --prefix server run db:seed",
-    "cli:query": "npm --prefix server run cli:query",
+    "client": "npm run dev -w @pb138/client",
+    "build": "npm run build -w @pb138/client && npm run build -w @pb138/server",
+    "lint": "npm run lint -w @pb138/client && npm run lint -w @pb138/server && eslint scripts",
+    "preview": "npm run preview -w @pb138/client",
+    "api:generate": "npm run api:generate -w @pb138/client",
+    "db:generate": "npm run db:generate -w @pb138/server",
+    "db:migrate": "npm run db:migrate -w @pb138/server",
+    "db:seed": "npm run db:seed -w @pb138/server",
+    "cli:query": "npm run cli:query -w @pb138/server",
     "setup": "tsx scripts/setup.ts",
-    "server": "npm --prefix server run start"
+    "server": "npm run start -w @pb138/server",
+    "dev": "run-p client server"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.4",
     "globals": "^17.4.0",
+    "npm-run-all": "^4.1.5",
     "tsx": "^4.20.6",
     "typescript-eslint": "^8.56.1"
   }

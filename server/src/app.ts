@@ -2,15 +2,20 @@ import { cors } from "@elysiajs/cors";
 import { node } from "@elysiajs/node";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
+import { NotFoundError } from "elysia/error";
 import { ZodError } from "zod";
 import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
+import { userRoutes } from "./routes/users";
+import { emailRoutes } from "./routes/email";
 
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
-    .use(wagerRoutes);
+    .use(wagerRoutes)
+    .use(userRoutes)
+    .use(emailRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))
@@ -40,6 +45,11 @@ export function createApp() {
         set.status = error.status;
         console.error("[API HttpError]", error.status, error.message);
         return { message: error.message };
+      }
+
+      if (error instanceof NotFoundError) {
+        set.status = 404;
+        return { message: "Endpoint not found" };
       }
 
       if (error instanceof ZodError) {

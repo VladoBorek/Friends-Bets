@@ -86,3 +86,30 @@ Expected response:
 - Client and server are separate packages with separate dependency trees.
 - Root package is intentionally thin and only orchestrates workflows.
 - Shared schemas are in `shared/src/schemas` and imported by both sides.
+
+## Seeded Test Users
+
+The development seed creates a set of test users with predictable passwords so contributors can sign in quickly. Run `npm run db:seed` (or `npm run setup`) to apply the seed.
+
+Default passwords:
+- Admins: `AdminPass123!`
+- Users: `UserPass123!`
+
+Seeded accounts (email : password):
+- you@midnight-wager.club : AdminPass123! (admin)
+- sarah@midnight-wager.club : AdminPass123! (admin)
+- mike@midnight-wager.club : UserPass123!
+- joe@midnight-wager.club : UserPass123!
+- dave@midnight-wager.club : UserPass123!
+- pete@midnight-wager.club : UserPass123!
+- lisa@midnight-wager.club : UserPass123!
+- tom@midnight-wager.club : UserPass123!
+- anna@midnight-wager.club : UserPass123!
+- greg@midnight-wager.club : UserPass123!
+- kate@midnight-wager.club : UserPass123!
+- sam@midnight-wager.club : UserPass123!
+- richard@midnight-wager.club : UserPass123!
+
+Notes:
+- These passwords are for development and testing only. Do not use them in production.
+- The seed logs the same credentials to the console when run, so you can verify them.

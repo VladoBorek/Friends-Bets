@@ -1,5 +1,5 @@
 {
-  "name": "pb138-client",
+  "name": "@pb138/client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,6 +11,7 @@
     "api:generate": "kubb generate --config ./kubb.config.ts"
   },
   "dependencies": {
+    "@pb138/shared": "*",
     "@tanstack/react-query": "^5.95.2",
     "@tanstack/react-router": "^1.168.8",
     "@tanstack/react-router-devtools": "^1.166.11",

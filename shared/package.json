@@ -1,8 +1,13 @@
 {
-  "name": "pb138-shared",
+  "name": "@pb138/shared",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas/*": "./src/schemas/*.ts"
+  },
   "dependencies": {
     "zod": "^4.3.6"
   }

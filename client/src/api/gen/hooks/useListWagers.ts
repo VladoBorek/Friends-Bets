@@ -3,11 +3,11 @@
 * Do not edit manually.
 */
 
-import type { ListWagersQueryResponse } from "../models/ListWagers.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@kubb/plugin-client/clients/fetch";
 import type { QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from "@tanstack/react-query";
-import { listWagers } from "../client/listWagers.ts";
+import type { ListWagersQueryResponse } from "../models/ListWagers.ts";
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { listWagers } from "../client/listWagers.ts";
 
 export const listWagersQueryKey = () => [{ url: '/api/wagers' }] as const
 

@@ -7,7 +7,7 @@ import {
   listWagersResponseSchema,
   placeBetRequestSchema,
   placeBetResponseSchema,
-} from "../../../shared/src/schemas/wager";
+} from "@pb138/shared/schemas/wager";
 import { createWager, getWagerById, listWagers, placeBet } from "../services/wager-service";
 
 const idParamsSchema = z.object({

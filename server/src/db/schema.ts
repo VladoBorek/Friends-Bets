@@ -23,6 +23,8 @@ export const User = pgTable("user", {
   password_hash: varchar("password_hash").notNull(),
   avatar_url: varchar("avatar_url"),
   role_id: integer("role_id").references(() => Role.id).notNull(),
+  is_verified: boolean("is_verified").default(false),
+  suspended_until: timestamp("suspended_until"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
