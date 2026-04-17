@@ -20,6 +20,7 @@ interface Step {
   cmd: string;
   args: string[];
   cwd?: string;
+  workspace?: string;
   required?: boolean;
   description?: string;
 }
@@ -29,66 +30,48 @@ const bunCmd = process.platform === "win32" ? "bun.exe" : "bun";
 const dockerCmd = process.platform === "win32" ? "docker.exe" : "docker";
 
 async function getPackageManager(): Promise<"bun" | "npm"> {
-  const bunVersion = await runCommand(bunCmd, ["--version"], undefined, true);
-  return bunVersion === 0 ? "bun" : "npm";
+  // Prefer NPM for workspace operations as it's the primary package manager used here
+  return "npm";
 }
 
 const steps: Step[] = [
   {
-    name: "Shared Dependencies",
+    name: "Project Dependencies",
     cmd: "PACKAGE_MANAGER",
     args: ["install"],
-    cwd: resolve(process.cwd(), "shared"),
-    description: "Install shared package dependencies (Zod schemas)",
-  },
-  {
-    name: "Server Dependencies",
-    cmd: "PACKAGE_MANAGER",
-    args: ["install"],
-    cwd: resolve(process.cwd(), "server"),
-    description: "Install server package dependencies",
-  },
-  {
-    name: "Client Dependencies",
-    cmd: "PACKAGE_MANAGER",
-    args: ["install"],
-    cwd: resolve(process.cwd(), "client"),
-    description: "Install client package dependencies",
-  },
-  {
-    name: "TanStack Router Plugin",
-    cmd: "ROUTER_PLUGIN_PACKAGE_MANAGER",
-    args: [],
-    cwd: resolve(process.cwd(), "client"),
-    description: "Ensure @tanstack/router-plugin is installed for Vite plugin import",
+    description: "Install all workspace dependencies",
   },
   {
     name: "Database Schema Generation",
     cmd: "PACKAGE_MANAGER",
     args: ["run", "db:generate"],
+    workspace: "@pb138/server",
     description: "Generate Drizzle migrations from schema",
   },
   {
     name: "Database Migration",
     cmd: "PACKAGE_MANAGER",
     args: ["run", "db:migrate"],
+    workspace: "@pb138/server",
     description: "Apply database migrations",
   },
   {
     name: "Database Seeding",
     cmd: "PACKAGE_MANAGER",
     args: ["run", "db:seed"],
+    workspace: "@pb138/server",
     description: "Seed database with sample data",
   },
   {
     name: "API Client Generation",
     cmd: "PACKAGE_MANAGER",
     args: ["run", "api:generate"],
+    workspace: "@pb138/client",
     description: "Generate TypeScript client and React Query hooks from OpenAPI",
   },
   {
     name: "Linting",
-    cmd: npmCmd,
+    cmd: "PACKAGE_MANAGER",
     args: ["run", "lint"],
     description: "Run ESLint to check for code issues",
     required: false,
@@ -97,7 +80,11 @@ const steps: Step[] = [
 
 function runCommand(cmd: string, args: string[], cwd?: string, silent = false): Promise<number> {
   return new Promise((resolve) => {
-    const proc = spawn(cmd, args, {
+    // Escape arguments with spaces
+    const escapedArgs = args.map(arg => arg.includes(" ") ? `"${arg}"` : arg);
+    const fullCmd = [cmd, ...escapedArgs].join(" ");
+
+    const proc = spawn(fullCmd, {
       cwd: cwd || process.cwd(),
       stdio: silent ? "ignore" : "inherit",
       shell: true,
@@ -135,11 +122,11 @@ async function ensurePostgresContainer(): Promise<void> {
     "--name",
     "pb138",
     "-e",
-    "POSTGRES_USER=user",
+    "POSTGRES_USER=postgres",
     "-e",
-    "POSTGRES_PASSWORD=password",
+    "POSTGRES_PASSWORD=postgres",
     "-e",
-    "POSTGRES_DB=database",
+    "POSTGRES_DB=pb138",
     "-p",
     "5432:5432",
     "postgres:latest",
@@ -159,18 +146,24 @@ async function runStep(step: Step, stepNumber: number, totalSteps: number, packa
     console.log(`  ${YELLOW}→ ${step.description}${RESET}`);
   }
 
-  let cmd = step.cmd;
-  let args = [...step.args];
-  if (step.cmd === "PACKAGE_MANAGER") {
-    cmd = packageManager === "bun" ? bunCmd : npmCmd;
-  } else if (step.cmd === "ROUTER_PLUGIN_PACKAGE_MANAGER") {
-    cmd = packageManager === "bun" ? bunCmd : npmCmd;
-    args = packageManager === "bun" ? ["add", "@tanstack/router-plugin"] : ["install", "@tanstack/router-plugin"];
+  const cmd = step.cmd === "PACKAGE_MANAGER" ? (packageManager === "bun" ? bunCmd : npmCmd) : step.cmd;
+  const args = [...step.args];
+
+  if (step.cmd === "PACKAGE_MANAGER" && step.workspace) {
+    if (packageManager === "bun") {
+      args.push("--filter", step.workspace);
+    } else {
+      args.push("-w", step.workspace);
+    }
   }
 
   return new Promise((resolve) => {
-    const proc = spawn(cmd, args, {
-      cwd: step.cwd || process.cwd(),
+    // Escape arguments with spaces
+    const escapedArgs = args.map(arg => arg.includes(" ") ? `"${arg}"` : arg);
+    const fullCmd = [cmd, ...escapedArgs].join(" ");
+
+    const proc = spawn(fullCmd, {
+      cwd: process.cwd(),
       stdio: "inherit",
       shell: true,
     });
@@ -245,8 +238,9 @@ async function main() {
 
   console.log(`${GREEN}✓ Setup completed successfully!${RESET}`);
   console.log(`\n${YELLOW}Next steps:${RESET}`);
-  console.log(`  1. Run API server:   npm run server`);
-  console.log(`  2. Run frontend:     npm run client`);
+  console.log(`  1. Run both client and server: npm run dev`);
+  console.log(`  2. Run only server:           npm run server`);
+  console.log(`  3. Run only client:           npm run client`);
   console.log(`\nAPI runs on http://localhost:3000`);
   console.log(`Frontend runs on http://localhost:5173`);
   console.log(`\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}`);

@@ -2,9 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
-import type { WagerDetail } from "../../../shared/src/schemas/wager";
-import { WagerInlineBetMenu } from "../components/wager-inline-bet-menu";
-import { WagerOutcomeItem } from "../components/wager-outcome-item";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 interface WagerDetailPageProps {
   wagerId: number;
@@ -186,41 +185,68 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         </div>
       </Card>
 
-      {detail.status === "OPEN" && (
-        <Card>
-          <CardTitle>Temporary Resolve Shortcut</CardTitle>
-          <CardDescription className="mt-2">
-            Temporary UI control to close an open wager and pay out the winning side immediately.
-          </CardDescription>
-          <div className="mt-4 grid gap-3">
-            <label className="flex flex-col gap-1 text-xs text-slate-300">
-              Winning outcome
-              <select
-                value={resolutionOutcomeId ?? ""}
-                onChange={(event) => setResolutionOutcomeId(Number(event.target.value))}
-                className="rounded border border-slate-700 bg-slate-900 p-2 text-white"
-              >
-                {detail.outcomes.map((outcome) => (
-                  <option key={outcome.id} value={outcome.id}>
-                    {outcome.title}
-                  </option>
-                ))}
-              </select>
+      <Card>
+        <CardTitle>Place a bet</CardTitle>
+        <form className="mt-4 grid gap-3" onSubmit={submitBet}>
+          <div className="grid gap-2">
+            <label className="text-xs text-slate-300" htmlFor="userId">
+              User ID
             </label>
-
-            <button
-              type="button"
-              onClick={() => void submitResolution()}
-              disabled={isResolving}
-              className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-100 hover:bg-amber-500/15 disabled:opacity-60"
-            >
-              {isResolving ? "Resolving..." : "Resolve Wager"}
-            </button>
-            {message && <p className="text-sm text-emerald-300">{message}</p>}
-            {resolveError && <p className="text-sm text-rose-300">{resolveError}</p>}
+            <Input
+              id="userId"
+              value={userId}
+              onChange={(event) => setUserId(event.target.value)}
+            />
           </div>
-        </Card>
-      )}
+
+          <div className="grid gap-2">
+            <label className="text-xs text-slate-300" htmlFor="outcome">
+              Outcome
+            </label>
+            <select
+              id="outcome"
+              value={selectedOutcomeId ?? ""}
+              onChange={(event) => setSelectedOutcomeId(Number(event.target.value))}
+              className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+            >
+              {detail.outcomes.map((outcome) => (
+                <option key={outcome.id} value={outcome.id}>
+                  {outcome.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-xs text-slate-300" htmlFor="amount">
+              Amount
+            </label>
+            <Input
+              id="amount"
+              value={betAmount}
+              onChange={(event) => setBetAmount(event.target.value)}
+              type="number"
+              step="0.01"
+              min="0"
+            />
+          </div>
+
+          {message && <p className="text-emerald-300">{message}</p>}
+          {error && <p className="text-rose-300">{error}</p>}
+
+          <Button
+            type="submit"
+            disabled={isSubmitting || detail.status !== "OPEN"}
+            className="w-full"
+          >
+            {isSubmitting ? "Placing bet..." : "Place Bet"}
+          </Button>
+
+          {detail.status !== "OPEN" && (
+            <p className="text-xs text-slate-400">Cannot place bets on wagers that are not OPEN.</p>
+          )}
+        </form>
+      </Card>
 
       <Link to="/wagers" className="text-sm text-cyan-300 transition-colors hover:text-cyan-200">
         Back to list

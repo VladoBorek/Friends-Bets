@@ -6,7 +6,8 @@ import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
-import { useAuth } from "../lib/auth-context";
+import { createWagerRequestSchema } from "@pb138/shared/schemas/wager";
+
 
 function toErrorMessage(error: unknown): string {
   if (error && typeof error === "object") {

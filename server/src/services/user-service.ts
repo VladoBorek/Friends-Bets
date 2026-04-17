@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { desc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db";
 import { Role, User } from "../db/schema";
-import type { CreateUserRequest, LoginRequest, UserSummary } from "../../../shared/src/schemas/user";
+import type { CreateUserRequest, LoginRequest, UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../errors";
 import { emailClient } from "./email-service";
 import crypto from "node:crypto";

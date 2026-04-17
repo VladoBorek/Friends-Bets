@@ -1,6 +1,6 @@
 import { createRootRouteWithContext, redirect } from "@tanstack/react-router";
 import { RootLayout } from "../pages/root-layout";
-import type { UserSummary } from "../../../shared/src/schemas/user";
+import type { UserSummary } from "@pb138/shared/schemas/user";
 
 export interface RouterContext {
   auth: {

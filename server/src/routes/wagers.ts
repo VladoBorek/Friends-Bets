@@ -9,20 +9,8 @@ import {
   listWagersResponseSchema,
   placeBetRequestSchema,
   placeBetResponseSchema,
-  resolveWagerRequestSchema,
-  resolveWagerResponseSchema,
-} from "../../../shared/src/schemas/wager";
-import { HttpError } from "../errors";
-import {
-  createWager,
-  ensureUserIsNotSuspended,
-  getWagerById,
-  listCategories,
-  listWagers,
-  placeBet,
-  resolveWager,
-} from "../services/wager-service";
-import { getUserById } from "../services/user-service";
+} from "@pb138/shared/schemas/wager";
+import { createWager, getWagerById, listWagers, placeBet } from "../services/wager-service";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card, CardDescription, CardTitle } from "../components/ui/card";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -55,13 +58,13 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-xl shadow-cyan-950/20 text-slate-100">
+      <Card className="w-full max-w-md p-8">
         <div className="mb-8 flex flex-col items-center">
           <div className="mb-4 inline-flex rounded-full bg-cyan-950/50 p-3 ring-1 ring-cyan-500/30">
             <LogIn className="h-6 w-6 text-cyan-400" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">System Access</h1>
-          <p className="mt-2 text-sm text-slate-400">Enter your credentials to continue</p>
+          <CardTitle className="text-2xl font-semibold tracking-tight text-white">System Access</CardTitle>
+          <CardDescription className="mt-2 text-sm text-slate-400 text-center">Enter your credentials to continue</CardDescription>
         </div>
 
         {error && (
@@ -70,32 +73,31 @@ export function LoginPage() {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="email">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-300" htmlFor="email">
               Email Address
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950/50 px-4 py-2.5 text-slate-200 outline-none transition-colors focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
               placeholder="operator@pb138.net"
               required
             />
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="password">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-300" htmlFor="password">
               Password
             </label>
             <div className="relative">
-              <input
+              <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-slate-700 bg-slate-950/50 px-4 py-2.5 pr-11 text-slate-200 outline-none transition-colors focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
+                className="pr-11"
                 placeholder="••••••••"
                 required
               />
@@ -110,23 +112,24 @@ export function LoginPage() {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-md bg-cyan-500 px-4 py-2.5 font-medium text-slate-950 transition-colors hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-50"
+            className="w-full"
           >
             {isLoading ? "Authenticating..." : "Sign In"}
-          </button>
+          </Button>
         </form>
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={handleGoToRegister}
-          className="mt-4 w-full rounded-md border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:border-cyan-500/50 hover:text-cyan-200"
+          className="mt-4 w-full"
         >
           Create Account
-        </button>
-      </div>
+        </Button>
+      </Card>
     </div>
   );
 }
