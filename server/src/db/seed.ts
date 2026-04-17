@@ -15,6 +15,7 @@ import {
 	Wallet,
 	Wager,
 	WagerVisibility,
+	Friendship
 } from "./schema";
 import bcrypt from "bcrypt";
 
@@ -410,6 +411,34 @@ async function seedTransactions(params: {
 	await db.insert(Transaction).values(deposits);
 }
 
+async function seedFriendships(users: Array<{ id: number }>) {
+  const primaryUser = users[0];
+
+  // Existing friends
+  const acceptedRows = users.slice(1, 13).map((user) => ({
+    requester_id: primaryUser.id,
+    addressee_id: user.id,
+    status: "ACCEPTED",
+    responded_at: new Date(),
+  }));
+
+  // incoming friend requests 
+  const incomingRows = users.slice(13, 19).map((user) => ({
+    requester_id: user.id,
+    addressee_id: primaryUser.id,
+    status: "PENDING",
+  }));
+
+  // outgoinf friend requests
+  const outgoingRows = users.slice(19, 25).map((user) => ({
+    requester_id: primaryUser.id,
+    addressee_id: user.id,
+    status: "PENDING",
+  }));
+
+  await db.insert(Friendship).values([...acceptedRows, ...incomingRows, ...outgoingRows]);
+}
+
 async function main() {
 	try {
 		faker.seed(138);
@@ -425,6 +454,8 @@ async function main() {
 		await seedVisibilityAndComments({ createdWagers, groups });
 		await seedNotifications(users);
 		await seedTransactions({ houseWallet: wallets.houseWallet, userWallets: wallets.userWallets });
+		await seedFriendships(users);
+
 
 		console.log(`Seed completed successfully. Wagers: ${createdWagers.length}, Users: ${users.length}`);
 	} catch (error) {
