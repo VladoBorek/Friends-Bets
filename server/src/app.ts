@@ -9,13 +9,17 @@ import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
 import { userRoutes } from "./routes/users";
 import { emailRoutes } from "./routes/email";
+import { friendRoutes } from "./routes/friends";
+
+
 
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
     .use(wagerRoutes)
     .use(userRoutes)
-    .use(emailRoutes);
+    .use(emailRoutes)
+    .use(friendRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))
@@ -30,6 +34,8 @@ export function createApp() {
           tags: [
             { name: "Health", description: "Service health endpoints" },
             { name: "Wagers", description: "Wager management endpoints" },
+            { name: "Friends", description: "Friendship and friend request endpoints" },
+
           ],
         },
       }),
