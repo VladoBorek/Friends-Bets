@@ -9,8 +9,20 @@ import {
   listWagersResponseSchema,
   placeBetRequestSchema,
   placeBetResponseSchema,
+  resolveWagerRequestSchema,
+  resolveWagerResponseSchema,
 } from "@pb138/shared/schemas/wager";
-import { createWager, getWagerById, listWagers, placeBet } from "../services/wager-service";
+import { HttpError } from "../errors";
+import {
+  createWager,
+  ensureUserIsNotSuspended,
+  getWagerById,
+  listCategories,
+  listWagers,
+  placeBet,
+  resolveWager,
+} from "../services/wager-service";
+import { getUserById } from "../services/user-service";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),

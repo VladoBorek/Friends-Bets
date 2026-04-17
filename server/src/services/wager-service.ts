@@ -1,7 +1,6 @@
 import { asc, desc, eq, sql, and } from "drizzle-orm";
 import { db } from "../db/db";
-import { Bet, Category, Outcome, User, Wager } from "../db/schema";
-import type { Bet as BetType, CreateWagerRequest, PlaceBetRequest, WagerDetail, WagerSummary } from "@pb138/shared/schemas/wager";
+import { Bet, Category, Outcome, Transaction, User, Wallet, Wager } from "../db/schema";
 import { HttpError } from "../errors";
 import type {
   Bet as BetType,
