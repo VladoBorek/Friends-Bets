@@ -1,6 +1,6 @@
 {
-  "id": "cb157136-1d7c-4af6-a782-c0489bf95984",
-  "prevId": "8be1adb3-76cb-4a5c-952d-8eaf4f5a751e",
+  "id": "654ac81c-0e80-49c3-a173-ffca105bbdb0",
+  "prevId": "cb157136-1d7c-4af6-a782-c0489bf95984",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -556,6 +556,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_verified": {
+          "name": "is_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "suspended_until": {
           "name": "suspended_until",
