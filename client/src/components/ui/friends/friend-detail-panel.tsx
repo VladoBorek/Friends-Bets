@@ -32,12 +32,13 @@ export function FriendDetailPanel({ friend }: FriendDetailPanelProps) {
 
   return (
     <Card
-      className={cn(
-        "rounded-2xl border-cyan-500/20 bg-slate-900/80 p-6 shadow-xl shadow-cyan-950/10",
-        "transition-[transform,border-color,box-shadow] duration-800 ease-out",
+    className={cn(
+        "rounded-2xl border-cyan-500/20 bg-slate-900/80 p-6",
+        "shadow-[0_30px_80px_-30px_rgba(8,145,178,0.32)]",
+        "transition-[transform,border-color,box-shadow] duration-500 ease-out",
         "motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.005]",
-        "hover:border-cyan-400/25 hover:shadow-[0_20px_48px_-28px_rgba(8,145,178,0.35)]",
-      )}
+        "hover:border-cyan-400/25 hover:shadow-[0_36px_96px_-32px_rgba(8,145,178,0.4)]",
+    )}
     >
       <div className="flex items-center gap-4">
         <div className="grid size-16 place-items-center rounded-full bg-indigo-500/15 text-xl font-semibold text-indigo-200 transition-transform duration-800 motion-safe:hover:scale-105">
