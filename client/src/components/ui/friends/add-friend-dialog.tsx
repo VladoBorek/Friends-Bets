@@ -1,5 +1,5 @@
 import type { UserSummary } from "@pb138/shared/schemas/user";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -12,13 +12,7 @@ import {
 import { useAuth } from "../../../lib/auth-context";
 import { cn } from "../../../lib/utils";
 import { Button } from "../button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../dialog";
 import { Input } from "../input";
 import { FriendsPagination } from "./friends-pagination";
 
@@ -160,48 +154,31 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
 
   const users = usersQuery.data ?? [];
   const friendIds = relationshipQuery.data?.friendIds ?? [];
-  const pendingIds = useMemo(
-    () => [...new Set([...(relationshipQuery.data?.pendingIds ?? []), ...optimisticPendingIds])],
-    [relationshipQuery.data?.pendingIds, optimisticPendingIds],
-  );
+  const pendingIds = [
+    ...(relationshipQuery.data?.pendingIds ?? []),
+    ...optimisticPendingIds,
+  ];
 
-  const filteredUsers = useMemo(
-    () => filterUsers(users, deferredQuery, user?.id),
-    [users, deferredQuery, user?.id],
-  );
-
+  const filteredUsers = filterUsers(users, deferredQuery, user?.id);
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / DISCOVERY_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
-
-  const visibleUsers = useMemo(
-    () =>
-      filteredUsers.slice(
-        (currentPage - 1) * DISCOVERY_PAGE_SIZE,
-        currentPage * DISCOVERY_PAGE_SIZE,
-      ),
-    [filteredUsers, currentPage],
+  const visibleUsers = filteredUsers.slice(
+    (currentPage - 1) * DISCOVERY_PAGE_SIZE,
+    currentPage * DISCOVERY_PAGE_SIZE,
   );
-
-  const combinedError = usersQuery.error ?? relationshipQuery.error;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-cyan-500/20 bg-slate-900/95 p-0 sm:max-w-4xl">
-        <DialogHeader className="shrink-0 border-b border-slate-800 px-6 py-5">
+        <DialogHeader className="border-b border-slate-800 px-6 py-5">
           <DialogTitle>Add Friend</DialogTitle>
           <DialogDescription>
-            Search existing users and send a friend request without leaving the page.
+            Search existing users and send a friend request.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex h-[min(70vh,40rem)] flex-col gap-4 px-6 py-5">
-          <div className="relative shrink-0">
+        <div className="flex min-h-0 max-h-[calc(85vh-88px)] flex-col gap-4 px-6 py-5">
+          <div className="shrink-0 relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <Input
               value={query}
@@ -213,12 +190,10 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
 
           <div className="shrink-0 flex items-center justify-between text-sm text-slate-400">
             <span>{filteredUsers.length} users</span>
-            <span>
-              Page {currentPage} / {totalPages}
-            </span>
+            <span>Page {currentPage} / {totalPages}</span>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <div className="max-h-[26rem] overflow-y-auto pr-1">
             {usersQuery.isLoading || relationshipQuery.isLoading ? (
               <div className="flex flex-col gap-3">
                 {Array.from({ length: 5 }, (_, index) => (
@@ -228,10 +203,10 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
                   />
                 ))}
               </div>
-            ) : combinedError ? (
+            ) : usersQuery.error || relationshipQuery.error ? (
               <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                {combinedError instanceof Error
-                  ? combinedError.message
+                {(usersQuery.error ?? relationshipQuery.error) instanceof Error
+                  ? (usersQuery.error ?? relationshipQuery.error)?.message
                   : "Unable to load add-friend data."}
               </div>
             ) : visibleUsers.length === 0 ? (
@@ -300,13 +275,11 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
             )}
           </div>
 
-          <div className="shrink-0 border-t border-slate-800 pt-3">
-            <FriendsPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
-          </div>
+          <FriendsPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </div>
       </DialogContent>
     </Dialog>
