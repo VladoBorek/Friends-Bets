@@ -156,3 +156,19 @@ export async function rejectFriendRequest(requestId: number) {
   const json = await readJsonOrThrow(response, "Unable to reject friend request");
   return friendRequestResponseSchema.parse(json).data;
 }
+
+export async function fetchFriendRequestCount(direction: FriendRequestDirection) {
+  const params = new URLSearchParams({
+    direction,
+    limit: "1",
+    offset: "0",
+  });
+
+  const response = await fetch(`/api/friends/requests?${params.toString()}`, {
+    method: "GET",
+    credentials: "same-origin",
+  });
+
+  const json = await readJsonOrThrow(response, "Unable to load friend request count");
+  return paginatedFriendRequestsResponseSchema.parse(json).pagination.total;
+}
