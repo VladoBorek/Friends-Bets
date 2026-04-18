@@ -16,6 +16,7 @@ import { HttpError } from "../errors";
 import {
   createWager,
   ensureUserIsNotSuspended,
+  ensureUserIsVerified,
   getWagerById,
   listCategories,
   listWagers,
@@ -82,6 +83,7 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
   })
   .post("", async ({ body, getCurrentUser }) => {
     const creator = await getCurrentUser();
+    ensureUserIsVerified(creator);
     ensureUserIsNotSuspended(creator);
     const parsedBody = createWagerRequestSchema.parse(body);
     const data = await createWager(parsedBody, creator.id);
@@ -91,6 +93,7 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const parsedParams = idParamsSchema.parse(params);
     const parsedBody = placeBetRequestSchema.parse(body);
     const user = await getCurrentUser();
+    ensureUserIsVerified(user);
     ensureUserIsNotSuspended(user);
     const data = await placeBet(parsedParams.id, parsedBody, user.id);
     return placeBetResponseSchema.parse({ data });

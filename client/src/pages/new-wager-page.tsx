@@ -57,6 +57,7 @@ export function NewWagerPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
+  const isUnverified = user?.isVerified === false;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -106,6 +107,11 @@ export function NewWagerPage() {
       return;
     }
 
+    if (isUnverified) {
+      setErrorMessage("Account must be verified to perform this action.");
+      return;
+    }
+
     const categoryId = Number(selectedCategoryId);
     const parsed = createWagerRequestSchema.safeParse({
       title,
@@ -148,7 +154,7 @@ export function NewWagerPage() {
     <Card className="max-w-2xl">
       <CardTitle>Create Wager</CardTitle>
       <CardDescription className="mt-2">
-        Use the authenticated account on the backend. Suspended users cannot create new wagers.
+        Use the authenticated account on the backend. Suspended and unverified users cannot create new wagers.
       </CardDescription>
 
       <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
@@ -185,9 +191,10 @@ export function NewWagerPage() {
         </div>
 
         {isSuspended && <p className="text-sm text-amber-200">Suspended users cannot create wagers.</p>}
+        {isUnverified && <p className="text-sm text-amber-200">Account must be verified to perform this action.</p>}
         {errorMessage && <p className="text-sm text-rose-300">{errorMessage}</p>}
 
-        <Button disabled={isSubmitting || isSuspended || isLoadingCategories || categories.length === 0} type="submit">
+        <Button disabled={isSubmitting || isSuspended || isUnverified || isLoadingCategories || categories.length === 0} type="submit">
           {isSubmitting ? "Creating..." : "Create Wager"}
         </Button>
       </form>

@@ -35,6 +35,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const [isResolving, setIsResolving] = useState(false);
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
+  const isUnverified = user?.isVerified === false;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -90,13 +91,15 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
   const currentUserBetAmount = Number(detail.currentUserBetAmount ?? "0");
   const hasCurrentUserBet = currentUserBetAmount > 0;
-  const canPlaceBet = detail.status === "OPEN" && !isSuspended && !hasCurrentUserBet;
+  const canPlaceBet = detail.status === "OPEN" && !isSuspended && !isUnverified && !hasCurrentUserBet;
   const betDisabledMessage = detail.status !== "OPEN"
     ? "Betting is closed for this wager."
     : hasCurrentUserBet
       ? `You already placed a bet of ${formatMoney(detail.currentUserBetAmount ?? "0")} on ${detail.currentUserBetOutcomeTitle ?? "your selected outcome"}.`
       : isSuspended
         ? "Suspended users cannot place bets."
+        : isUnverified
+          ? "Account must be verified to perform this action."
         : "Betting is unavailable for this account.";
 
   const submitResolution = async () => {
@@ -152,6 +155,11 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
           {isSuspended && (
             <span className="rounded-full border border-amber-500/35 px-2 py-1 text-amber-200 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10">
               Suspended
+            </span>
+          )}
+          {isUnverified && (
+            <span className="rounded-full border border-amber-500/35 px-2 py-1 text-amber-200 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10">
+              Unverified
             </span>
           )}
         </div>

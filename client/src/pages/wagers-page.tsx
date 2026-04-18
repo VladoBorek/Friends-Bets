@@ -20,6 +20,7 @@ export function WagersPage() {
   const [openBetMenu, setOpenBetMenu] = useState<{ wagerId: number; outcomeId: number } | null>(null);
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
+  const isUnverified = user?.isVerified === false;
 
   const navigateToWager = (wagerId: number) => {
     void navigate({ to: "/wagers/$wagerId", params: { wagerId: String(wagerId) } });
@@ -129,6 +130,11 @@ export function WagersPage() {
                 Suspended
               </span>
             )}
+            {isUnverified && (
+              <span className="rounded-full border border-amber-500/35 px-2 py-1 text-amber-200 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10">
+                Unverified
+              </span>
+            )}
           </div>
           <div className="mt-4 space-y-2">
             {wager.outcomes.map((outcome) => (
@@ -146,7 +152,7 @@ export function WagersPage() {
                       wagerId={wager.id}
                       outcomeId={outcome.id}
                       outcomeTitle={outcome.title}
-                      canPlaceBet={wager.status === "OPEN" && !isSuspended && !wager.currentUserBetAmount}
+                      canPlaceBet={wager.status === "OPEN" && !isSuspended && !isUnverified && !wager.currentUserBetAmount}
                       disabledMessage={
                         wager.status !== "OPEN"
                           ? "Betting is closed for this wager."
@@ -154,6 +160,8 @@ export function WagersPage() {
                             ? `You already placed a bet of ${formatMoney(wager.currentUserBetAmount)} on ${wager.currentUserBetOutcomeTitle ?? "your selected outcome"}.`
                             : isSuspended
                               ? "Suspended users cannot place bets."
+                              : isUnverified
+                                ? "Account must be verified to perform this action."
                               : "Betting is unavailable for this account."
                       }
                       onBetPlaced={async () => {

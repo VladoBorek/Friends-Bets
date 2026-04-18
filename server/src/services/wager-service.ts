@@ -195,6 +195,12 @@ function ensureUserIsNotSuspended(user: { suspendedUntil?: string | null }): voi
   }
 }
 
+function ensureUserIsVerified(user: { isVerified?: boolean | null }): void {
+  if (user.isVerified === false) {
+    throw new HttpError(403, "Account must be verified to perform this action.");
+  }
+}
+
 export async function listWagers(currentUserId?: number): Promise<WagerSummary[]> {
   const currentUserBetAmount = currentUserId
     ? sql<string | null>`(
@@ -254,7 +260,15 @@ export async function listCategories(): Promise<CategorySummary[]> {
 export async function createWager(input: CreateWagerRequest, createdById: number): Promise<WagerDetail> {
   const [category, creator] = await Promise.all([
     db.select({ id: Category.id }).from(Category).where(eq(Category.id, input.categoryId)).limit(1),
-    db.select({ id: User.id }).from(User).where(eq(User.id, createdById)).limit(1),
+    db
+      .select({
+        id: User.id,
+        isVerified: User.is_verified,
+        suspendedUntil: User.suspended_until,
+      })
+      .from(User)
+      .where(eq(User.id, createdById))
+      .limit(1),
   ]);
 
   if (!category[0]) {
@@ -264,6 +278,9 @@ export async function createWager(input: CreateWagerRequest, createdById: number
   if (!creator[0]) {
     throw new HttpError(400, "Unknown creator");
   }
+
+  ensureUserIsVerified(creator[0]);
+  ensureUserIsNotSuspended({ suspendedUntil: creator[0].suspendedUntil?.toISOString() ?? null });
 
   const created = await db.transaction(async (tx) => {
     const [newWager] = await tx
@@ -300,6 +317,23 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
   if (wager.status !== "OPEN") {
     throw new HttpError(400, "Cannot place bets on wagers that are not OPEN");
   }
+
+  const [bettingUser] = await db
+    .select({
+      id: User.id,
+      isVerified: User.is_verified,
+      suspendedUntil: User.suspended_until,
+    })
+    .from(User)
+    .where(eq(User.id, userId))
+    .limit(1);
+
+  if (!bettingUser) {
+    throw new HttpError(404, "User not found");
+  }
+
+  ensureUserIsVerified(bettingUser);
+  ensureUserIsNotSuspended({ suspendedUntil: bettingUser.suspendedUntil?.toISOString() ?? null });
 
   const [outcome] = await db
     .select({ id: Outcome.id, wagerId: Outcome.wager_id })
@@ -469,3 +503,4 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
 }
 
 export { ensureUserIsNotSuspended };
+export { ensureUserIsVerified };
