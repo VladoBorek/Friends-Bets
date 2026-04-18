@@ -1,15 +1,14 @@
-    // client/src/features/friends/pages/friends-page.tsx
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import { Route } from "../../routes/friends";
+import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
+import { FriendDetailPanel } from "../../components/ui/friends/friend-detail-panel";
+import { FriendsPageErrorState } from "../../components/ui/friends/friends-page-error-state";
+import { FriendsPageSkeleton } from "../../components/ui/friends/friends-page-skeleton";
+import { PersonRowCard } from "../../components/ui/friends/person-row-card";
 import { friendsQueries } from "../../api/friends-query-options";
-import { FriendDetailPanel } from "../../components/ui//friends/friend-detail-panel";
-import { FriendsPageErrorState } from "../../components/ui//friends/friends-page-error-state";
-import { FriendsPageSkeleton } from "../../components/ui//friends/friends-page-skeleton";
-import { PersonRowCard } from "../../components/ui//friends/person-row-card";
+import { Route } from "../../routes/friends";
 
 export function FriendsPage() {
   const search = Route.useSearch();
@@ -61,7 +60,6 @@ export function FriendsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
-        <p className="mt-1 text-sm text-slate-400">Base paginated list with a placeholder summary panel.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
@@ -98,44 +96,24 @@ export function FriendsPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={search.page <= 1}
-              onClick={() =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    page: prev.page - 1,
-                    friendId: undefined,
-                  }),
-                })
-              }
-            >
-              Previous
-            </Button>
-
-            <div className="text-xs text-slate-500">
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="text-center text-xs text-slate-500">
               {friendsQuery.isFetching ? "Refreshing..." : " "}
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!pagination.hasMore}
-              onClick={() =>
+            <FriendsPagination
+              currentPage={search.page}
+              totalPages={totalPages}
+              onPageChange={(page) =>
                 void navigate({
                   search: (prev) => ({
                     ...prev,
-                    page: prev.page + 1,
+                    page,
                     friendId: undefined,
                   }),
                 })
               }
-            >
-              Next
-            </Button>
+            />
           </div>
         </section>
 
