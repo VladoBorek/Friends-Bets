@@ -1,6 +1,6 @@
 import type { FriendRequestSummary } from "@pb138/shared/schemas/friends";
 import { Button } from "../../button";
-import { FriendPersonCell } from "../friends-person-cell";
+import { FriendPersonCell } from "../dialog/friends-person-cell";
 
 type PendingTab = "incoming" | "outgoing";
 

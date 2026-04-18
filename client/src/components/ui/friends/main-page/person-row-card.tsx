@@ -1,6 +1,6 @@
 // client/src/features/friends/components/person-row-card.tsx
 import type { FriendSummary } from "@pb138/shared/schemas/friends";
-import { cn } from "../../../lib/utils";
+import { cn } from "../../../../lib/utils";
 
 type PersonRowCardProps = {
   friend: FriendSummary;

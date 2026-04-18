@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/card";
-import { FriendDetailPanel } from "../../components/ui/friends/friend-detail-panel";
+import { FriendDetailPanel } from "../../components/ui/friends/main-page/friend-detail-panel";
 import { FriendsPageErrorState } from "../../components/ui/friends/friends-page-error-state";
 import { FriendsPageSkeleton } from "../../components/ui/friends/friends-page-skeleton";
 import { friendsQueries } from "../../api/friends-query-options";
 import { Route } from "../../routes/friends";
-import { FriendsListSection } from "../../components/ui/friends/friend-list-section"
+import { FriendsListSection } from "../../components/ui/friends/main-page/friend-list-section"
 import { useMediaQuery } from "../../features/friends/use-media-query";
 import { Button } from "../../components/ui/button";
 import { UserPlus, Clock3 } from "lucide-react";
 import { AddFriendDialog } from "../../components/ui/friends/add-friend/add-friend-dialog";
 import { PendingRequestsDialog } from "../../components/ui/friends/pending-requests/pending-request-dialog";
+import { fetchAllFriendRequests } from "../../api/friends-discovery-api";
+
 
 
 
@@ -20,6 +22,7 @@ export function FriendsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  
   
   const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
   const [isAddFriendDialogOpen, setIsAddFriendDialogOpen] = useState(false);
@@ -30,6 +33,15 @@ export function FriendsPage() {
   const friends = friendsQuery.data?.data ?? [];
   const pagination = friendsQuery.data?.pagination ?? null;
   const selectedFriend = friends.find((friend) => friend.id === selectedFriendId) ?? null;
+
+  const incomingRequestsQuery = useQuery({
+    queryKey: ["friend-requests", "incoming"],
+    queryFn: () => fetchAllFriendRequests("incoming"),
+    staleTime: 15_000,}
+  );
+
+  const incomingRequestCount = incomingRequestsQuery.data?.length ?? 0;
+  const hasIncomingRequests = incomingRequestCount > 0;
 
   useEffect(() => {
     if (!friends.length) {
@@ -103,12 +115,22 @@ export function FriendsPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
-              variant="secondary"
-              onClick={() => setIsPendingDialogOpen(true)}
-              className="gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800"
-            >
-              <Clock3 className="h-4 w-4" />
-              Pending
+                variant="secondary"
+                onClick={() => setIsPendingDialogOpen(true)}
+                className="relative gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800"
+                >
+                <Clock3 className="h-4 w-4" />
+                Pending
+
+                {hasIncomingRequests ? (
+                    <>
+                        <span className="absolute -right-1.5 -top-1.5 size-3 rounded-full border border-slate-950 bg-rose-500" />
+                        <span className="sr-only">
+                        {incomingRequestCount} pending incoming friend request
+                        {incomingRequestCount === 1 ? "" : "s"}
+                        </span>
+                    </>
+                    ) : null}
             </Button>
 
             <Button

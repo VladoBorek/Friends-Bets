@@ -2,7 +2,7 @@ import type { UserSummary } from "@pb138/shared/schemas/user";
 import { UserPlus } from "lucide-react";
 import { cn } from "../../../../lib/utils";
 import { Button } from "../../button";
-import { FriendPersonCell } from "../friends-person-cell";
+import { FriendPersonCell } from "../dialog/friends-person-cell";
 import {
   buildButtonLabel,
   getRelationshipState,
