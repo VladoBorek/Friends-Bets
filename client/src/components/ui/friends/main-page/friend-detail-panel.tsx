@@ -1,7 +1,7 @@
 // client/src/features/friends/components/friend-detail-panel.tsx
 import type { FriendSummary } from "@pb138/shared/schemas/friends";
-import { Card } from "../../../components/ui/card";
-import { cn } from "../../../lib/utils";
+import { Card } from "../../card";
+import { cn } from "../../../../lib/utils";
 
 type FriendDetailPanelProps = {
   friend: FriendSummary | null;

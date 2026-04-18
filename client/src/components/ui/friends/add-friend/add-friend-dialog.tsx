@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../../../../lib/auth-context";
 import { Dialog } from "../../dialog";
 import { Input } from "../../input";
-import { FriendsDialogShell } from "../friends-dialog-shell";
+import { FriendsDialogShell } from "../dialog/friends-dialog-shell";
 import { FriendsPagination } from "..//friends-pagination";
 import { AddFriendList } from "./add-friend-list";
 import { DISCOVERY_PAGE_SIZE, filterUsers } from "./add-friend-dialog-utils";
