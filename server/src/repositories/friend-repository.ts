@@ -253,7 +253,7 @@ export async function listDiscoverableUsers(
     .from(User)
     .innerJoin(Role, eq(User.role_id, Role.id))
     .where(buildDiscoverUsersWhere(currentUserId, query))
-    .orderBy(asc(User.username))
+    .orderBy(asc(User.username), asc(User.id))
     .limit(limit)
     .offset(offset);
 }
