@@ -12,9 +12,6 @@ default:
     key: "${CI_PROJECT_PATH_SLUG}-${CI_COMMIT_REF_SLUG}-node24"
     paths:
       - node_modules/
-      - client/node_modules/
-      - server/node_modules/
-      - shared/node_modules/
     policy: pull-push
 
 stages:
@@ -24,16 +21,10 @@ lint:
   stage: validate
   script:
     - npm ci
-    - npm --prefix client ci
-    - npm --prefix server ci
-    - npm --prefix shared ci
     - npm run lint
 
 build:
   stage: validate
   script:
     - npm ci
-    - npm --prefix client ci
-    - npm --prefix server ci
-    - npm --prefix shared ci
     - npm run build
