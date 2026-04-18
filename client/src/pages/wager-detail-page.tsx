@@ -103,7 +103,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     setMessage(null);
     setResolveError(null);
 
-    if (detail.status !== "OPEN") {
+    if (detail.status === "CLOSED") {
       setResolveError("This wager is already closed.");
       return;
     }
@@ -186,7 +186,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         </div>
       </Card>
 
-      {detail.status === "OPEN" && (
+      {detail.status !== "CLOSED" && (
         <Card>
           <CardTitle>Temporary Resolve Shortcut</CardTitle>
           <CardDescription className="mt-2">

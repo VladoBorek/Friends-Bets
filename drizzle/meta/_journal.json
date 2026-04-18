@@ -34,21 +34,21 @@
       "idx": 4,
       "version": "7",
       "when": 1775677547078,
-      "tag": "0005_powerful_kid_colt",
+      "tag": "0004_powerful_kid_colt",
       "breakpoints": true
     },
     {
       "idx": 5,
       "version": "7",
       "when": 1775677547079,
-      "tag": "0006_nifty_northstar",
+      "tag": "0005_nifty_northstar",
       "breakpoints": true
     },
     {
       "idx": 6,
       "version": "7",
       "when": 1775677547080,
-      "tag": "0007_overjoyed_anthem",
+      "tag": "0006_overjoyed_anthem",
       "breakpoints": true
     },
     {
@@ -56,6 +56,13 @@
       "version": "7",
       "when": 1776513843021,
       "tag": "0007_married_gambit",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776522308237,
+      "tag": "0008_ordinary_colossus",
       "breakpoints": true
     }
   ]

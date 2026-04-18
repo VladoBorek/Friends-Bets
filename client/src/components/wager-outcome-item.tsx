@@ -38,8 +38,6 @@ export function WagerOutcomeItem({
   const isWinningOutcome = wagerStatus === "CLOSED" && outcome.isWinner;
   const interactionProps = { [interactionAttribute]: "true" };
 
-  console.log(outcome.title, { isCurrentUserOutcome, isWinningOutcome }); // temp
-
   return (
     <div
       {...interactionProps}

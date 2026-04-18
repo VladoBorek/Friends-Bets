@@ -118,7 +118,8 @@ async function loadWagerBase(wagerId: number, currentUserId?: number): Promise<W
     ? sql<string | null>`(
       SELECT COALESCE(SUM(${Bet.amount}), '0')
       FROM ${Bet}
-      WHERE ${Bet.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
+      INNER JOIN ${Outcome} ON ${Outcome.id} = ${Bet.outcome_id}
+      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
     )`
     : sql<string | null>`NULL`;
   const currentUserBetOutcomeTitle = currentUserId
@@ -126,7 +127,7 @@ async function loadWagerBase(wagerId: number, currentUserId?: number): Promise<W
       SELECT ${Outcome.title}
       FROM ${Bet}
       INNER JOIN ${Outcome} ON ${Outcome.id} = ${Bet.outcome_id}
-      WHERE ${Bet.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
+      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
       LIMIT 1
     )`
     : sql<string | null>`NULL`;
@@ -199,7 +200,8 @@ export async function listWagers(currentUserId?: number): Promise<WagerSummary[]
     ? sql<string | null>`(
       SELECT COALESCE(SUM(${Bet.amount}), '0')
       FROM ${Bet}
-      WHERE ${Bet.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
+      INNER JOIN ${Outcome} ON ${Outcome.id} = ${Bet.outcome_id}
+      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
     )`
     : sql<string | null>`NULL`;
   const currentUserBetOutcomeTitle = currentUserId
@@ -207,7 +209,7 @@ export async function listWagers(currentUserId?: number): Promise<WagerSummary[]
       SELECT ${Outcome.title}
       FROM ${Bet}
       INNER JOIN ${Outcome} ON ${Outcome.id} = ${Bet.outcome_id}
-      WHERE ${Bet.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
+      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
       LIMIT 1
     )`
     : sql<string | null>`NULL`;
@@ -280,7 +282,6 @@ export async function createWager(input: CreateWagerRequest, createdById: number
       input.outcomes.map((outcome) => ({
         wager_id: newWager.id,
         title: outcome.title,
-        odds: outcome.odds?.toFixed(2),
       })),
     );
 
@@ -313,7 +314,8 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
   const [existingBet] = await db
     .select({ id: Bet.id })
     .from(Bet)
-    .where(and(eq(Bet.user_id, userId), eq(Bet.wager_id, wagerId)))
+    .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
+    .where(and(eq(Bet.user_id, userId), eq(Outcome.wager_id, wagerId)))
     .limit(1);
 
   if (existingBet) {
@@ -339,7 +341,6 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
       .insert(Bet)
       .values({
         user_id: userId,
-        wager_id: wagerId,
         outcome_id: input.outcomeId,
         amount: formatMoney(input.amount),
       })
@@ -357,11 +358,9 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
 
     await tx.insert(Transaction).values({
       wallet_id: currentUserWallet.id,
-      wager_id: wagerId,
       outcome_id: input.outcomeId,
       type: "bet",
       amount: formatMoney(-input.amount),
-      reference_id: betRow.id,
     });
 
     return betRow;
@@ -387,7 +386,7 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
       throw new HttpError(404, "Wager not found");
     }
 
-    if (wager.status !== "OPEN") {
+    if (wager.status === "CLOSED") {
       throw new HttpError(400, "Wager is already closed");
     }
 
@@ -425,7 +424,8 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
         amount: Bet.amount,
       })
       .from(Bet)
-      .where(and(eq(Bet.wager_id, wagerId), eq(Bet.outcome_id, input.outcomeId)));
+      .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
+      .where(and(eq(Outcome.wager_id, wagerId), eq(Bet.outcome_id, input.outcomeId)));
 
     await tx.update(Wager).set({ status: "CLOSED" }).where(eq(Wager.id, wagerId));
     await tx.update(Outcome).set({ is_winner: false }).where(eq(Outcome.wager_id, wagerId));
@@ -451,11 +451,9 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
 
         await tx.insert(Transaction).values({
           wallet_id: userWallet.id,
-          wager_id: wagerId,
           outcome_id: input.outcomeId,
           type: "payout",
           amount: formatMoney(payout),
-          reference_id: betRow.id,
         });
       }
     }

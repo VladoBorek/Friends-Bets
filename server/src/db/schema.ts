@@ -7,8 +7,7 @@ import {
   integer,
   decimal,
   boolean,
-  json,
-  uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -67,9 +66,7 @@ export const Wager = pgTable("wager", {
   is_public: boolean("is_public").default(false),
   created_at: timestamp("created_at").defaultNow(),
   // Extended UI fields
-  pool: varchar("pool"), 
-  group: varchar("group"), 
-  outcomeSplit: json("outcome_split"),
+  pool: varchar("pool"),
 });
 
 export const WagerVisibility = pgTable("wager_visibility", {
@@ -83,29 +80,27 @@ export const Outcome = pgTable("outcome", {
   id: serial("id").primaryKey(),
   wager_id: integer("wager_id").references(() => Wager.id, { onDelete: "cascade" }).notNull(),
   title: varchar("title").notNull(),
-  odds: decimal("odds"),
   is_winner: boolean("is_winner").default(false),
 });
 
-export const Bet = pgTable("bet", {
-  id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
-  wager_id: integer("wager_id").references(() => Wager.id).notNull(),
-  outcome_id: integer("outcome_id").references(() => Outcome.id, { onDelete: "cascade" }).notNull(),
-  amount: decimal("amount").notNull(),
-  created_at: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  userWagerUnique: uniqueIndex("bet_user_wager_unique").on(table.user_id, table.wager_id),
-}));
+export const Bet = pgTable(
+  "bet",
+  {
+    id: serial("id").primaryKey(),
+    user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+    outcome_id: integer("outcome_id").references(() => Outcome.id, { onDelete: "cascade" }).notNull(),
+    amount: decimal("amount").notNull(),
+    created_at: timestamp("created_at").defaultNow(),
+  },
+  (table) => [unique("bet_user_outcome_unique").on(table.user_id, table.outcome_id)],
+);
 
 export const Transaction = pgTable("transaction", {
   id: serial("id").primaryKey(),
   wallet_id: integer("wallet_id").references(() => Wallet.id, { onDelete: "cascade" }).notNull(),
-  wager_id: integer("wager_id").references(() => Wager.id),
-  outcome_id: integer("outcome_id").references(() => Outcome.id),
+  outcome_id: integer("outcome_id").references(() => Outcome.id, { onDelete: "set null" }),
   type: varchar("type").notNull(),
   amount: decimal("amount").notNull(),
-  reference_id: integer("reference_id"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
@@ -145,7 +140,6 @@ export const WalletRelations = relations(Wallet, ({ one, many }) => ({
 
 export const TransactionRelations = relations(Transaction, ({ one }) => ({
   wallet: one(Wallet, { fields: [Transaction.wallet_id], references: [Wallet.id] }),
-  wager: one(Wager, { fields: [Transaction.wager_id], references: [Wager.id] }),
   outcome: one(Outcome, { fields: [Transaction.outcome_id], references: [Outcome.id] }),
 }));
 
@@ -186,7 +180,6 @@ export const OutcomeRelations = relations(Outcome, ({ one, many }) => ({
 
 export const BetRelations = relations(Bet, ({ one }) => ({
   user: one(User, { fields: [Bet.user_id], references: [User.id] }),
-  wager: one(Wager, { fields: [Bet.wager_id], references: [Wager.id] }),
   outcome: one(Outcome, { fields: [Bet.outcome_id], references: [Outcome.id] }),
 }));
 

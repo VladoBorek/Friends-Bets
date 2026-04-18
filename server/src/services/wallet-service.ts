@@ -21,7 +21,7 @@ export async function getWalletOverview(userId: number): Promise<WalletOverview>
   const rows = await db
     .select({
       id: Transaction.id,
-      wagerId: Transaction.wager_id,
+      wagerId: Outcome.wager_id,
       type: Transaction.type,
       amount: Transaction.amount,
       wagerName: Wager.title,
@@ -29,8 +29,8 @@ export async function getWalletOverview(userId: number): Promise<WalletOverview>
       createdAt: Transaction.created_at,
     })
     .from(Transaction)
-    .innerJoin(Wager, eq(Transaction.wager_id, Wager.id))
     .innerJoin(Outcome, eq(Transaction.outcome_id, Outcome.id))
+    .innerJoin(Wager, eq(Outcome.wager_id, Wager.id))
     .where(
       and(
         eq(Transaction.wallet_id, wallet.id),
@@ -41,14 +41,10 @@ export async function getWalletOverview(userId: number): Promise<WalletOverview>
 
   return {
     balance: wallet.balance ?? "0",
-    history: rows.flatMap((row) => {
-      if (!row.wagerId) {
-        return [];
-      }
-
+    history: rows.map((row) => {
       const signedAmount = Number(row.amount ?? "0");
 
-      return [{
+      return {
         id: row.id,
         wagerId: row.wagerId,
         wagerName: row.wagerName,
@@ -56,7 +52,7 @@ export async function getWalletOverview(userId: number): Promise<WalletOverview>
         outcome: row.outcomeName,
         walletImpact: signedAmount >= 0 ? `+${signedAmount.toFixed(2)}` : signedAmount.toFixed(2),
         timestamp: (row.createdAt ?? new Date()).toISOString(),
-      }];
+      };
     }),
   };
 }

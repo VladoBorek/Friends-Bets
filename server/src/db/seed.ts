@@ -38,7 +38,6 @@ type SeedWager = {
 	pool: string;
 	status: "OPEN" | "PENDING" | "CLOSED";
 	outcomes: string[];
-	outcomeSplit: number[];
 	participants: SeedParticipant[];
 	description: string;
 };
@@ -52,7 +51,6 @@ const wagerTemplates: SeedWager[] = [
 		status: "OPEN",
 		description: "Office challenge wager from the dashboard watchlist.",
 		outcomes: ["Yes", "No", "Needs Extension"],
-		outcomeSplit: [55, 30, 15],
 		participants: [
 			{ name: "Lisa", amount: "30", outcome: "Yes" },
 			{ name: "Sarah", amount: "25", outcome: "No" },
@@ -68,7 +66,6 @@ const wagerTemplates: SeedWager[] = [
 		status: "OPEN",
 		description: "Head-to-head office run challenge.",
 		outcomes: ["Dave", "Pete", "Both DNF"],
-		outcomeSplit: [45, 45, 10],
 		participants: [
 			{ name: "Mike", amount: "50", outcome: "Dave" },
 			{ name: "Lisa", amount: "50", outcome: "Pete" },
@@ -84,7 +81,6 @@ const wagerTemplates: SeedWager[] = [
 		status: "OPEN",
 		description: "Team dinner prediction market.",
 		outcomes: ["1-3", "4-6", "7+"],
-		outcomeSplit: [20, 50, 30],
 		participants: [
 			{ name: "Greg", amount: "20", outcome: "4-6" },
 			{ name: "Tom", amount: "25", outcome: "7+" },
@@ -100,7 +96,6 @@ const wagerTemplates: SeedWager[] = [
 		status: "PENDING",
 		description: "Friends challenge with pending outcome.",
 		outcomes: ["Yes", "No"],
-		outcomeSplit: [60, 40],
 		participants: [
 			{ name: "You", amount: "40", outcome: "Yes" },
 			{ name: "Dave", amount: "50", outcome: "No" },
@@ -116,7 +111,6 @@ const wagerTemplates: SeedWager[] = [
 		status: "CLOSED",
 		description: "Resolved social commitment challenge.",
 		outcomes: ["Yes", "No"],
-		outcomeSplit: [30, 70],
 		participants: [
 			{ name: "You", amount: "20", outcome: "No" },
 			{ name: "Mike", amount: "30", outcome: "No" },
@@ -128,10 +122,6 @@ const wagerTemplates: SeedWager[] = [
 
 function normalizeUsername(name: string): string {
 	return name.toLowerCase().replace(/\s+/g, "-");
-}
-
-function randomOdds(): string {
-	return faker.number.float({ min: 1.2, max: 4.8, fractionDigits: 2 }).toFixed(2);
 }
 
 function randomInviteCode(): string {
@@ -261,15 +251,6 @@ async function seedGroups(users: Array<{ id: number; username: string }>) {
 	return groups;
 }
 
-function buildOutcomeSplit(outcomes: string[]): number[] {
-	const raw = outcomes.map(() => faker.number.int({ min: 10, max: 60 }));
-	const total = raw.reduce((sum, current) => sum + current, 0);
-	const percentages = raw.map((value) => Math.round((value / total) * 100));
-	const diff = 100 - percentages.reduce((sum, current) => sum + current, 0);
-	percentages[0] = percentages[0] + diff;
-	return percentages;
-}
-
 async function seedWagers(params: {
 	users: Array<{ id: number; username: string }>;
 	categories: Array<{ id: number; name: string }>;
@@ -277,17 +258,12 @@ async function seedWagers(params: {
 }) {
 	const userByName = new Map(params.users.map((u) => [u.username, u]));
 	const categoryByName = new Map(params.categories.map((c) => [c.name, c]));
-	const groupByName = new Map(params.groups.map((g) => [g.name, g]));
 
 	const createdWagers: Array<{ id: number; template: SeedWager }> = [];
 
 	for (const template of wagerTemplates) {
 		const createdBy = faker.helpers.arrayElement(params.users);
 		const category = categoryByName.get(template.category) ?? params.categories[0];
-		const group = groupByName.get(template.group) ?? params.groups[0];
-		const split = template.outcomeSplit.length === template.outcomes.length
-			? template.outcomeSplit
-			: buildOutcomeSplit(template.outcomes);
 
 		const [wager] = await db
 			.insert(Wager)
@@ -299,8 +275,6 @@ async function seedWagers(params: {
 				created_by_id: createdBy.id,
 				is_public: true,
 				pool: template.pool,
-				group: group.name,
-				outcomeSplit: split,
 			})
 			.returning();
 
@@ -312,7 +286,6 @@ async function seedWagers(params: {
 				template.outcomes.map((title, index) => ({
 					wager_id: wager.id,
 					title,
-					odds: randomOdds(),
 					is_winner: template.status === "CLOSED" ? index === 0 : false,
 				})),
 			)
@@ -328,7 +301,6 @@ async function seedWagers(params: {
 
 			await db.insert(Bet).values({
 				user_id: user.id,
-				wager_id: wager.id,
 				outcome_id: outcome.id,
 				amount: participant.amount,
 			});
@@ -401,7 +373,6 @@ async function seedTransactions(params: {
 		.select({
 			id: Bet.id,
 			userId: Bet.user_id,
-			wagerId: Bet.wager_id,
 			outcomeId: Bet.outcome_id,
 			amount: Bet.amount,
 		})
@@ -415,11 +386,9 @@ async function seedTransactions(params: {
 
 			return {
 				wallet_id: walletId,
-				wager_id: bet.wagerId,
 				outcome_id: bet.outcomeId,
 				type: "bet" as const,
 				amount: `-${bet.amount}`,
-				reference_id: bet.id,
 			};
 		})
 		.filter((row): row is NonNullable<typeof row> => row !== null);
@@ -433,11 +402,9 @@ async function seedTransactions(params: {
 			const amount = Number(bet.amount ?? "0");
 			return {
 				wallet_id: walletId,
-				wager_id: bet.wagerId,
 				outcome_id: bet.outcomeId,
 				type: "payout" as const,
 				amount: (amount * faker.number.float({ min: 1.3, max: 2.1, fractionDigits: 2 })).toFixed(2),
-				reference_id: bet.id,
 			};
 		})
 		.filter((row): row is NonNullable<typeof row> => row !== null);
