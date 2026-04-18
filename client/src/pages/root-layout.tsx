@@ -3,10 +3,12 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Button } from "../components/ui/button";
+import { fa } from "zod/locales";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
   { to: "/wagers", label: "All Wagers", exact: false },
+  { to: "/friends", label: "Friends", exact: false },
 ] as const;
 
 const placeholderNavItems = [{ label: "Friends & Groups" }, { label: "Wallet" }] as const;
