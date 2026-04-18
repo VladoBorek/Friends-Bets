@@ -13,7 +13,7 @@ import { Button } from "../../components/ui/button";
 import { UserPlus, Clock3 } from "lucide-react";
 import { AddFriendDialog } from "../../components/ui/friends/add-friend/add-friend-dialog";
 import { PendingRequestsDialog } from "../../components/ui/friends/pending-requests/pending-request-dialog";
-import { fetchAllFriendRequests } from "../../api/friends-discovery-api";
+import { fetchFriendRequestCount } from "../../api/friends-discovery-api";
 
 
 
@@ -36,11 +36,11 @@ export function FriendsPage() {
 
   const incomingRequestsQuery = useQuery({
     queryKey: ["friend-requests", "incoming"],
-    queryFn: () => fetchAllFriendRequests("incoming"),
+    queryFn: () => fetchFriendRequestCount("incoming"),
     staleTime: 15_000,}
   );
 
-  const incomingRequestCount = incomingRequestsQuery.data?.length ?? 0;
+  const incomingRequestCount = incomingRequestsQuery.data ?? 0;
   const hasIncomingRequests = incomingRequestCount > 0;
 
   useEffect(() => {
