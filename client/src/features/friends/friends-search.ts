@@ -1,4 +1,3 @@
-// client/src/features/friends/friends-search.ts
 import { z } from "zod";
 
 export const FRIENDS_PAGE_SIZE = 5;
