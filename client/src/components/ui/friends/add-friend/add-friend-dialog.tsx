@@ -1,20 +1,19 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDeferredValue, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { friendsKeys } from "../../../../api/friends-query-options";
 import {
-  fetchAllUsers,
-  fetchFriendRelationshipSnapshot,
+  fetchDiscoveredUsers,
   sendFriendRequest,
 } from "../../../../api/friends-discovery-api";
 import { useAuth } from "../../../../lib/auth-context";
 import { Dialog } from "../../dialog";
 import { Input } from "../../input";
 import { FriendsDialogShell } from "../dialog/friends-dialog-shell";
-import { FriendsPagination } from "..//friends-pagination";
+import { FriendsPagination } from "../friends-pagination";
 import { AddFriendList } from "./add-friend-list";
-import { DISCOVERY_PAGE_SIZE, filterUsers } from "./add-friend-dialog-utils";
+import { DISCOVERY_PAGE_SIZE } from "./add-friend-dialog-utils";
 
 type AddFriendDialogProps = {
   open: boolean;
@@ -27,45 +26,48 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
 
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [optimisticPendingIds, setOptimisticPendingIds] = useState<number[]>([]);
   const [submittingUserId, setSubmittingUserId] = useState<number | null>(null);
 
-  const deferredQuery = useDeferredValue(query);
+  const deferredQuery = useDeferredValue(query.trim());
 
-  const usersQuery = useQuery({
-    queryKey: ["users", "all"],
-    queryFn: fetchAllUsers,
-    enabled: open,
-    staleTime: 60_000,
-  });
 
-  const relationshipQuery = useQuery({
-    queryKey: ["friends", "relationship-snapshot", user?.id],
-    queryFn: () => fetchFriendRelationshipSnapshot(user!.id),
-    enabled: open && Boolean(user?.id),
-    staleTime: 15_000,
-  });
-
+const discoveryQuery = useQuery({
+  queryKey: ["friends", "discover", user?.id, deferredQuery, page],
+  queryFn: () =>
+    fetchDiscoveredUsers({
+      page,
+      limit: DISCOVERY_PAGE_SIZE,
+      query: deferredQuery,
+    }),
+  enabled: open && Boolean(user?.id),
+  staleTime: 0,
+  refetchOnMount: "always",
+  placeholderData: keepPreviousData,
+});
   const sendRequestMutation = useMutation({
     mutationFn: sendFriendRequest,
     onMutate: (candidateId) => {
       setSubmittingUserId(candidateId);
     },
-    onSuccess: (_, candidateId) => {
-      setOptimisticPendingIds((current) =>
-        current.includes(candidateId) ? current : [...current, candidateId],
-      );
-
+    onSuccess: async () => {
       toast.success("Friend request sent", {
         description: "The user will now see your request in pending.",
       });
 
-      void queryClient.invalidateQueries({
-        queryKey: ["friends", "relationship-snapshot", user?.id],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: friendsKeys.all,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["friends", "discover", user?.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["friend-requests", user?.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["friend-requests-count", user?.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: friendsKeys.all,
+        }),
+      ]);
     },
     onError: (error) => {
       toast.error(
@@ -79,50 +81,32 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
 
   useEffect(() => {
     setPage(1);
-  }, [deferredQuery]);
+    }, [query]);
+
 
   useEffect(() => {
     if (!open) {
       setQuery("");
       setPage(1);
-      setOptimisticPendingIds([]);
       setSubmittingUserId(null);
     }
   }, [open]);
 
-  const users = usersQuery.data ?? [];
-  const friendIds = relationshipQuery.data?.friendIds ?? [];
+  const discoveredUsers = discoveryQuery.data?.data ?? [];
+  const pagination = discoveryQuery.data?.pagination ?? null;
+    const totalPages = pagination
+    ? Math.max(1, Math.ceil(pagination.total / pagination.limit))
+    : page;
 
-  const pendingIds = useMemo(
-    () => [...new Set([...(relationshipQuery.data?.pendingIds ?? []), ...optimisticPendingIds])],
-    [relationshipQuery.data?.pendingIds, optimisticPendingIds],
-  );
-
-  const filteredUsers = useMemo(
-    () => filterUsers(users, deferredQuery, user?.id),
-    [users, deferredQuery, user?.id],
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / DISCOVERY_PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
+    useEffect(() => {
+    if (!pagination) {
+        return;
     }
-  }, [page, totalPages]);
 
-  const visibleUsers = useMemo(
-    () =>
-      filteredUsers.slice(
-        (currentPage - 1) * DISCOVERY_PAGE_SIZE,
-        currentPage * DISCOVERY_PAGE_SIZE,
-      ),
-    [filteredUsers, currentPage],
-  );
-
-  const combinedError = usersQuery.error ?? relationshipQuery.error;
-  const isLoading = usersQuery.isLoading || relationshipQuery.isLoading;
+    if (page > totalPages) {
+        setPage(totalPages);
+    }
+    }, [page, totalPages, pagination]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,26 +126,24 @@ export function AddFriendDialog({ open, onOpenChange }: AddFriendDialogProps) {
         </div>
 
         <div className="shrink-0 flex items-center justify-between text-sm text-slate-400">
-          <span>{filteredUsers.length} users</span>
+          <span>{pagination?.total ?? 0} users</span>
           <span>
-            Page {currentPage} / {totalPages}
+            Page {page} / {totalPages}
           </span>
         </div>
 
         <div className="max-h-[26rem] overflow-y-auto pr-1">
           <AddFriendList
-            visibleUsers={visibleUsers}
-            friendIds={friendIds}
-            pendingIds={pendingIds}
+            visibleUsers={discoveredUsers}
             submittingUserId={submittingUserId}
-            isLoading={isLoading}
-            error={combinedError}
+            isLoading={discoveryQuery.isLoading}
+            error={discoveryQuery.error}
             onSendRequest={(candidateId) => sendRequestMutation.mutate(candidateId)}
           />
         </div>
 
         <FriendsPagination
-          currentPage={currentPage}
+          currentPage={page}
           totalPages={totalPages}
           onPageChange={setPage}
         />

@@ -1,8 +1,7 @@
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import type { FriendRequestDirection } from "@pb138/shared/schemas/friends";
 import { db } from "../db/db";
 import { Friendship, Role, User } from "../db/schema";
-import { fr } from "zod/locales";
 
 export type FriendUserRow = {
   id: number;
@@ -181,6 +180,32 @@ function requestDirectionCondition(currentUserId: number, direction: FriendReque
     : eq(Friendship.requester_id, currentUserId);
 }
 
+function buildUserSearchCondition(query: string) {
+  const normalized = query.trim().toLowerCase();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  const pattern = `%${normalized}%`;
+
+  return or(
+    sql`lower(${User.username}) like ${pattern}`,
+    sql`lower(${User.email}) like ${pattern}`,
+  );
+}
+
+function buildDiscoverUsersWhere(currentUserId: number, query: string) {
+  const searchCondition = buildUserSearchCondition(query);
+
+  if (!searchCondition) {
+    return ne(User.id, currentUserId);
+  }
+
+  return and(ne(User.id, currentUserId), searchCondition);
+}
+
+
 export async function countPendingFriendRequestsForUser(
   currentUserId: number,
   direction: FriendRequestDirection,
@@ -206,4 +231,54 @@ export async function listPendingFriendRequestsForUser(
     .orderBy(desc(Friendship.created_at))
     .limit(limit)
     .offset(offset);
+}
+
+export async function countDiscoverableUsers(currentUserId: number, query: string): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(User)
+    .where(buildDiscoverUsersWhere(currentUserId, query));
+
+  return Number(row.count);
+}
+
+export async function listDiscoverableUsers(
+  currentUserId: number,
+  query: string,
+  limit: number,
+  offset: number,
+): Promise<FriendUserRow[]> {
+  return db
+    .select(userSelect)
+    .from(User)
+    .innerJoin(Role, eq(User.role_id, Role.id))
+    .where(buildDiscoverUsersWhere(currentUserId, query))
+    .orderBy(asc(User.username))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function listFriendshipsBetweenUserAndCandidates(
+  currentUserId: number,
+  candidateIds: number[],
+): Promise<FriendshipRow[]> {
+  if (candidateIds.length === 0) {
+    return [];
+  }
+
+  return db
+    .select(friendshipSelect)
+    .from(Friendship)
+    .where(
+      or(
+        and(
+          eq(Friendship.requester_id, currentUserId),
+          inArray(Friendship.addressee_id, candidateIds),
+        ),
+        and(
+          eq(Friendship.addressee_id, currentUserId),
+          inArray(Friendship.requester_id, candidateIds),
+        ),
+      ),
+    );
 }

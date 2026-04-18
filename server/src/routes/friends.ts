@@ -5,12 +5,17 @@ import {
   friendRequestResponseSchema,
   friendRequestsListQuerySchema,
   friendsListQuerySchema,
+  friendDiscoveryQuerySchema,
+
   paginatedFriendRequestsResponseSchema,
   paginatedFriendsResponseSchema,
+  paginatedDiscoveredUsersResponseSchema,
+  
   sendFriendRequestSchema,
+
 } from "@pb138/shared/schemas/friends";
 import { authPlugin, getAuthenticatedUser } from "../plugins/auth";
-import { listFriends, listFriendRequests } from "../services/friends/friend-query-service";
+import { listFriends, listFriendRequests, discoverUsers } from "../services/friends/friend-query-service";
 import {
   sendFriendRequest,
   acceptFriendRequest,
@@ -35,6 +40,15 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     return paginatedFriendsResponseSchema.parse(result);
   })
+
+  .get("/discover", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const parsedQuery = friendDiscoveryQuerySchema.parse(context.query);
+    const result = await discoverUsers(actor.id, parsedQuery);
+
+    return paginatedDiscoveredUsersResponseSchema.parse(result);
+  })
+
   .get("/requests", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedQuery = friendRequestsListQuerySchema.parse(context.query);

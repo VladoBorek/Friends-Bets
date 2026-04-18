@@ -6,7 +6,7 @@ type PendingTab = "incoming" | "outgoing";
 
 type PendingRequestListProps = {
   type: PendingTab;
-  requests: FriendRequestSummary[];
+  requests: FriendRequestSummary[] | undefined | null;
   isLoading: boolean;
   error: unknown;
   pendingActionId: number | null;
@@ -25,11 +25,13 @@ export function PendingRequestList({
   onAccept,
   onReject,
 }: PendingRequestListProps) {
+  const safeRequests = Array.isArray(requests) ? requests : [];
+
   return (
     <FriendsAsyncState
       isLoading={isLoading}
       error={error}
-      isEmpty={requests.length === 0}
+      isEmpty={safeRequests.length === 0}
       emptyMessage={
         type === "incoming"
           ? "No incoming friend requests."
@@ -39,7 +41,7 @@ export function PendingRequestList({
       errorMessage="Unable to load pending requests."
     >
       <div className="flex max-h-[24rem] flex-col gap-3 overflow-y-auto pr-1">
-        {requests.map((request) => (
+        {safeRequests.map((request) => (
           <PendingRequestRow
             key={request.id}
             request={request}

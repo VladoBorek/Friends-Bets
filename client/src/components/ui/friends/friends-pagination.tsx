@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -30,18 +31,35 @@ function buildPageItems(currentPage: number, totalPages: number) {
   return [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages] as const;
 }
 
-export function FriendsPagination({ currentPage, totalPages, onPageChange }: FriendsPaginationProps) {
+export function FriendsPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: FriendsPaginationProps) {
   if (totalPages <= 1) {
     return null;
   }
 
   const items = buildPageItems(currentPage, totalPages);
 
+  const handlePageChange = (event: MouseEvent, page: number) => {
+    event.preventDefault();
+
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return;
+    }
+
+    onPageChange(page);
+  };
+
   return (
     <Pagination>
       <PaginationContent>
         <PaginationItem>
-          <PaginationPrevious disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} />
+          <PaginationPrevious
+            disabled={currentPage === 1}
+            onClick={(event) => handlePageChange(event, currentPage - 1)}
+          />
         </PaginationItem>
 
         {items.map((item, index) => (
@@ -49,7 +67,10 @@ export function FriendsPagination({ currentPage, totalPages, onPageChange }: Fri
             {item === "ellipsis" ? (
               <PaginationEllipsis />
             ) : (
-              <PaginationLink isActive={item === currentPage} onClick={() => onPageChange(item)}>
+              <PaginationLink
+                isActive={item === currentPage}
+                onClick={(event) => handlePageChange(event, item)}
+              >
                 {item}
               </PaginationLink>
             )}
@@ -57,7 +78,10 @@ export function FriendsPagination({ currentPage, totalPages, onPageChange }: Fri
         ))}
 
         <PaginationItem>
-          <PaginationNext disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)} />
+          <PaginationNext
+            disabled={currentPage === totalPages}
+            onClick={(event) => handlePageChange(event, currentPage + 1)}
+          />
         </PaginationItem>
       </PaginationContent>
     </Pagination>
