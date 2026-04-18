@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/card";
@@ -7,50 +7,60 @@ import { FriendsPageErrorState } from "../../components/ui/friends/friends-page-
 import { FriendsPageSkeleton } from "../../components/ui/friends/friends-page-skeleton";
 import { friendsQueries } from "../../api/friends-query-options";
 import { Route } from "../../routes/friends";
-//import { FriendsListSection } from "client/src/components/ui/friends/friend-list-section";
 import { FriendsListSection } from "../../components/ui/friends/friend-list-section"
+import { useMediaQuery } from "../../features/friends/use-media-query";
 
 
 export function FriendsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   const friendsQuery = useQuery(friendsQueries.list(search.page));
 
   const friends = friendsQuery.data?.data ?? [];
   const pagination = friendsQuery.data?.pagination ?? null;
-  const selectedFriend = friends.find((friend) => friend.id === search.friendId) ?? null;
+  //const selectedFriend = friends.find((friend) => friend.id === search.friendId) ?? null;
+  
+  const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
+    const selectedFriend =
+    friends.find((friend) => friend.id === selectedFriendId) ?? null;
 
   useEffect(() => {
-    if (!friends.length) return;
-    if (selectedFriend) return;
+    if (!friends.length) {
+      setSelectedFriendId(null);
+      return;
+    }
 
-    void navigate({
-      search: (prev) => ({
-        ...prev,
-        friendId: friends[0].id,
-      }),
-      replace: true,
-    });
-  }, [friends, navigate, selectedFriend]);
+    const selectedStillExists = friends.some((friend) => friend.id === selectedFriendId);
+
+    if (selectedStillExists) {
+      return;
+    }
+
+    if (isDesktop) {
+      setSelectedFriendId(friends[0].id);
+      return;
+    }
+
+    setSelectedFriendId(null);
+  }, [friends, isDesktop, selectedFriendId]);
 
   const handleFriendSelect = (friendId: number) => {
-    void navigate({
-      search: (prev) => ({
-        ...prev,
-        friendId,
-      }),
-      replace: true,
+    setSelectedFriendId((currentId) => {
+      if (isDesktop) {
+        return friendId;
+      }
+
+      return currentId === friendId ? null : friendId;
     });
   };
 
+
   const handlePageChange = (page: number) => {
-    void navigate({
-      search: (prev) => ({
-        ...prev,
-        page,
-        friendId: undefined,
-      }),
+   void navigate({
+        to: "/friends",
+        search: { page },
     });
   };
 
