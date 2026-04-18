@@ -10,8 +10,9 @@ import { Route } from "../../routes/friends";
 import { FriendsListSection } from "../../components/ui/friends/friend-list-section"
 import { useMediaQuery } from "../../features/friends/use-media-query";
 import { Button } from "../../components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Clock3 } from "lucide-react";
 import { AddFriendDialog } from "../../components/ui/friends/add-friend-dialog";
+import { PendingRequestsDialog } from "../../components/ui/friends/pending-request-dialog";
 
 
 
@@ -19,15 +20,15 @@ export function FriendsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  
+  const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
   const [isAddFriendDialogOpen, setIsAddFriendDialogOpen] = useState(false);
+  const [isPendingDialogOpen, setIsPendingDialogOpen] = useState(false);
 
   const friendsQuery = useQuery(friendsQueries.list(search.page));
 
   const friends = friendsQuery.data?.data ?? [];
   const pagination = friendsQuery.data?.pagination ?? null;
-  //const selectedFriend = friends.find((friend) => friend.id === search.friendId) ?? null;
-  
-  const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
   const selectedFriend = friends.find((friend) => friend.id === selectedFriendId) ?? null;
 
   useEffect(() => {
@@ -100,13 +101,24 @@ export function FriendsPage() {
             <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
           </div>
 
-          <Button
-            onClick={() => setIsAddFriendDialogOpen(true)}
-            className="gap-2 self-start sm:self-auto"
-          >
-            <UserPlus className="h-4 w-4" />
-            Add Friend
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsPendingDialogOpen(true)}
+              className="gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800"
+            >
+              <Clock3 className="h-4 w-4" />
+              Pending
+            </Button>
+
+            <Button
+              onClick={() => setIsAddFriendDialogOpen(true)}
+              className="gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Add Friend
+            </Button>
+          </div>
         </div>
 
       <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
@@ -130,6 +142,12 @@ export function FriendsPage() {
         open={isAddFriendDialogOpen}
         onOpenChange={setIsAddFriendDialogOpen}
       />
+
+      <PendingRequestsDialog
+        open={isPendingDialogOpen}
+        onOpenChange={setIsPendingDialogOpen}
+      />
+
     </div>
     
   );
