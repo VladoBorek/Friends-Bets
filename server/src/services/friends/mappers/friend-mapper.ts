@@ -46,3 +46,45 @@ export function mapFriendRequestSummary(
     addressee,
   };
 }
+
+
+export function mapRelationshipState(
+  currentUserId: number,
+  friendship:
+    | {
+        requesterId: number;
+        addresseeId: number;
+        status: string;
+        id: number;
+      }
+    | undefined,
+) {
+  if (!friendship) {
+    return {
+      relationshipState: "AVAILABLE" as const,
+      friendshipId: null,
+    };
+  }
+
+  if (friendship.status === "ACCEPTED") {
+    return {
+      relationshipState: "FRIENDS" as const,
+      friendshipId: friendship.id,
+    };
+  }
+
+  if (friendship.status === "PENDING") {
+    return {
+      relationshipState:
+        friendship.requesterId === currentUserId
+          ? ("OUTGOING_PENDING" as const)
+          : ("INCOMING_PENDING" as const),
+      friendshipId: friendship.id,
+    };
+  }
+
+  return {
+    relationshipState: "AVAILABLE" as const,
+    friendshipId: null,
+  };
+}

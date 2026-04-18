@@ -2,6 +2,7 @@ import {
   friendRequestResponseSchema,
   paginatedFriendRequestsResponseSchema,
   paginatedFriendsResponseSchema,
+  paginatedDiscoveredUsersResponseSchema,
   type FriendRequestDirection,
 } from "@pb138/shared/schemas/friends";
 import { listUsersResponseSchema } from "@pb138/shared/schemas/user";
@@ -100,28 +101,6 @@ export async function fetchAllFriendRequests(direction: FriendRequestDirection) 
   return requests;
 }
 
-export async function fetchFriendRelationshipSnapshot(currentUserId: number) {
-  const [friends, incomingRequests, outgoingRequests] = await Promise.all([
-    fetchAllFriends(),
-    fetchAllFriendRequests("incoming"),
-    fetchAllFriendRequests("outgoing"),
-  ]);
-
-  const friendIds = friends.map((friend) => friend.id);
-  const pendingIds = [
-    ...incomingRequests.map((request) =>
-      request.requester.id === currentUserId ? request.addressee.id : request.requester.id,
-    ),
-    ...outgoingRequests.map((request) =>
-      request.requester.id === currentUserId ? request.addressee.id : request.requester.id,
-    ),
-  ];
-
-  return {
-    friendIds: [...new Set(friendIds)],
-    pendingIds: [...new Set(pendingIds)],
-  };
-}
 
 export async function sendFriendRequest(addresseeId: number) {
   const response = await fetch("/api/friends/requests", {
@@ -171,4 +150,24 @@ export async function fetchFriendRequestCount(direction: FriendRequestDirection)
 
   const json = await readJsonOrThrow(response, "Unable to load friend request count");
   return paginatedFriendRequestsResponseSchema.parse(json).pagination.total;
+}
+
+export async function fetchDiscoveredUsers(input: {
+  page: number;
+  limit: number;
+  query: string;
+}) {
+  const params = new URLSearchParams({
+    limit: String(input.limit),
+    offset: String((input.page - 1) * input.limit),
+    q: input.query,
+  });
+
+  const response = await fetch(`/api/friends/discover?${params.toString()}`, {
+    method: "GET",
+    credentials: "same-origin",
+  });
+
+  const json = await readJsonOrThrow(response, "Unable to load discoverable users");
+  return paginatedDiscoveredUsersResponseSchema.parse(json);
 }

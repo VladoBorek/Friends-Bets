@@ -1,4 +1,8 @@
-import type { UserSummary } from "@pb138/shared/schemas/user";
+import type {
+  DiscoveredUser,
+  FriendDiscoveryState,
+} from "@pb138/shared/schemas/friends";
+
 
 export const DISCOVERY_PAGE_SIZE = 8;
 
@@ -20,34 +24,32 @@ export function getRelationshipState(
   return "add";
 }
 
-export function buildButtonLabel(state: RelationshipState, isSending: boolean) {
+export function buildButtonLabel(state: FriendDiscoveryState, isSending: boolean) {
   if (isSending) {
     return "Sending...";
   }
 
-  if (state === "friends") {
+  if (state === "FRIENDS") {
     return "Friends";
   }
 
-  if (state === "request-sent") {
+  if (state === "OUTGOING_PENDING" || state === "INCOMING_PENDING") {
     return "Request sent";
   }
 
   return "Add";
 }
 
-export function filterUsers(users: UserSummary[], query: string, currentUserId?: number) {
+
+export function filterUsers(users: DiscoveredUser[], query: string) {
   const normalizedQuery = query.trim().toLowerCase();
 
-  return users
-    .filter((candidate) => candidate.id !== currentUserId)
-    .filter((candidate) => {
-      if (!normalizedQuery) {
-        return true;
-      }
+  if (!normalizedQuery) {
+    return users;
+  }
 
-      const haystack = `${candidate.username} ${candidate.email}`.toLowerCase();
-      return haystack.includes(normalizedQuery);
-    })
-    .sort((left, right) => left.username.localeCompare(right.username));
+  return users.filter((candidate) => {
+    const haystack = `${candidate.username} ${candidate.email}`.toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
 }

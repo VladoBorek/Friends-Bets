@@ -8,6 +8,7 @@ import {
   rejectFriendRequest,
 } from "../../../../api/friends-discovery-api";
 import { friendsKeys } from "../../../../api/friends-query-options";
+import { useAuth } from "../../../../lib/auth-context";
 import { cn } from "../../../../lib/utils";
 import { Dialog } from "../../dialog";
 import { FriendsDialogShell } from "../dialog/friends-dialog-shell";
@@ -20,32 +21,38 @@ type PendingRequestsDialogProps = {
 
 type PendingTab = "incoming" | "outgoing";
 
-const requestKeys = {
-  all: ["friend-requests"] as const,
-  list: (direction: PendingTab) => ["friend-requests", direction] as const,
-};
-
 export function PendingRequestsDialog({
   open,
   onOpenChange,
 }: PendingRequestsDialogProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
   const [activeTab, setActiveTab] = useState<PendingTab>("incoming");
   const [pendingActionId, setPendingActionId] = useState<number | null>(null);
   const [pendingActionType, setPendingActionType] = useState<"accept" | "reject" | null>(null);
 
+  const requestKeys = {
+    all: ["friend-requests", user?.id] as const,
+    list: (direction: PendingTab) => ["friend-requests", user?.id, direction] as const,
+  };
+
   const incomingQuery = useQuery({
     queryKey: requestKeys.list("incoming"),
     queryFn: () => fetchAllFriendRequests("incoming"),
-    enabled: open,
-    staleTime: 15_000,
+    enabled: open && Boolean(user?.id),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const outgoingQuery = useQuery({
     queryKey: requestKeys.list("outgoing"),
     queryFn: () => fetchAllFriendRequests("outgoing"),
-    enabled: open,
-    staleTime: 15_000,
+    enabled: open && Boolean(user?.id),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const acceptMutation = useMutation({
@@ -54,11 +61,15 @@ export function PendingRequestsDialog({
       setPendingActionId(requestId);
       setPendingActionType("accept");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Friend request accepted");
-      void queryClient.invalidateQueries({ queryKey: requestKeys.all });
-      void queryClient.invalidateQueries({ queryKey: friendsKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ["friends", "relationship-snapshot"] });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: requestKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["friend-requests-count", user?.id] }),
+        queryClient.invalidateQueries({ queryKey: friendsKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["friends", "discover", user?.id] }),
+      ]);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Unable to accept friend request");
@@ -75,11 +86,15 @@ export function PendingRequestsDialog({
       setPendingActionId(requestId);
       setPendingActionType("reject");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Friend request rejected");
-      void queryClient.invalidateQueries({ queryKey: requestKeys.all });
-      void queryClient.invalidateQueries({ queryKey: friendsKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ["friends", "relationship-snapshot"] });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: requestKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["friend-requests-count", user?.id] }),
+        queryClient.invalidateQueries({ queryKey: friendsKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["friends", "discover", user?.id] }),
+      ]);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Unable to reject friend request");
@@ -146,7 +161,7 @@ export function PendingRequestsDialog({
         <PendingRequestList
           type={activeTab}
           requests={requests}
-          isLoading={incomingQuery.isLoading || outgoingQuery.isLoading}
+          isLoading={activeQuery.isLoading || activeQuery.isFetching}
           error={activeQuery.error}
           pendingActionId={pendingActionId}
           pendingActionType={pendingActionType}

@@ -1,12 +1,15 @@
-import type { FriendRequestsListQuery, FriendsListQuery } from "@pb138/shared/schemas/friends";
+import type { FriendRequestsListQuery, FriendsListQuery, FriendDiscoveryQuery} from "@pb138/shared/schemas/friends";
 import {
   countAcceptedFriendsForUser,
   countPendingFriendRequestsForUser,
+  countDiscoverableUsers,
   listAcceptedFriendshipsForUser,
   listPendingFriendRequestsForUser,
   listUsersByIds,
+  listDiscoverableUsers,
+  listFriendshipsBetweenUserAndCandidates
 } from "../../repositories/friend-repository";
-import { buildUserSummaryMap, mapFriendRequestSummary } from "./mappers/friend-mapper"
+import { buildUserSummaryMap, mapFriendRequestSummary, mapRelationshipState, mapUserSummary } from "./mappers/friend-mapper"
 
 export async function listFriends(currentUserId: number, query: FriendsListQuery) {
   const total = await countAcceptedFriendsForUser(currentUserId);
@@ -48,6 +51,48 @@ export async function listFriendRequests(currentUserId: number, query: FriendReq
   const usersById = buildUserSummaryMap(users);
 
   const data = rows.map((row) => mapFriendRequestSummary(row, usersById));
+
+  return {
+    data,
+    pagination: {
+      total,
+      limit: query.limit,
+      offset: query.offset,
+      hasMore: query.offset + data.length < total,
+    },
+  };
+}
+
+export async function discoverUsers(currentUserId: number, query: FriendDiscoveryQuery) {
+  const total = await countDiscoverableUsers(currentUserId, query.q);
+  const users = await listDiscoverableUsers(currentUserId, query.q, query.limit, query.offset);
+
+  const candidateIds = users.map((user) => user.id);
+  const friendships = await listFriendshipsBetweenUserAndCandidates(currentUserId, candidateIds);
+
+  const friendshipsByUserId = new Map<number, (typeof friendships)[number]>();
+
+  for (const friendship of friendships) {
+    const otherUserId =
+      friendship.requesterId === currentUserId
+        ? friendship.addresseeId
+        : friendship.requesterId;
+
+    friendshipsByUserId.set(otherUserId, friendship);
+  }
+
+  const data = users.map((user) => {
+    const relationship = mapRelationshipState(
+        currentUserId,
+        friendshipsByUserId.get(user.id),
+    );
+
+    return {
+        ...mapUserSummary(user),
+        relationshipState: relationship.relationshipState,
+        friendshipId: relationship.friendshipId,
+    };
+    });
 
   return {
     data,

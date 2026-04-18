@@ -1,11 +1,9 @@
-import type { UserSummary } from "@pb138/shared/schemas/user";
+import type { DiscoveredUser } from "@pb138/shared/schemas/friends";
 import { FriendsAsyncState } from "../friends-async-state";
 import { AddFriendRow } from "./add-friend-row";
 
 type AddFriendListProps = {
-  visibleUsers: UserSummary[];
-  friendIds: number[];
-  pendingIds: number[];
+  visibleUsers: DiscoveredUser[];
   submittingUserId: number | null;
   isLoading: boolean;
   error: unknown;
@@ -14,8 +12,6 @@ type AddFriendListProps = {
 
 export function AddFriendList({
   visibleUsers,
-  friendIds,
-  pendingIds,
   submittingUserId,
   isLoading,
   error,
@@ -35,8 +31,6 @@ export function AddFriendList({
           <AddFriendRow
             key={candidate.id}
             candidate={candidate}
-            friendIds={friendIds}
-            pendingIds={pendingIds}
             isSending={submittingUserId === candidate.id}
             onSendRequest={onSendRequest}
           />
