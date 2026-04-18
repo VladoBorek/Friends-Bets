@@ -9,12 +9,17 @@ import { friendsQueries } from "../../api/friends-query-options";
 import { Route } from "../../routes/friends";
 import { FriendsListSection } from "../../components/ui/friends/friend-list-section"
 import { useMediaQuery } from "../../features/friends/use-media-query";
+import { Button } from "../../components/ui/button";
+import { UserPlus } from "lucide-react";
+import { AddFriendDialog } from "../../components/ui/friends/add-friend-dialog";
+
 
 
 export function FriendsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const [isAddFriendDialogOpen, setIsAddFriendDialogOpen] = useState(false);
 
   const friendsQuery = useQuery(friendsQueries.list(search.page));
 
@@ -23,8 +28,7 @@ export function FriendsPage() {
   //const selectedFriend = friends.find((friend) => friend.id === search.friendId) ?? null;
   
   const [selectedFriendId, setSelectedFriendId] = useState<number | null>(null);
-    const selectedFriend =
-    friends.find((friend) => friend.id === selectedFriendId) ?? null;
+  const selectedFriend = friends.find((friend) => friend.id === selectedFriendId) ?? null;
 
   useEffect(() => {
     if (!friends.length) {
@@ -91,9 +95,19 @@ export function FriendsPage() {
   return (
     <div className="flex flex-col gap-6">
       
-      <div>
-          <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
-      </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
+          </div>
+
+          <Button
+            onClick={() => setIsAddFriendDialogOpen(true)}
+            className="gap-2 self-start sm:self-auto"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add Friend
+          </Button>
+        </div>
 
       <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <FriendsListSection
@@ -111,6 +125,12 @@ export function FriendsPage() {
           <FriendDetailPanel friend={selectedFriend} />
         </section>
       </div>
+
+      <AddFriendDialog
+        open={isAddFriendDialogOpen}
+        onOpenChange={setIsAddFriendDialogOpen}
+      />
     </div>
+    
   );
 }
