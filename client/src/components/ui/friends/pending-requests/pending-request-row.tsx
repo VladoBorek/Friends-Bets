@@ -1,5 +1,6 @@
 import type { FriendRequestSummary } from "@pb138/shared/schemas/friends";
-import { Button } from "../button";
+import { Button } from "../../button";
+import { FriendPersonCell } from "../friends-person-cell";
 
 type PendingTab = "incoming" | "outgoing";
 
@@ -33,16 +34,7 @@ export function PendingRequestRow({
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="grid size-12 shrink-0 place-items-center rounded-full bg-indigo-500/15 text-sm font-semibold text-indigo-200">
-          {getInitials(person.username)}
-        </div>
-
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-100">{person.username}</p>
-          <p className="truncate text-xs text-slate-400">{person.email}</p>
-        </div>
-      </div>
+      <FriendPersonCell username={person.username} email={person.email} />
 
       {type === "incoming" ? (
         <div className="flex items-center gap-2">

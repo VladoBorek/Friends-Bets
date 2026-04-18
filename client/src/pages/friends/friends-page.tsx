@@ -11,8 +11,8 @@ import { FriendsListSection } from "../../components/ui/friends/friend-list-sect
 import { useMediaQuery } from "../../features/friends/use-media-query";
 import { Button } from "../../components/ui/button";
 import { UserPlus, Clock3 } from "lucide-react";
-import { AddFriendDialog } from "../../components/ui/friends/add-friend-dialog";
-import { PendingRequestsDialog } from "../../components/ui/friends/pending-request-dialog";
+import { AddFriendDialog } from "../../components/ui/friends/add-friend/add-friend-dialog";
+import { PendingRequestsDialog } from "../../components/ui/friends/pending-requests/pending-request-dialog";
 
 
 
