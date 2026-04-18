@@ -28,7 +28,7 @@ export function FriendDetailPanel({ friend }: FriendDetailPanelProps) {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
           <p className="text-sm text-slate-400">Head-to-head</p>
           <p className="mt-3 text-2xl font-semibold text-slate-100">--</p>
@@ -39,7 +39,7 @@ export function FriendDetailPanel({ friend }: FriendDetailPanelProps) {
           <p className="mt-3 text-2xl font-semibold text-slate-100">--</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 sm:col-span-2 xl:col-span-1">
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 sm:col-span-2 lg:col-span-1">
           <p className="text-sm text-slate-400">Recent wagers</p>
           <p className="mt-3 text-2xl font-semibold text-slate-100">--</p>
         </div>

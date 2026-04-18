@@ -2,13 +2,14 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/card";
-import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
 import { FriendDetailPanel } from "../../components/ui/friends/friend-detail-panel";
 import { FriendsPageErrorState } from "../../components/ui/friends/friends-page-error-state";
 import { FriendsPageSkeleton } from "../../components/ui/friends/friends-page-skeleton";
-import { PersonRowCard } from "../../components/ui/friends/person-row-card";
 import { friendsQueries } from "../../api/friends-query-options";
 import { Route } from "../../routes/friends";
+//import { FriendsListSection } from "client/src/components/ui/friends/friend-list-section";
+import { FriendsListSection } from "../../components/ui/friends/friend-list-section"
+
 
 export function FriendsPage() {
   const search = Route.useSearch();
@@ -32,6 +33,27 @@ export function FriendsPage() {
       replace: true,
     });
   }, [friends, navigate, selectedFriend]);
+
+  const handleFriendSelect = (friendId: number) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        friendId,
+      }),
+      replace: true,
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        page,
+        friendId: undefined,
+      }),
+    });
+  };
+
 
   if (friendsQuery.isLoading) {
     return <FriendsPageSkeleton />;
@@ -58,66 +80,24 @@ export function FriendsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      
       <div>
-        <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
+          <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>{pagination.total} friends</span>
-            <span>
-              Page {search.page} / {totalPages}
-            </span>
-          </div>
+      <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <FriendsListSection
+          friends={friends}
+          totalFriends={pagination.total}
+          currentPage={search.page}
+          totalPages={totalPages}
+          selectedFriend={selectedFriend}
+          isRefreshing={friendsQuery.isFetching}
+          onFriendSelect={handleFriendSelect}
+          onPageChange={handlePageChange}
+          />
 
-          {friends.length === 0 ? (
-            <Card className="rounded-2xl border-slate-800 p-4 text-sm text-slate-400">
-              No friends found.
-            </Card>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {friends.map((friend) => (
-                <PersonRowCard
-                  key={friend.id}
-                  friend={friend}
-                  isActive={friend.id === selectedFriend?.id}
-                  onClick={() =>
-                    void navigate({
-                      search: (prev) => ({
-                        ...prev,
-                        friendId: friend.id,
-                      }),
-                      replace: true,
-                    })
-                  }
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2 pt-2">
-            <div className="text-center text-xs text-slate-500">
-              {friendsQuery.isFetching ? "Refreshing..." : " "}
-            </div>
-
-            <FriendsPagination
-              currentPage={search.page}
-              totalPages={totalPages}
-              onPageChange={(page) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    page,
-                    friendId: undefined,
-                  }),
-                })
-              }
-            />
-          </div>
-        </section>
-
-        <section>
+        <section className="hidden lg:block">
           <FriendDetailPanel friend={selectedFriend} />
         </section>
       </div>
