@@ -29,13 +29,6 @@
       "when": 1775677547077,
       "tag": "0003_actual_user_verification",
       "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1776377135034,
-      "tag": "0004_brave_giant_girl",
-      "breakpoints": true
     }
   ]
 }
