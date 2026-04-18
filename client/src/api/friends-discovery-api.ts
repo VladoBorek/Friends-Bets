@@ -136,3 +136,23 @@ export async function sendFriendRequest(addresseeId: number) {
   const json = await readJsonOrThrow(response, "Unable to send friend request");
   return friendRequestResponseSchema.parse(json).data;
 }
+
+export async function acceptFriendRequest(requestId: number) {
+  const response = await fetch(`/api/friends/requests/${requestId}/accept`, {
+    method: "POST",
+    credentials: "same-origin",
+  });
+
+  const json = await readJsonOrThrow(response, "Unable to accept friend request");
+  return friendRequestResponseSchema.parse(json).data;
+}
+
+export async function rejectFriendRequest(requestId: number) {
+  const response = await fetch(`/api/friends/requests/${requestId}/reject`, {
+    method: "POST",
+    credentials: "same-origin",
+  });
+
+  const json = await readJsonOrThrow(response, "Unable to reject friend request");
+  return friendRequestResponseSchema.parse(json).data;
+}
