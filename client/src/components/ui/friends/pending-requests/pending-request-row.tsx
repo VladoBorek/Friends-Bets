@@ -13,15 +13,6 @@ type PendingRequestRowProps = {
   onReject: () => void;
 };
 
-function getInitials(username: string) {
-  return username
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 export function PendingRequestRow({
   request,
   type,
