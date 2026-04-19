@@ -27,6 +27,8 @@ This command:
 4. Generates client API from OpenAPI
 5. Runs lint
 
+If Docker is unavailable or any Docker command fails, setup exits immediately with a non-zero status.
+
 ### Start API
 
 ```bash
@@ -86,6 +88,11 @@ Expected response:
 - Client and server are separate packages with separate dependency trees.
 - Root package is intentionally thin and only orchestrates workflows.
 - Shared schemas are in `shared/src/schemas` and imported by both sides.
+- Authenticated users now have a Wallet tab that shows current balance plus wager-related transaction history.
+- Bets are limited to one per user per wager, and suspended users cannot place bets or create wagers.
+- Create Wager and wager resolution both use the authenticated user on the backend; the UI no longer asks for manual user IDs.
+- Wager cards and detail pages show live pool totals and odds derived from current bet totals.
+- The wager detail page includes a temporary resolve shortcut so any authenticated user can close an open wager and trigger payouts.
 
 ## Seeded Test Users
 

@@ -1,110 +1,142 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import type { SubmitEvent } from "react";
-import { useGetWagerById, usePlaceBet } from "../api/gen/hooks";
+import { useAuth } from "../lib/auth-context";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import type { WagerDetail } from "../../../shared/src/schemas/wager";
+import { WagerInlineBetMenu } from "../components/wager-inline-bet-menu";
+import { WagerOutcomeItem } from "../components/wager-outcome-item";
 
-type WagerDetailPageProps = {
+interface WagerDetailPageProps {
   wagerId: number;
-};
+}
+function formatMoney(value: string): string {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue.toFixed(2) : value;
+}
 
 function toErrorMessage(error: unknown): string {
-  if (error && typeof error === "object") {
-    const value = error as {
-      response?: { data?: unknown };
-      message?: unknown;
-    };
-
-    if (typeof value.response?.data === "string" && value.response.data.trim()) {
-      return value.response.data;
-    }
-
-    if (value.response?.data && typeof value.response.data === "object") {
-      const data = value.response.data as { message?: unknown };
-      if (typeof data.message === "string" && data.message.trim()) {
-        return data.message;
-      }
-    }
-
-    if (typeof value.message === "string" && value.message.trim()) {
-      return value.message;
-    }
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
   }
 
-  return "Failed to place bet";
+  return "Request failed";
 }
 
 export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
-  const wager = useGetWagerById(wagerId);
-  const placeBet = usePlaceBet();
-
-  const [selectedOutcomeId, setSelectedOutcomeId] = useState<number | null>(null);
-  const [betAmount, setBetAmount] = useState("");
-  const [userId, setUserId] = useState("1");
+  const { user } = useAuth();
+  const [detail, setDetail] = useState<WagerDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [openBetOutcomeId, setOpenBetOutcomeId] = useState<number | null>(null);
+  const [resolutionOutcomeId, setResolutionOutcomeId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
 
-  const detail = wager.data?.data ?? null;
+  const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
+  const isUnverified = user?.isVerified === false;
 
   useEffect(() => {
-    if (detail && selectedOutcomeId === null) {
-      setSelectedOutcomeId(detail.outcomes[0]?.id ?? null);
-    }
-  }, [detail, selectedOutcomeId]);
+    const controller = new AbortController();
 
-  if (wager.isLoading) {
+    async function loadDetail() {
+      try {
+        const response = await fetch(`/api/wagers/${wagerId}`, { signal: controller.signal });
+        const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
+
+        if (!response.ok) {
+          throw new Error(json?.message ?? "Wager not found");
+        }
+
+        const nextDetail = json?.data ?? null;
+        setDetail(nextDetail);
+        setResolutionOutcomeId((current) => current ?? nextDetail?.outcomes[0]?.id ?? null);
+      } catch (loadError) {
+        if (loadError instanceof DOMException && loadError.name === "AbortError") {
+          return;
+        }
+
+        setPageError(loadError instanceof Error ? loadError.message : "Wager not found");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    setIsLoading(true);
+    void loadDetail();
+
+    return () => controller.abort();
+  }, [wagerId]);
+
+  const refreshDetail = async () => {
+    const response = await fetch(`/api/wagers/${wagerId}`);
+    const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
+    if (!response.ok) {
+      throw new Error(json?.message ?? "Unable to refresh wager");
+    }
+
+    const nextDetail = json?.data ?? null;
+    setDetail(nextDetail);
+    setResolutionOutcomeId(nextDetail?.outcomes[0]?.id ?? null);
+  };
+
+  if (isLoading) {
     return <p className="text-slate-300">Loading wager detail...</p>;
   }
 
-  if (wager.error || !detail) {
-    return <p className="text-rose-300">Wager not found.</p>;
+  if (pageError || !detail) {
+    return <p className="text-rose-300">{pageError ?? "Wager not found."}</p>;
   }
 
-  const submitBet = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const currentUserBetAmount = Number(detail.currentUserBetAmount ?? "0");
+  const hasCurrentUserBet = currentUserBetAmount > 0;
+  const canPlaceBet = detail.status === "OPEN" && !isSuspended && !isUnverified && !hasCurrentUserBet;
+  const betDisabledMessage = detail.status !== "OPEN"
+    ? "Betting is closed for this wager."
+    : hasCurrentUserBet
+      ? `You already placed a bet of ${formatMoney(detail.currentUserBetAmount ?? "0")} on ${detail.currentUserBetOutcomeTitle ?? "your selected outcome"}.`
+      : isSuspended
+        ? "Suspended users cannot place bets."
+        : isUnverified
+          ? "Account must be verified to perform this action."
+        : "Betting is unavailable for this account.";
+
+  const submitResolution = async () => {
     setMessage(null);
-    setError(null);
+    setResolveError(null);
 
-    if (!selectedOutcomeId) {
-      setError("Please select an outcome");
+    if (detail.status === "CLOSED") {
+      setResolveError("This wager is already closed.");
       return;
     }
 
-    const amount = Number(betAmount);
-    const user = Number(userId);
-
-    if (Number.isNaN(amount) || amount <= 0) {
-      setError("Enter a valid bet amount");
+    if (!resolutionOutcomeId) {
+      setResolveError("Please select a winning outcome");
       return;
     }
 
-    if (Number.isNaN(user) || user <= 0) {
-      setError("Enter a valid user id");
-      return;
-    }
-
-    setIsSubmitting(true);
+    setIsResolving(true);
     try {
-      const result = await placeBet.mutateAsync({
-        id: detail.id,
-        data: {
-          userId: user,
-          outcomeId: selectedOutcomeId,
-          amount,
-        },
+      // TEMPORARY: this lets any authenticated user resolve a wager while the admin workflow is unfinished.
+      const response = await fetch(`/api/wagers/${detail.id}/resolve`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcomeId: resolutionOutcomeId }),
       });
+      const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
 
-      const betId = result.data?.id;
-      setMessage(betId ? `Bet placed successfully (id ${betId})` : "Bet placed successfully");
-      setBetAmount("");
-      await wager.refetch();
-    } catch (err: unknown) {
-      setError(toErrorMessage(err));
+      if (!response.ok) {
+        throw new Error(json?.message ?? "Failed to resolve wager");
+      }
+
+      setMessage("Wager resolved and payouts were processed.");
+      setDetail(json?.data ?? detail);
+      await refreshDetail();
+    } catch (resolveError) {
+      setResolveError(toErrorMessage(resolveError));
     } finally {
-      setIsSubmitting(false);
+      setIsResolving(false);
     }
   };
 
@@ -114,9 +146,22 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         <CardTitle>{detail.title}</CardTitle>
         <CardDescription className="mt-2">{detail.description ?? "No description"}</CardDescription>
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
-          <span className="rounded-full border border-slate-700 px-2 py-1">{detail.status}</span>
-          <span>Category: {detail.categoryName}</span>
-          <span>Creator: {detail.creatorName}</span>
+          <span className="rounded-full border border-slate-700 px-2 py-1 transition-colors hover:border-slate-500 hover:bg-slate-800/35">{detail.status}</span>
+          <span className="rounded-full border border-slate-700 px-2 py-1 transition-colors hover:border-slate-500 hover:bg-slate-800/35">Category: {detail.categoryName}</span>
+          <span className="rounded-full border border-slate-700 px-2 py-1 transition-colors hover:border-slate-500 hover:bg-slate-800/35">Creator: {detail.creatorName}</span>
+          <span className="rounded-full border border-cyan-400/50 bg-cyan-500/15 px-3 py-1 font-semibold text-cyan-100 transition-colors hover:border-cyan-300/70 hover:bg-cyan-500/25">
+            Total pool: {formatMoney(detail.totalPool)}
+          </span>
+          {isSuspended && (
+            <span className="rounded-full border border-amber-500/35 px-2 py-1 text-amber-200 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10">
+              Suspended
+            </span>
+          )}
+          {isUnverified && (
+            <span className="rounded-full border border-amber-500/35 px-2 py-1 text-amber-200 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10">
+              Unverified
+            </span>
+          )}
         </div>
       </Card>
 
@@ -124,76 +169,73 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         <CardTitle>Outcomes</CardTitle>
         <div className="mt-4 grid gap-2">
           {detail.outcomes.map((outcome) => (
-            <div key={outcome.id} className="flex items-center justify-between rounded-md border border-slate-700 p-3">
-              <p>{outcome.title}</p>
-              <p className="text-sm text-slate-300">odds: {outcome.odds ?? "n/a"}</p>
-            </div>
+            <WagerOutcomeItem
+              key={outcome.id}
+              outcome={outcome}
+              wagerStatus={detail.status}
+              currentUserBetAmount={detail.currentUserBetAmount}
+              currentUserBetOutcomeTitle={detail.currentUserBetOutcomeTitle}
+              onClick={() => setOpenBetOutcomeId((current) => (current === outcome.id ? null : outcome.id))}
+              isMenuOpen={openBetOutcomeId === outcome.id}
+              menu={(
+                <WagerInlineBetMenu
+                  wagerId={detail.id}
+                  outcomeId={outcome.id}
+                  outcomeTitle={outcome.title}
+                  canPlaceBet={canPlaceBet}
+                  disabledMessage={betDisabledMessage}
+                  onBetPlaced={async () => {
+                    await refreshDetail();
+                  }}
+                />
+              )}
+            />
           ))}
         </div>
       </Card>
 
-      <Card>
-        <CardTitle>Place a bet</CardTitle>
-        <form className="mt-4 grid gap-3" onSubmit={submitBet}>
-          <div className="grid gap-2">
-            <label className="text-xs text-slate-300" htmlFor="userId">
-              User ID
-            </label>
-            <Input
-              id="userId"
-              value={userId}
-              onChange={(event) => setUserId(event.target.value)}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <label className="text-xs text-slate-300" htmlFor="outcome">
-              Outcome
-            </label>
-            <select
-              id="outcome"
-              value={selectedOutcomeId ?? ""}
-              onChange={(event) => setSelectedOutcomeId(Number(event.target.value))}
-              className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
-            >
-              {detail.outcomes.map((outcome) => (
-                <option key={outcome.id} value={outcome.id}>
-                  {outcome.title}
+      {detail.status !== "CLOSED" && (
+        <Card>
+          <CardTitle>Temporary Resolve Shortcut</CardTitle>
+          <CardDescription className="mt-2">
+            Temporary UI control to close an open wager and pay out the winning side immediately.
+          </CardDescription>
+          <div className="mt-4 grid gap-3">
+            <label className="flex flex-col gap-1 text-xs text-slate-300">
+              Winning outcome
+              <select
+                value={resolutionOutcomeId?.toString() ?? ""}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setResolutionOutcomeId(nextValue ? Number(nextValue) : null);
+                }}
+                className="rounded border border-slate-700 bg-slate-900 p-2 text-white"
+              >
+                <option value="" disabled>
+                  Select an outcome
                 </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid gap-2">
-            <label className="text-xs text-slate-300" htmlFor="amount">
-              Amount
+                {detail.outcomes.map((outcome) => (
+                  <option key={outcome.id} value={outcome.id.toString()}>
+                    {outcome.title}
+                  </option>
+                ))}
+              </select>
             </label>
-            <Input
-              id="amount"
-              value={betAmount}
-              onChange={(event) => setBetAmount(event.target.value)}
-              type="number"
-              step="0.01"
-              min="0"
-            />
+
+            <Button
+              type="button"
+              onClick={() => void submitResolution()}
+              disabled={isResolving}
+              variant="secondary"
+              className="border border-amber-500/40 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15"
+            >
+              {isResolving ? "Resolving..." : "Resolve Wager"}
+            </Button>
+            {message && <p className="text-sm text-emerald-300">{message}</p>}
+            {resolveError && <p className="text-sm text-rose-300">{resolveError}</p>}
           </div>
-
-          {message && <p className="text-emerald-300">{message}</p>}
-          {error && <p className="text-rose-300">{error}</p>}
-
-          <Button
-            type="submit"
-            disabled={isSubmitting || detail.status !== "OPEN"}
-            className="w-full"
-          >
-            {isSubmitting ? "Placing bet..." : "Place Bet"}
-          </Button>
-
-          {detail.status !== "OPEN" && (
-            <p className="text-xs text-slate-400">Cannot place bets on wagers that are not OPEN.</p>
-          )}
-        </form>
-      </Card>
+        </Card>
+      )}
 
       <Link to="/wagers" className="text-sm text-cyan-300 transition-colors hover:text-cyan-200">
         Back to list

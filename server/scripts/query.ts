@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import { db, closeConnection } from "../src/db/db";
-import { Bet, Category, Outcome, User, Wager } from "../src/db/schema";
+import { Bet, Category, Outcome, Transaction, User, Wallet, Wager } from "../src/db/schema";
 
 const RED = "\x1b[31m";
 const GREEN = "\x1b[32m";
@@ -12,7 +12,7 @@ const RESET = "\x1b[0m";
 async function showStats() {
   try {
     console.log(`${BLUE}╭──────────────────────────────────────╮${RESET}`);
-    console.log(`${BLUE}│  Database Query Report                │${RESET}`);
+    console.log(`${BLUE}│  Database Query Report               │${RESET}`);
     console.log(`${BLUE}╰──────────────────────────────────────╯${RESET}\n`);
 
     console.log(`${GREEN}Open Wagers:${RESET}`);
@@ -64,6 +64,56 @@ async function showStats() {
         console.log(`     Wager: [${bet.wagerId}] ${bet.wagerTitle}`);
       });
       console.log(recentBets.length > 5 ? `  ... and ${recentBets.length - 5} more\n` : "");
+    }
+
+    console.log(`${GREEN}Users & Wallet Balances:${RESET}`);
+    const userWallets = await db
+      .select({
+        userId: User.id,
+        username: User.username,
+        walletId: Wallet.id,
+        walletBalance: Wallet.balance,
+      })
+      .from(User)
+      .leftJoin(Wallet, eq(Wallet.user_id, User.id))
+      .orderBy(asc(User.id));
+
+    if (userWallets.length === 0) {
+      console.log("  (No users found)\n");
+    } else {
+      userWallets.forEach((userWallet, i) => {
+        const walletId = userWallet.walletId ?? "n/a";
+        const balance = userWallet.walletBalance ?? "0";
+        console.log(`  ${i + 1}. [${userWallet.userId}] ${userWallet.username}`);
+        console.log(`     Wallet: ${walletId} | Balance: ${balance}`);
+      });
+      console.log("");
+    }
+
+    console.log(`${GREEN}Recent Transactions:${RESET}`);
+    const recentTransactions = await db
+      .select({
+        username: User.username,
+        walletId: Transaction.wallet_id,
+        outcomeId: Transaction.outcome_id,
+        amount: Transaction.amount,
+        createdAt: Transaction.created_at,
+      })
+      .from(User)
+      .innerJoin(Wallet, eq(Wallet.user_id, User.id))
+      .innerJoin(Transaction, eq(Transaction.wallet_id, Wallet.id))
+      .orderBy(desc(Transaction.created_at));
+
+    if (recentTransactions.length === 0) {
+      console.log("  (No transactions found)\n");
+    } else {
+      recentTransactions.slice(0, 10).forEach((tx, i) => {
+        console.log(`  ${i + 1}. ${tx.username}`);
+        console.log(
+          `     wallet_id: ${tx.walletId} | outcome_id: ${tx.outcomeId ?? "n/a"} | amount: ${tx.amount} | created_at: ${tx.createdAt?.toISOString() ?? "n/a"}`,
+        );
+      });
+      console.log(recentTransactions.length > 10 ? `  ... and ${recentTransactions.length - 10} more\n` : "");
     }
 
     const [wagerCount] = await db.select({ count: count() }).from(Wager);

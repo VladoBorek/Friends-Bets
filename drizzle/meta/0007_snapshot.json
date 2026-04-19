@@ -1,6 +1,6 @@
 {
-  "id": "06254593-83a8-46a7-a4d2-1ad114570c60",
-  "prevId": "654ac81c-0e80-49c3-a173-ffca105bbdb0",
+  "id": "e3e8af7e-336b-4f34-a383-7498d434b442",
+  "prevId": "e1de966f-6442-4138-b5ed-4505469f8a59",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -16,6 +16,12 @@
         },
         "user_id": {
           "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wager_id": {
+          "name": "wager_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -40,7 +46,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "bet_user_wager_unique": {
+          "name": "bet_user_wager_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "wager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "bet_user_id_user_id_fk": {
           "name": "bet_user_id_user_id_fk",
@@ -53,6 +81,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "bet_wager_id_wager_id_fk": {
+          "name": "bet_wager_id_wager_id_fk",
+          "tableFrom": "bet",
+          "tableTo": "wager",
+          "columnsFrom": [
+            "wager_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "bet_outcome_id_outcome_id_fk": {
@@ -444,14 +485,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "from_wallet_id": {
-          "name": "from_wallet_id",
+        "wallet_id": {
+          "name": "wallet_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wager_id": {
+          "name": "wager_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "to_wallet_id": {
-          "name": "to_wallet_id",
+        "outcome_id": {
+          "name": "outcome_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -484,12 +531,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "transaction_from_wallet_id_wallet_id_fk": {
-          "name": "transaction_from_wallet_id_wallet_id_fk",
+        "transaction_wallet_id_wallet_id_fk": {
+          "name": "transaction_wallet_id_wallet_id_fk",
           "tableFrom": "transaction",
           "tableTo": "wallet",
           "columnsFrom": [
-            "from_wallet_id"
+            "wallet_id"
           ],
           "columnsTo": [
             "id"
@@ -497,17 +544,30 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "transaction_to_wallet_id_wallet_id_fk": {
-          "name": "transaction_to_wallet_id_wallet_id_fk",
+        "transaction_wager_id_wager_id_fk": {
+          "name": "transaction_wager_id_wager_id_fk",
           "tableFrom": "transaction",
-          "tableTo": "wallet",
+          "tableTo": "wager",
           "columnsFrom": [
-            "to_wallet_id"
+            "wager_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_outcome_id_outcome_id_fk": {
+          "name": "transaction_outcome_id_outcome_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "outcome",
+          "columnsFrom": [
+            "outcome_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },

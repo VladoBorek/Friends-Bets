@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { desc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db";
-import { Role, User } from "../db/schema";
+import { Role, User, Wallet } from "../db/schema";
 import type { CreateUserRequest, LoginRequest, UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../errors";
 import { emailClient } from "./email-service";
@@ -86,16 +86,25 @@ export async function createUser(input: CreateUserRequest): Promise<UserSummary>
 
   const passwordHash = await bcrypt.hash(input.password, 10);
 
-  const [newUser] = await db
-    .insert(User)
-    .values({
-      username: input.username,
-      email: input.email,
-      password_hash: passwordHash,
-      role_id: roleIdToUse,
-      is_verified: false,
-    })
-    .returning();
+  const [newUser] = await db.transaction(async (tx) => {
+    const [createdUser] = await tx
+      .insert(User)
+      .values({
+        username: input.username,
+        email: input.email,
+        password_hash: passwordHash,
+        role_id: roleIdToUse,
+        is_verified: false,
+      })
+      .returning();
+
+    await tx.insert(Wallet).values({
+      user_id: createdUser.id,
+      balance: "100.00",
+    });
+
+    return [createdUser];
+  });
 
   const createdUser = await getUserById(newUser.id);
   const { token, expiresAtMs } = buildVerificationToken(createdUser.id);

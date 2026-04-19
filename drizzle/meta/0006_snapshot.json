@@ -1,6 +1,6 @@
 {
-  "id": "06254593-83a8-46a7-a4d2-1ad114570c60",
-  "prevId": "654ac81c-0e80-49c3-a173-ffca105bbdb0",
+  "id": "055de221-b57e-4fd4-bab6-c61573f15741",
+  "prevId": "783c3349-8d64-47f7-af88-149422db5e6a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -16,6 +16,12 @@
         },
         "user_id": {
           "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wager_id": {
+          "name": "wager_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -40,7 +46,29 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "bet_user_wager_unique": {
+          "name": "bet_user_wager_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "wager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "bet_user_id_user_id_fk": {
           "name": "bet_user_id_user_id_fk",
@@ -52,7 +80,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "bet_wager_id_wager_id_fk": {
+          "name": "bet_wager_id_wager_id_fk",
+          "tableFrom": "bet",
+          "tableTo": "wager",
+          "columnsFrom": [
+            "wager_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "bet_outcome_id_outcome_id_fk": {
@@ -65,7 +106,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -148,7 +189,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "comment_user_id_user_id_fk": {
@@ -161,7 +202,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -263,7 +304,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "group_membership_group_id_group_id_fk": {
@@ -276,7 +317,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -341,7 +382,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -399,7 +440,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -444,14 +485,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "from_wallet_id": {
-          "name": "from_wallet_id",
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wager_id": {
+          "name": "wager_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "to_wallet_id": {
-          "name": "to_wallet_id",
+        "outcome_id": {
+          "name": "outcome_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -484,30 +531,43 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "transaction_from_wallet_id_wallet_id_fk": {
-          "name": "transaction_from_wallet_id_wallet_id_fk",
+        "transaction_user_id_user_id_fk": {
+          "name": "transaction_user_id_user_id_fk",
           "tableFrom": "transaction",
-          "tableTo": "wallet",
+          "tableTo": "user",
           "columnsFrom": [
-            "from_wallet_id"
+            "user_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "transaction_to_wallet_id_wallet_id_fk": {
-          "name": "transaction_to_wallet_id_wallet_id_fk",
+        "transaction_wager_id_wager_id_fk": {
+          "name": "transaction_wager_id_wager_id_fk",
           "tableFrom": "transaction",
-          "tableTo": "wallet",
+          "tableTo": "wager",
           "columnsFrom": [
-            "to_wallet_id"
+            "wager_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transaction_outcome_id_outcome_id_fk": {
+          "name": "transaction_outcome_id_outcome_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "outcome",
+          "columnsFrom": [
+            "outcome_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -707,7 +767,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -759,7 +819,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "wager_visibility_user_id_user_id_fk": {
@@ -772,7 +832,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -825,7 +885,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
