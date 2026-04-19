@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./app";
 import { AuthProvider } from "./lib/auth-provider";
 import "./index.css";
+import { Toaster } from "sonner";
 
 setApiClientConfig({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:3000" : ""),
@@ -20,6 +21,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <App />
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          theme="dark"
+        />
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

@@ -64,6 +64,13 @@
       "when": 1776522308237,
       "tag": "0008_ordinary_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776377135034,
+      "tag": "0004_brave_giant_girl",
+      "breakpoints": true
     }
   ]
 }
