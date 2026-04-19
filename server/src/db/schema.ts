@@ -8,7 +8,6 @@ import {
   decimal,
   boolean,
   unique,
-  json,
   check,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
