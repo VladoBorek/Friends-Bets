@@ -10,6 +10,7 @@ import {
   unique,
   check,
   uniqueIndex,
+  index
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
@@ -69,7 +70,9 @@ export const Wager = pgTable("wager", {
   created_at: timestamp("created_at").defaultNow(),
   // Extended UI fields
   pool: varchar("pool"),
-});
+},
+  (table) => [index("wager_status_created_at_idx").on(table.status, table.created_at)],
+);
 
 export const WagerVisibility = pgTable("wager_visibility", {
   id: serial("id").primaryKey(),
@@ -83,7 +86,9 @@ export const Outcome = pgTable("outcome", {
   wager_id: integer("wager_id").references(() => Wager.id, { onDelete: "cascade" }).notNull(),
   title: varchar("title").notNull(),
   is_winner: boolean("is_winner").default(false),
-});
+},
+  (table) => [index("outcome_wager_idx").on(table.wager_id)],
+);
 
 export const Bet = pgTable(
   "bet",
@@ -94,7 +99,11 @@ export const Bet = pgTable(
     amount: decimal("amount").notNull(),
     created_at: timestamp("created_at").defaultNow(),
   },
-  (table) => [unique("bet_user_outcome_unique").on(table.user_id, table.outcome_id)],
+  (table) => [unique("bet_user_outcome_unique").on(table.user_id, table.outcome_id),
+    index("bet_user_idx").on(table.user_id),
+    index("bet_outcome_idx").on(table.outcome_id),
+    index("bet_created_at_idx").on(table.created_at),
+  ],
 );
 
 export const Transaction = pgTable("transaction", {
@@ -104,7 +113,12 @@ export const Transaction = pgTable("transaction", {
   type: varchar("type").notNull(),
   amount: decimal("amount").notNull(),
   created_at: timestamp("created_at").defaultNow(),
-});
+},
+  (table) => [
+    index("transaction_wallet_idx").on(table.wallet_id),
+    index("transaction_outcome_type_idx").on(table.outcome_id, table.type),
+  ],
+);
 
 export const Notification = pgTable("notification", {
   id: serial("id").primaryKey(),
