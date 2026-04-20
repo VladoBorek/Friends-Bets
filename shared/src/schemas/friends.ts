@@ -26,8 +26,6 @@ export const sendFriendRequestSchema = z.object({
   addresseeId: z.coerce.number().int().positive(),
 });
 
-export const friendSummarySchema = userSummarySchema;
-
 export const friendRequestSummarySchema = z.object({
   id: z.number().int(),
   status: friendshipStatusSchema,
@@ -37,10 +35,6 @@ export const friendRequestSummarySchema = z.object({
   addressee: userSummarySchema,
 });
 
-export const paginatedFriendsResponseSchema = z.object({
-  data: z.array(friendSummarySchema),
-  pagination: paginationMetaSchema,
-});
 
 export const paginatedFriendRequestsResponseSchema = z.object({
   data: z.array(friendRequestSummarySchema),
@@ -76,6 +70,53 @@ export const paginatedDiscoveredUsersResponseSchema = z.object({
   pagination: paginationMetaSchema,
 });
 
+export const friendStatsSchema = z.object({
+  totalWagers: z.number().int().nonnegative(),
+  wins: z.number().int().nonnegative(),
+  losses: z.number().int().nonnegative(),
+  sameResults: z.number().int().nonnegative(),
+  winRate: z.number().int().min(0).max(100),
+  netPnl: z.string(),
+});
+
+export const friendHeadToHeadResultSchema = z.enum(["WIN", "LOSS", "SAME"]);
+
+export const friendWagerSummarySchema = z.object({
+  wagerId: z.number().int(),
+  title: z.string(),
+  createdAt: z.string().nullable(),
+  currentUserOutcomeTitle: z.string().nullable(),
+  friendOutcomeTitle: z.string().nullable(),
+  currentUserBetAmount: z.string(),
+  friendBetAmount: z.string(),
+  currentUserNetPnl: z.string(),
+  friendNetPnl: z.string(),
+  headToHeadResult: friendHeadToHeadResultSchema,
+});
+
+export const friendWagersListQuerySchema = paginationQuerySchema;
+
+export const friendSummarySchema = userSummarySchema.extend({
+  stats: friendStatsSchema,
+});
+
+export const paginatedFriendsResponseSchema = z.object({
+  data: z.array(friendSummarySchema),
+  pagination: paginationMetaSchema,
+});
+
+export const friendStatsResponseSchema = z.object({
+  data: z.object({
+    friend: friendSummarySchema,
+    recentWagers: z.array(friendWagerSummarySchema),
+  }),
+});
+
+export const paginatedFriendWagersResponseSchema = z.object({
+  friend: friendSummarySchema,
+  data: z.array(friendWagerSummarySchema),
+  pagination: paginationMetaSchema,
+});
 
 export type FriendshipStatus = z.infer<typeof friendshipStatusSchema>;
 export type FriendRequestDirection = z.infer<typeof friendRequestDirectionSchema>;
@@ -87,3 +128,7 @@ export type FriendRequestSummary = z.infer<typeof friendRequestSummarySchema>;
 export type FriendDiscoveryQuery = z.infer<typeof friendDiscoveryQuerySchema>;
 export type FriendDiscoveryState = z.infer<typeof friendDiscoveryStateSchema>;
 export type DiscoveredUser = z.infer<typeof discoveredUserSchema>;
+export type FriendStats = z.infer<typeof friendStatsSchema>;
+export type FriendWagerSummary = z.infer<typeof friendWagerSummarySchema>;
+export type FriendWagersListQuery = z.infer<typeof friendWagersListQuerySchema>;
+export type FriendHeadToHeadResult = z.infer<typeof friendHeadToHeadResultSchema>;
