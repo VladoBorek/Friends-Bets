@@ -74,12 +74,12 @@ export const friendStatsSchema = z.object({
   totalWagers: z.number().int().nonnegative(),
   wins: z.number().int().nonnegative(),
   losses: z.number().int().nonnegative(),
-  sameResults: z.number().int().nonnegative(),
+  draws: z.number().int().nonnegative(),
   winRate: z.number().int().min(0).max(100),
   netPnl: z.string(),
 });
 
-export const friendHeadToHeadResultSchema = z.enum(["WIN", "LOSS", "SAME"]);
+export const friendHeadToHeadResultSchema = z.enum(["WIN", "LOSS", "DRAW"]);
 
 export const friendWagerSummarySchema = z.object({
   wagerId: z.number().int(),
