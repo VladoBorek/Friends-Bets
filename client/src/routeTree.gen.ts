@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WagersIndexRouteImport } from './routes/wagers/index'
 import { Route as WagersNewRouteImport } from './routes/wagers/new'
 import { Route as WagersWagerIdRouteImport } from './routes/wagers/$wagerId'
+import { Route as FriendsFriendIdWagersRouteImport } from './routes/friends_.$friendId.wagers'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
@@ -76,6 +77,11 @@ const WagersWagerIdRoute = WagersWagerIdRouteImport.update({
   path: '/wagers/$wagerId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FriendsFriendIdWagersRoute = FriendsFriendIdWagersRouteImport.update({
+  id: '/friends_/$friendId/wagers',
+  path: '/friends/$friendId/wagers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
+  '/friends/$friendId/wagers': typeof FriendsFriendIdWagersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers': typeof WagersIndexRoute
+  '/friends/$friendId/wagers': typeof FriendsFriendIdWagersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/wagers/$wagerId': typeof WagersWagerIdRoute
   '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
+  '/friends_/$friendId/wagers': typeof FriendsFriendIdWagersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/wagers/$wagerId'
     | '/wagers/new'
     | '/wagers/'
+    | '/friends/$friendId/wagers'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/wagers/$wagerId'
     | '/wagers/new'
     | '/wagers'
+    | '/friends/$friendId/wagers'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/wagers/$wagerId'
     | '/wagers/new'
     | '/wagers/'
+    | '/friends_/$friendId/wagers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   WagersWagerIdRoute: typeof WagersWagerIdRoute
   WagersNewRoute: typeof WagersNewRoute
   WagersIndexRoute: typeof WagersIndexRoute
+  FriendsFriendIdWagersRoute: typeof FriendsFriendIdWagersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WagersWagerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/friends_/$friendId/wagers': {
+      id: '/friends_/$friendId/wagers'
+      path: '/friends/$friendId/wagers'
+      fullPath: '/friends/$friendId/wagers'
+      preLoaderRoute: typeof FriendsFriendIdWagersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   WagersWagerIdRoute: WagersWagerIdRoute,
   WagersNewRoute: WagersNewRoute,
   WagersIndexRoute: WagersIndexRoute,
+  FriendsFriendIdWagersRoute: FriendsFriendIdWagersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
