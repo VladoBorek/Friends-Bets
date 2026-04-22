@@ -45,13 +45,6 @@ function toErrorMessage(error: unknown): string {
   return "Unable to create wager";
 }
 
-function getCreatedWagerId(result: unknown): number | null {
-  if (!result || typeof result !== "object") return null;
-  const p = result as { id?: unknown; data?: { id?: unknown } };
-  const c = p.id ?? p.data?.id;
-  return typeof c === "number" && Number.isInteger(c) ? c : null;
-}
-
 // ─── UserSearchSection ───────────────────────────────────────────────────────
 
 const MAX_OUTCOMES = 8;
