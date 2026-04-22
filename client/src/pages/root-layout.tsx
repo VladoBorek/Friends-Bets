@@ -1,3 +1,4 @@
+
 import { Link, Outlet, useRouter } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -7,9 +8,12 @@ import { Button } from "../components/ui/button";
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
   { to: "/wagers", label: "All Wagers", exact: true },
-  { to: "/wallet", label: "Wallet", exact: true },
-] as const;const placeholderNavItems = [{ label: "Friends & Groups" }] as const;
+  { to: "/friends", label: "Friends", exact: false },
 
+  { to: "/wallet", label: "Wallet", exact: true },
+] as const;
+
+const placeholderNavItems = [{ label: "Friends & Groups" }] as const;
 export function RootLayout() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
@@ -47,7 +51,7 @@ export function RootLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="isolate min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto flex w-full max-w-[90rem] flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
         <header className="mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 shadow-xl shadow-cyan-950/20 backdrop-blur md:p-5">
           {feedback && (
