@@ -9,6 +9,7 @@ const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
   { to: "/wagers", label: "All Wagers", exact: false },
   { to: "/friends", label: "Friends", exact: false },
+
   { to: "/wallet", label: "Wallet", exact: true },
 ] as const;
 
