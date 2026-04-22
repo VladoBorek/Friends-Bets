@@ -3,9 +3,17 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-export const Dialog = BaseDialog.Root;
-export const DialogTrigger = BaseDialog.Trigger;
-export const DialogClose = BaseDialog.Close;
+export function Dialog(props: React.ComponentProps<typeof BaseDialog.Root>) {
+  return <BaseDialog.Root {...props} />;
+}
+
+export function DialogTrigger(props: React.ComponentProps<typeof BaseDialog.Trigger>) {
+  return <BaseDialog.Trigger {...props} />;
+}
+
+export function DialogClose(props: React.ComponentProps<typeof BaseDialog.Close>) {
+  return <BaseDialog.Close {...props} />;
+}
 
 type DialogContentProps = React.ComponentPropsWithoutRef<typeof BaseDialog.Popup> & {
   children: React.ReactNode;

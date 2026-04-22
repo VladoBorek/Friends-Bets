@@ -1,6 +1,6 @@
-import { asc, desc, eq, sql, and } from "drizzle-orm";
+import { asc, desc, eq, or, sql, and } from "drizzle-orm";
 import { db } from "../db/db";
-import { Bet, Category, Outcome, Transaction, User, Wallet, Wager } from "../db/schema";
+import { Bet, Category, Comment, Outcome, Transaction, User, Wallet, Wager, WagerVisibility } from "../db/schema";
 import { HttpError } from "../errors";
 import type {
   Bet as BetType,
@@ -220,6 +220,14 @@ export async function listWagers(currentUserId?: number): Promise<WagerSummary[]
     )`
     : sql<string | null>`NULL`;
 
+  const visibilityFilter = currentUserId
+    ? or(
+        eq(Wager.is_public, true),
+        eq(Wager.created_by_id, currentUserId),
+        sql`EXISTS (SELECT 1 FROM wager_visibility WHERE wager_visibility.wager_id = ${Wager.id} AND wager_visibility.user_id = ${currentUserId})`,
+      )
+    : eq(Wager.is_public, true);
+
   const rows = await db
     .select({
       id: Wager.id,
@@ -238,13 +246,35 @@ export async function listWagers(currentUserId?: number): Promise<WagerSummary[]
     .from(Wager)
     .innerJoin(Category, eq(Wager.category_id, Category.id))
     .innerJoin(User, eq(Wager.created_by_id, User.id))
+    .where(visibilityFilter)
     .orderBy(desc(Wager.created_at));
 
   return Promise.all(rows.map(async (row) => mapWagerSummary(row, await loadWagerOutcomes(row.id))));
 }
 
 export async function getWagerById(id: number, currentUserId?: number): Promise<WagerDetail> {
-  return loadWagerDetail(id, currentUserId);
+  const detail = await loadWagerDetail(id, currentUserId);
+
+  if (!detail.isPublic) {
+    if (!currentUserId || detail.createdById !== currentUserId) {
+      const [visibility] = await db
+        .select({ id: WagerVisibility.id })
+        .from(WagerVisibility)
+        .where(
+          and(
+            eq(WagerVisibility.wager_id, id),
+            currentUserId ? eq(WagerVisibility.user_id, currentUserId) : sql`FALSE`,
+          ),
+        )
+        .limit(1);
+
+      if (!visibility) {
+        throw new HttpError(404, "Wager not found");
+      }
+    }
+  }
+
+  return detail;
 }
 
 export async function listCategories(): Promise<CategorySummary[]> {
@@ -301,6 +331,15 @@ export async function createWager(input: CreateWagerRequest, createdById: number
         title: outcome.title,
       })),
     );
+
+    if (!input.isPublic && input.invitedUserIds && input.invitedUserIds.length > 0) {
+      await tx.insert(WagerVisibility).values(
+        input.invitedUserIds.map((userId) => ({
+          wager_id: newWager.id,
+          user_id: userId,
+        })),
+      );
+    }
 
     return newWager;
   });
@@ -413,6 +452,25 @@ export async function placeBet(wagerId: number, input: PlaceBetRequest, userId: 
   };
 }
 
+export async function closeWagerBetting(wagerId: number, requestingUserId: number): Promise<WagerDetail> {
+  const [wager] = await db.select().from(Wager).where(eq(Wager.id, wagerId)).limit(1);
+  if (!wager) {
+    throw new HttpError(404, "Wager not found");
+  }
+
+  if (wager.created_by_id !== requestingUserId) {
+    throw new HttpError(403, "Only the wager creator can end betting");
+  }
+
+  if (wager.status !== "OPEN") {
+    throw new HttpError(400, "Only OPEN wagers can have betting ended");
+  }
+
+  await db.update(Wager).set({ status: "PENDING" }).where(eq(Wager.id, wagerId));
+
+  return loadWagerDetail(wagerId, requestingUserId);
+}
+
 export async function resolveWager(wagerId: number, input: ResolveWagerRequest): Promise<WagerDetail> {
   const result = await db.transaction(async (tx) => {
     const [wager] = await tx.select().from(Wager).where(eq(Wager.id, wagerId)).limit(1);
@@ -500,6 +558,95 @@ export async function resolveWager(wagerId: number, input: ResolveWagerRequest):
   }
 
   return loadWagerDetail(wagerId);
+}
+
+export type WagerBet = {
+  id: number;
+  userId: number;
+  username: string;
+  outcomeTitle: string;
+  amount: string;
+};
+
+export async function listBets(wagerId: number, requestingUserId?: number): Promise<WagerBet[]> {
+  await getWagerById(wagerId, requestingUserId);
+
+  const rows = await db
+    .select({
+      id: Bet.id,
+      userId: User.id,
+      username: User.username,
+      outcomeTitle: Outcome.title,
+      amount: Bet.amount,
+    })
+    .from(Bet)
+    .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
+    .innerJoin(User, eq(Bet.user_id, User.id))
+    .where(eq(Outcome.wager_id, wagerId))
+    .orderBy(desc(Bet.amount));
+
+  return rows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    username: r.username,
+    outcomeTitle: r.outcomeTitle,
+    amount: formatMoney(parseMoney(r.amount)),
+  }));
+}
+
+export type WagerComment = {
+  id: number;
+  userId: number;
+  username: string;
+  content: string;
+  createdAt: string;
+};
+
+export async function listComments(wagerId: number, requestingUserId?: number): Promise<WagerComment[]> {
+  await getWagerById(wagerId, requestingUserId);
+
+  const rows = await db
+    .select({
+      id: Comment.id,
+      userId: User.id,
+      username: User.username,
+      content: Comment.content,
+      createdAt: Comment.created_at,
+    })
+    .from(Comment)
+    .innerJoin(User, eq(Comment.user_id, User.id))
+    .where(eq(Comment.wager_id, wagerId))
+    .orderBy(asc(Comment.created_at));
+
+  return rows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    username: r.username,
+    content: r.content,
+    createdAt: (r.createdAt ?? new Date()).toISOString(),
+  }));
+}
+
+export async function createComment(wagerId: number, userId: number, content: string): Promise<WagerComment> {
+  await getWagerById(wagerId, userId);
+
+  const [row] = await db
+    .insert(Comment)
+    .values({ wager_id: wagerId, user_id: userId, content })
+    .returning({
+      id: Comment.id,
+      createdAt: Comment.created_at,
+    });
+
+  const [user] = await db.select({ username: User.username }).from(User).where(eq(User.id, userId)).limit(1);
+
+  return {
+    id: row.id,
+    userId,
+    username: user?.username ?? "Unknown",
+    content,
+    createdAt: (row.createdAt ?? new Date()).toISOString(),
+  };
 }
 
 export { ensureUserIsNotSuspended };

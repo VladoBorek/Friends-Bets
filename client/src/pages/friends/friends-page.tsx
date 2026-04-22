@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Card } from "../../components/ui/card";
@@ -28,7 +28,7 @@ export function FriendsPage() {
 
   const friendsQuery = useQuery(friendsQueries.list(search.page));
 
-  const friends = friendsQuery.data?.data ?? [];
+  const friends = useMemo(() => friendsQuery.data?.data ?? [], [friendsQuery.data?.data]);
   const pagination = friendsQuery.data?.pagination ?? null;
   const selectedFriend = friends.find((friend) => friend.id === selectedFriendId) ?? null;
 

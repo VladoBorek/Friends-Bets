@@ -265,24 +265,26 @@
         "type": "object",
         "required": ["title"],
         "properties": {
-          "title": { "type": "string", "minLength": 1, "maxLength": 120 },
-          "odds": { "type": "number", "exclusiveMinimum": 0 }
+          "title": { "type": "string", "minLength": 1, "maxLength": 120 }
         }
       },
       "CreateWagerRequest": {
         "type": "object",
-        "required": ["title", "categoryId", "createdById", "isPublic", "outcomes"],
+        "required": ["title", "categoryId", "isPublic", "outcomes"],
         "properties": {
           "title": { "type": "string", "minLength": 3, "maxLength": 200 },
           "description": { "type": "string", "maxLength": 2000 },
           "categoryId": { "type": "integer", "minimum": 1 },
-          "createdById": { "type": "integer", "minimum": 1 },
           "isPublic": { "type": "boolean" },
           "outcomes": {
             "type": "array",
             "minItems": 2,
             "maxItems": 8,
             "items": { "$ref": "#/components/schemas/CreateWagerOutcome" }
+          },
+          "invitedUserIds": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 1 }
           }
         }
       },
