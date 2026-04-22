@@ -1,4 +1,4 @@
-import { asc, desc, eq, or, inArray, sql, and } from "drizzle-orm";
+import { asc, desc, eq, or, sql, and } from "drizzle-orm";
 import { db } from "../db/db";
 import { Bet, Category, Comment, Outcome, Transaction, User, Wallet, Wager, WagerVisibility } from "../db/schema";
 import { HttpError } from "../errors";
