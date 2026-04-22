@@ -8,6 +8,20 @@
       "when": 1776880137739,
       "tag": "0000_cultured_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776707226388,
+      "tag": "0010_friend_stats_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776707226389,
+      "tag": "0011_friendship_backfill",
+      "breakpoints": true
     }
   ]
 }

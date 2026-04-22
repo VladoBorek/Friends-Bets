@@ -1,6 +1,6 @@
 {
-  "id": "783c3349-8d64-47f7-af88-149422db5e6a",
-  "prevId": "e69062db-c6ae-41e7-9167-d4945bd41543",
+  "id": "e290833c-1f52-4071-9648-40713cf54378",
+  "prevId": "8be1adb3-76cb-4a5c-952d-8eaf4f5a751e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -16,12 +16,6 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "wager_id": {
-          "name": "wager_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -46,29 +40,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "bet_user_wager_unique": {
-          "name": "bet_user_wager_unique",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "wager_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "bet_user_id_user_id_fk": {
           "name": "bet_user_id_user_id_fk",
@@ -76,19 +48,6 @@
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "bet_wager_id_wager_id_fk": {
-          "name": "bet_wager_id_wager_id_fk",
-          "tableFrom": "bet",
-          "tableTo": "wager",
-          "columnsFrom": [
-            "wager_id"
           ],
           "columnsTo": [
             "id"
@@ -497,18 +456,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "wager_id": {
-          "name": "wager_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "outcome_id": {
-          "name": "outcome_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "type": {
           "name": "type",
           "type": "varchar",
@@ -556,32 +503,6 @@
           "tableTo": "wallet",
           "columnsFrom": [
             "to_wallet_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_wager_id_wager_id_fk": {
-          "name": "transaction_wager_id_wager_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "wager",
-          "columnsFrom": [
-            "wager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "transaction_outcome_id_outcome_id_fk": {
-          "name": "transaction_outcome_id_outcome_id_fk",
-          "tableFrom": "transaction",
-          "tableTo": "outcome",
-          "columnsFrom": [
-            "outcome_id"
           ],
           "columnsTo": [
             "id"
@@ -636,25 +557,18 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_verified": {
-          "name": "is_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "suspended_until": {
-          "name": "suspended_until",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
+        },
+        "suspended_until": {
+          "name": "suspended_until",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
