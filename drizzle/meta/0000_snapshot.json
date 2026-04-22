@@ -1,5 +1,5 @@
 {
-  "id": "8be1adb3-76cb-4a5c-952d-8eaf4f5a751e",
+  "id": "75b15d8e-2d43-4e77-beb5-d162615073db",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -40,7 +40,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "bet_user_idx": {
+          "name": "bet_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "bet_outcome_idx": {
+          "name": "bet_outcome_idx",
+          "columns": [
+            {
+              "expression": "outcome_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "bet_created_at_idx": {
+          "name": "bet_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "bet_user_id_user_id_fk": {
           "name": "bet_user_id_user_id_fk",
@@ -52,7 +98,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "bet_outcome_id_outcome_id_fk": {
@@ -65,12 +111,21 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "bet_user_outcome_unique": {
+          "name": "bet_user_outcome_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "outcome_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -148,7 +203,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "comment_user_id_user_id_fk": {
@@ -161,7 +216,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -169,6 +224,110 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.friendship": {
+      "name": "friendship",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "requester_id": {
+          "name": "requester_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "addressee_id": {
+          "name": "addressee_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "responded_at": {
+          "name": "responded_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "friendship_requester_addressee_unique": {
+          "name": "friendship_requester_addressee_unique",
+          "columns": [
+            {
+              "expression": "requester_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "addressee_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "friendship_requester_id_user_id_fk": {
+          "name": "friendship_requester_id_user_id_fk",
+          "tableFrom": "friendship",
+          "tableTo": "user",
+          "columnsFrom": [
+            "requester_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "friendship_addressee_id_user_id_fk": {
+          "name": "friendship_addressee_id_user_id_fk",
+          "tableFrom": "friendship",
+          "tableTo": "user",
+          "columnsFrom": [
+            "addressee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "friendship_not_self_check": {
+          "name": "friendship_not_self_check",
+          "value": "\"friendship\".\"requester_id\" <> \"friendship\".\"addressee_id\""
+        }
+      },
       "isRLSEnabled": false
     },
     "public.group": {
@@ -263,7 +422,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "group_membership_group_id_group_id_fk": {
@@ -276,7 +435,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -341,7 +500,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -373,12 +532,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "odds": {
-          "name": "odds",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
         "is_winner": {
           "name": "is_winner",
           "type": "boolean",
@@ -387,7 +540,23 @@
           "default": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "outcome_wager_idx": {
+          "name": "outcome_wager_idx",
+          "columns": [
+            {
+              "expression": "wager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "outcome_wager_id_wager_id_fk": {
           "name": "outcome_wager_id_wager_id_fk",
@@ -399,7 +568,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -444,14 +613,14 @@
           "primaryKey": true,
           "notNull": true
         },
-        "from_wallet_id": {
-          "name": "from_wallet_id",
+        "wallet_id": {
+          "name": "wallet_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "to_wallet_id": {
-          "name": "to_wallet_id",
+        "outcome_id": {
+          "name": "outcome_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -468,12 +637,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "reference_id": {
-          "name": "reference_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -482,32 +645,69 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "transaction_wallet_idx": {
+          "name": "transaction_wallet_idx",
+          "columns": [
+            {
+              "expression": "wallet_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "transaction_outcome_type_idx": {
+          "name": "transaction_outcome_type_idx",
+          "columns": [
+            {
+              "expression": "outcome_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "transaction_from_wallet_id_wallet_id_fk": {
-          "name": "transaction_from_wallet_id_wallet_id_fk",
+        "transaction_wallet_id_wallet_id_fk": {
+          "name": "transaction_wallet_id_wallet_id_fk",
           "tableFrom": "transaction",
           "tableTo": "wallet",
           "columnsFrom": [
-            "from_wallet_id"
+            "wallet_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "transaction_to_wallet_id_wallet_id_fk": {
-          "name": "transaction_to_wallet_id_wallet_id_fk",
+        "transaction_outcome_id_outcome_id_fk": {
+          "name": "transaction_outcome_id_outcome_id_fk",
           "tableFrom": "transaction",
-          "tableTo": "wallet",
+          "tableTo": "outcome",
           "columnsFrom": [
-            "to_wallet_id"
+            "outcome_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -556,6 +756,19 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_verified": {
+          "name": "is_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "suspended_until": {
+          "name": "suspended_until",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -655,21 +868,31 @@
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
-        },
-        "group": {
-          "name": "group",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "outcome_split": {
-          "name": "outcome_split",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "wager_status_created_at_idx": {
+          "name": "wager_status_created_at_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "wager_category_id_category_id_fk": {
           "name": "wager_category_id_category_id_fk",
@@ -694,7 +917,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -746,7 +969,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "wager_visibility_user_id_user_id_fk": {
@@ -759,7 +982,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -812,7 +1035,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
