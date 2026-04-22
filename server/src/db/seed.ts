@@ -138,6 +138,7 @@ async function truncateAll() {
 	await db.delete(Outcome);
 	await db.delete(Wager);
 	await db.delete(GroupMembership);
+	await db.delete(Friendship);
 	await db.delete(Wallet);
 	await db.delete(Group);
 	await db.delete(User);
