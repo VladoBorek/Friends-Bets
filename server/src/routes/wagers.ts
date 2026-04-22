@@ -14,11 +14,15 @@ import {
 } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../errors";
 import {
+  closeWagerBetting,
+  createComment,
   createWager,
   ensureUserIsNotSuspended,
   ensureUserIsVerified,
   getWagerById,
+  listBets,
   listCategories,
+  listComments,
   listWagers,
   placeBet,
   resolveWager,
@@ -98,11 +102,39 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const data = await placeBet(parsedParams.id, parsedBody, user.id);
     return placeBetResponseSchema.parse({ data });
   })
-  // TEMPORARY: this shortcut lets any authenticated user close a wager while the admin flow is unfinished.
+  .get("/:id/bets", async ({ params, getOptionalCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const currentUser = await getOptionalCurrentUser();
+    const data = await listBets(parsedParams.id, currentUser?.id);
+    return { data };
+  })
+  .get("/:id/comments", async ({ params, getOptionalCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const currentUser = await getOptionalCurrentUser();
+    const data = await listComments(parsedParams.id, currentUser?.id);
+    return { data };
+  })
+  .post("/:id/comments", async ({ params, body, getCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const user = await getCurrentUser();
+    const { content } = z.object({ content: z.string().min(1).max(2000) }).parse(body);
+    const data = await createComment(parsedParams.id, user.id, content);
+    return { data };
+  })
+  .patch("/:id/close", async ({ params, getCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const user = await getCurrentUser();
+    const data = await closeWagerBetting(parsedParams.id, user.id);
+    return getWagerResponseSchema.parse({ data });
+  })
   .patch("/:id/resolve", async ({ params, body, getCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
     const parsedBody = resolveWagerRequestSchema.parse(body);
-    await getCurrentUser();
+    const user = await getCurrentUser();
+    const wager = await getWagerById(parsedParams.id, user.id);
+    if (wager.createdById !== user.id) {
+      throw new HttpError(403, "Only the wager creator can resolve the wager");
+    }
     const data = await resolveWager(parsedParams.id, parsedBody);
     return resolveWagerResponseSchema.parse({ data });
   });
