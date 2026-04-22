@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, ilike, inArray, ne, and } from "drizzle-orm";
 import { db } from "../db/db";
 import { Role, User, Wallet } from "../db/schema";
 import type { CreateUserRequest, LoginRequest, UserSummary } from "@pb138/shared/schemas/user";
@@ -428,6 +428,17 @@ export async function resetPasswordByToken(token: string, password: string): Pro
     username: updated.username,
     changedAtIso: new Date().toISOString(),
   });
+}
+
+export async function searchUsersByEmail(
+  emailQuery: string,
+  excludeUserId: number,
+): Promise<{ id: number; username: string; email: string }[]> {
+  return db
+    .select({ id: User.id, username: User.username, email: User.email })
+    .from(User)
+    .where(and(ilike(User.email, `${emailQuery}%`), ne(User.id, excludeUserId)))
+    .limit(10);
 }
 
 export async function verifyEmailToken(token: string): Promise<UserSummary> {

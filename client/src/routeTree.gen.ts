@@ -18,7 +18,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WagersIndexRouteImport } from './routes/wagers/index'
-import { Route as WagersNewRouteImport } from './routes/wagers/new'
 import { Route as WagersWagerIdRouteImport } from './routes/wagers/$wagerId'
 import { Route as FriendsFriendIdWagersRouteImport } from './routes/friends_.$friendId.wagers'
 
@@ -67,11 +66,6 @@ const WagersIndexRoute = WagersIndexRouteImport.update({
   path: '/wagers/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WagersNewRoute = WagersNewRouteImport.update({
-  id: '/wagers/new',
-  path: '/wagers/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const WagersWagerIdRoute = WagersWagerIdRouteImport.update({
   id: '/wagers/$wagerId',
   path: '/wagers/$wagerId',
@@ -93,7 +87,6 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
-  '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
   '/friends/$friendId/wagers': typeof FriendsFriendIdWagersRoute
 }
@@ -107,7 +100,6 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
-  '/wagers/new': typeof WagersNewRoute
   '/wagers': typeof WagersIndexRoute
   '/friends/$friendId/wagers': typeof FriendsFriendIdWagersRoute
 }
@@ -122,7 +114,6 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/wagers/$wagerId': typeof WagersWagerIdRoute
-  '/wagers/new': typeof WagersNewRoute
   '/wagers/': typeof WagersIndexRoute
   '/friends_/$friendId/wagers': typeof FriendsFriendIdWagersRoute
 }
@@ -138,7 +129,6 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/wagers/$wagerId'
-    | '/wagers/new'
     | '/wagers/'
     | '/friends/$friendId/wagers'
   fileRoutesByTo: FileRoutesByTo
@@ -152,7 +142,6 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/wagers/$wagerId'
-    | '/wagers/new'
     | '/wagers'
     | '/friends/$friendId/wagers'
   id:
@@ -166,7 +155,6 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/wagers/$wagerId'
-    | '/wagers/new'
     | '/wagers/'
     | '/friends_/$friendId/wagers'
   fileRoutesById: FileRoutesById
@@ -181,7 +169,6 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   WalletRoute: typeof WalletRoute
   WagersWagerIdRoute: typeof WagersWagerIdRoute
-  WagersNewRoute: typeof WagersNewRoute
   WagersIndexRoute: typeof WagersIndexRoute
   FriendsFriendIdWagersRoute: typeof FriendsFriendIdWagersRoute
 }
@@ -251,13 +238,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WagersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/wagers/new': {
-      id: '/wagers/new'
-      path: '/wagers/new'
-      fullPath: '/wagers/new'
-      preLoaderRoute: typeof WagersNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/wagers/$wagerId': {
       id: '/wagers/$wagerId'
       path: '/wagers/$wagerId'
@@ -285,7 +265,6 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   WalletRoute: WalletRoute,
   WagersWagerIdRoute: WagersWagerIdRoute,
-  WagersNewRoute: WagersNewRoute,
   WagersIndexRoute: WagersIndexRoute,
   FriendsFriendIdWagersRoute: FriendsFriendIdWagersRoute,
 }

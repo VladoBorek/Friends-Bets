@@ -8,7 +8,6 @@ import { Button } from "../components/ui/button";
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
   { to: "/wagers", label: "All Wagers", exact: false },
-  { to: "/wagers/new", label: "Create Wager", exact: true },
   { to: "/friends", label: "Friends", exact: false },
   { to: "/wallet", label: "Wallet", exact: true },
 ] as const;
