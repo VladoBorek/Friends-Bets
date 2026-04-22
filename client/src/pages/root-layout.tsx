@@ -7,7 +7,6 @@ import { Button } from "../components/ui/button";
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
   { to: "/wagers", label: "All Wagers", exact: true },
-  { to: "/wagers/new", label: "Create Wager", exact: true },
   { to: "/wallet", label: "Wallet", exact: true },
 ] as const;const placeholderNavItems = [{ label: "Friends & Groups" }] as const;
 

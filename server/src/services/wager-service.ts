@@ -1,6 +1,6 @@
-import { asc, desc, eq, sql, and } from "drizzle-orm";
+import { asc, desc, eq, or, inArray, sql, and } from "drizzle-orm";
 import { db } from "../db/db";
-import { Bet, Category, Outcome, Transaction, User, Wallet, Wager } from "../db/schema";
+import { Bet, Category, Outcome, Transaction, User, Wallet, Wager, WagerVisibility } from "../db/schema";
 import { HttpError } from "../errors";
 import type {
   Bet as BetType,
@@ -220,6 +220,14 @@ export async function listWagers(currentUserId?: number): Promise<WagerSummary[]
     )`
     : sql<string | null>`NULL`;
 
+  const visibilityFilter = currentUserId
+    ? or(
+        eq(Wager.is_public, true),
+        eq(Wager.created_by_id, currentUserId),
+        sql`EXISTS (SELECT 1 FROM wager_visibility WHERE wager_visibility.wager_id = ${Wager.id} AND wager_visibility.user_id = ${currentUserId})`,
+      )
+    : eq(Wager.is_public, true);
+
   const rows = await db
     .select({
       id: Wager.id,
@@ -238,13 +246,35 @@ export async function listWagers(currentUserId?: number): Promise<WagerSummary[]
     .from(Wager)
     .innerJoin(Category, eq(Wager.category_id, Category.id))
     .innerJoin(User, eq(Wager.created_by_id, User.id))
+    .where(visibilityFilter)
     .orderBy(desc(Wager.created_at));
 
   return Promise.all(rows.map(async (row) => mapWagerSummary(row, await loadWagerOutcomes(row.id))));
 }
 
 export async function getWagerById(id: number, currentUserId?: number): Promise<WagerDetail> {
-  return loadWagerDetail(id, currentUserId);
+  const detail = await loadWagerDetail(id, currentUserId);
+
+  if (!detail.isPublic) {
+    if (!currentUserId || detail.createdById !== currentUserId) {
+      const [visibility] = await db
+        .select({ id: WagerVisibility.id })
+        .from(WagerVisibility)
+        .where(
+          and(
+            eq(WagerVisibility.wager_id, id),
+            currentUserId ? eq(WagerVisibility.user_id, currentUserId) : sql`FALSE`,
+          ),
+        )
+        .limit(1);
+
+      if (!visibility) {
+        throw new HttpError(404, "Wager not found");
+      }
+    }
+  }
+
+  return detail;
 }
 
 export async function listCategories(): Promise<CategorySummary[]> {
@@ -301,6 +331,15 @@ export async function createWager(input: CreateWagerRequest, createdById: number
         title: outcome.title,
       })),
     );
+
+    if (!input.isPublic && input.invitedUserIds && input.invitedUserIds.length > 0) {
+      await tx.insert(WagerVisibility).values(
+        input.invitedUserIds.map((userId) => ({
+          wager_id: newWager.id,
+          user_id: userId,
+        })),
+      );
+    }
 
     return newWager;
   });

@@ -27,6 +27,7 @@ import {
   resendVerificationEmail,
   resendVerificationEmailByAddress,
   resetPasswordByToken,
+  searchUsersByEmail,
   suspendUser,
   unsuspendUser,
   updateUserRole,
@@ -166,6 +167,14 @@ export const userRoutes = new Elysia({ prefix: "/users" })
   .get("/me", async ({ getCurrentUser }) => {
     const user = await getCurrentUser();
     return getMeResponseSchema.parse({ data: user });
+  })
+
+  // Protected: Search users by email prefix (for wager invites)
+  .get("/search", async ({ getCurrentUser, query }) => {
+    const currentUser = await getCurrentUser();
+    const emailQuery = z.string().min(1).max(200).parse(query.email);
+    const data = await searchUsersByEmail(emailQuery, currentUser.id);
+    return { data };
   })
 
   // Protected: List Users

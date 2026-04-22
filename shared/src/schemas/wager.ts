@@ -4,7 +4,6 @@ export const wagerStatusSchema = z.enum(["OPEN", "PENDING", "CLOSED"]);
 
 export const createWagerOutcomeSchema = z.object({
   title: z.string().min(1).max(120),
-  odds: z.coerce.number().positive().max(100).optional(),
 });
 
 export const createWagerRequestSchema = z.object({
@@ -13,6 +12,15 @@ export const createWagerRequestSchema = z.object({
   categoryId: z.coerce.number().int().positive(),
   isPublic: z.boolean().default(true),
   outcomes: z.array(createWagerOutcomeSchema).min(2).max(8),
+  invitedUserIds: z.array(z.number().int().positive()).optional(),
+}).superRefine((data, ctx) => {
+  if (!data.isPublic && (!data.invitedUserIds || data.invitedUserIds.length === 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Private wagers must have at least one invited user.",
+      path: ["invitedUserIds"],
+    });
+  }
 });
 
 export const wagerOutcomeSummarySchema = z.object({
