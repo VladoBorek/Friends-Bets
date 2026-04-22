@@ -1,6 +1,16 @@
-import type { FriendRequestSummary, FriendSummary } from "@pb138/shared/schemas/friends";
+import type {
+  FriendRequestSummary,
+  FriendStats,
+  FriendSummary,
+  FriendWagerSummary,
+} from "@pb138/shared/schemas/friends";
+import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../../errors";
 import type { FriendUserRow, FriendshipRow } from "../../../repositories/friend-repository";
+import type {
+  FriendStatsAggregateRow,
+  SharedFriendWagerRow,
+} from "../../../repositories/friend-stats-repository";
 
 function normalizeRoleName(roleName: unknown): string {
   if (typeof roleName !== "string" || roleName.trim().length === 0) {
@@ -10,7 +20,12 @@ function normalizeRoleName(roleName: unknown): string {
   return roleName.toUpperCase();
 }
 
-export function mapUserSummary(row: FriendUserRow): FriendSummary {
+function formatMoney(value: string | number | null | undefined): string {
+  const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+  return Number.isFinite(numericValue) ? numericValue.toFixed(2) : "0.00";
+}
+
+export function mapUserSummary(row: FriendUserRow): UserSummary {
   return {
     id: row.id,
     username: row.username,
@@ -22,13 +37,13 @@ export function mapUserSummary(row: FriendUserRow): FriendSummary {
   };
 }
 
-export function buildUserSummaryMap(users: FriendUserRow[]): Map<number, FriendSummary> {
+export function buildUserSummaryMap(users: FriendUserRow[]): Map<number, UserSummary> {
   return new Map(users.map((user) => [user.id, mapUserSummary(user)]));
 }
 
 export function mapFriendRequestSummary(
   row: FriendshipRow,
-  usersById: Map<number, FriendSummary>,
+  usersById: Map<number, UserSummary>,
 ): FriendRequestSummary {
   const requester = usersById.get(row.requesterId);
   const addressee = usersById.get(row.addresseeId);
@@ -47,6 +62,63 @@ export function mapFriendRequestSummary(
   };
 }
 
+export function emptyFriendStats(): FriendStats {
+  return {
+    totalWagers: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    winRate: 0,
+    netPnl: "0.00",
+  };
+}
+
+export function mapFriendStats(row?: FriendStatsAggregateRow): FriendStats {
+  if (!row) {
+    return emptyFriendStats();
+  }
+
+  const totalWagers = row.totalWagers ?? 0;
+  const wins = row.wins ?? 0;
+
+  return {
+    totalWagers,
+    wins,
+    losses: row.losses ?? 0,
+    draws: row.draws ?? 0,
+    winRate: totalWagers > 0 ? Math.round((wins / totalWagers) * 100) : 0,
+    netPnl: formatMoney(row.netPnl),
+  };
+}
+
+export function mapFriendSummary(user: UserSummary, statsRow?: FriendStatsAggregateRow): FriendSummary {
+  return {
+    ...user,
+    stats: mapFriendStats(statsRow),
+  };
+}
+
+export function mapFriendWagerSummary(row: SharedFriendWagerRow): FriendWagerSummary {
+  const headToHeadResult =
+    row.currentUserDidWin === row.friendDidWin
+      ? "DRAW"
+      : row.currentUserDidWin
+        ? "WIN"
+        : "LOSS";
+
+  return {
+    wagerId: row.wagerId,
+    title: row.wagerTitle,
+    createdAt: row.wagerCreatedAt?.toISOString() ?? null,
+    currentUserOutcomeTitle: row.currentUserOutcomeTitle,
+    friendOutcomeTitle: row.friendOutcomeTitle,
+    currentUserBetAmount: formatMoney(row.currentUserBetAmount),
+    friendBetAmount: formatMoney(row.friendBetAmount),
+    currentUserNetPnl: formatMoney(row.currentUserNetPnl),
+    friendNetPnl: formatMoney(row.friendNetPnl),
+    headToHeadResult,
+  };
+}
 
 export function mapRelationshipState(
   currentUserId: number,

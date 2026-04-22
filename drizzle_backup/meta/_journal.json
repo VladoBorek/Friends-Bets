@@ -71,14 +71,6 @@
       "when": 1776377135034,
       "tag": "0009_brave_giant_girl",
       "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1776707226388,
-      "tag": "0010_friend_stats_indexes",
-      "breakpoints": true
     }
-
   ]
 }

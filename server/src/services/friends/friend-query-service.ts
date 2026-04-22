@@ -9,7 +9,9 @@ import {
   listDiscoverableUsers,
   listFriendshipsBetweenUserAndCandidates
 } from "../../repositories/friend-repository";
-import { buildUserSummaryMap, mapFriendRequestSummary, mapRelationshipState, mapUserSummary } from "./mappers/friend-mapper"
+import { buildUserSummaryMap, mapFriendRequestSummary, mapRelationshipState, mapUserSummary, mapFriendSummary } from "./mappers/friend-mapper"
+import { listFriendStatsPreviewRows } from "../../repositories/friend-stats-repository";
+
 
 export async function listFriends(currentUserId: number, query: FriendsListQuery) {
   const total = await countAcceptedFriendsForUser(currentUserId);
@@ -19,11 +21,22 @@ export async function listFriends(currentUserId: number, query: FriendsListQuery
     row.requesterId === currentUserId ? row.addresseeId : row.requesterId,
   );
 
-  const users = await listUsersByIds([...new Set(friendIds)]);
+  const uniqueFriendIds = [...new Set(friendIds)];
+
+  const [users, statRows] = await Promise.all([
+    listUsersByIds(uniqueFriendIds),
+    listFriendStatsPreviewRows(currentUserId, uniqueFriendIds),
+  ]);
+
   const usersById = buildUserSummaryMap(users);
+  const statsByFriendId = new Map(statRows.map((row) => [row.friendId, row]));
 
   const data = friendIds
-    .map((friendId) => usersById.get(friendId))
+    .map((friendId) => {
+      const user = usersById.get(friendId);
+      if (!user) return null;
+      return mapFriendSummary(user, statsByFriendId.get(friendId));
+    })
     .filter((friend): friend is NonNullable<typeof friend> => Boolean(friend));
 
   return {

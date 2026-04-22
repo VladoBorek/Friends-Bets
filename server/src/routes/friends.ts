@@ -6,10 +6,13 @@ import {
   friendRequestsListQuerySchema,
   friendsListQuerySchema,
   friendDiscoveryQuerySchema,
+  friendWagersListQuerySchema,
+  friendStatsResponseSchema,
 
   paginatedFriendRequestsResponseSchema,
   paginatedFriendsResponseSchema,
   paginatedDiscoveredUsersResponseSchema,
+  paginatedFriendWagersResponseSchema,
   
   sendFriendRequestSchema,
 
@@ -22,6 +25,8 @@ import {
   rejectFriendRequest,
 } from "../services/friends/friend-request-service";
 import { removeFriend } from "../services/friends/friend-relationship-service";
+
+import { getFriendStats, listFriendWagers } from "../services/friends/friend-stats-service";
 
 const requestIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -56,6 +61,23 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     return paginatedFriendRequestsResponseSchema.parse(result);
   })
+   .get("/:userId/stats", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const parsedParams = userIdParamsSchema.parse(context.params);
+    const data = await getFriendStats(actor.id, parsedParams.userId);
+
+    return friendStatsResponseSchema.parse({ data });
+  })
+
+  .get("/:userId/wagers", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const parsedParams = userIdParamsSchema.parse(context.params);
+    const parsedQuery = friendWagersListQuerySchema.parse(context.query);
+    const result = await listFriendWagers(actor.id, parsedParams.userId, parsedQuery);
+
+    return paginatedFriendWagersResponseSchema.parse(result);
+  })
+
   .post("/requests", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedBody = sendFriendRequestSchema.parse(context.body);

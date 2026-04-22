@@ -17,6 +17,27 @@ function getInitials(username: string) {
     .join("");
 }
 
+function formatRecord(friend: FriendSummary) {
+  const { wins, losses, draws } = friend.stats;
+  return draws > 0 ? `${wins}W - ${losses}L - ${draws}D` : `${wins}W - ${losses}L`;
+}
+
+function formatSignedMoney(value: string) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return value;
+
+  const fixed = numericValue.toFixed(2);
+  return numericValue > 0 ? `+${fixed}` : fixed;
+}
+
+function getMoneyTone(value: string) {
+  const numericValue = Number(value);
+  if (numericValue > 0) return "text-emerald-300";
+  if (numericValue < 0) return "text-rose-300";
+  return "text-slate-300";
+}
+
+
 export function PersonRowCard({ friend, isActive, onClick }: PersonRowCardProps) {
   return (
     <button type="button" onClick={onClick} className="w-full text-left">
@@ -36,9 +57,15 @@ export function PersonRowCard({ friend, isActive, onClick }: PersonRowCardProps)
           {getInitials(friend.username)}
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-100">{friend.username}</p>
-          <p className="truncate text-xs text-slate-400">{friend.email}</p>
+          <p className="truncate text-xs text-slate-400">{formatRecord(friend)}</p>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <p className={cn("text-sm font-semibold", getMoneyTone(friend.stats.netPnl))}>
+            {formatSignedMoney(friend.stats.netPnl)}
+          </p>
         </div>
       </div>
     </button>
