@@ -1,58 +1,16 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { BET_AMOUNT_ERROR_MESSAGE } from "../../../shared/src/schemas/wager";
-
-function toErrorMessage(error: unknown): string {
-  if (error && typeof error === "object") {
-    const value = error as {
-      response?: { data?: unknown };
-      message?: unknown;
-    };
-
-    if (typeof value.response?.data === "string" && value.response.data.trim()) {
-      return value.response.data;
-    }
-
-    if (value.response?.data && typeof value.response.data === "object") {
-      const data = value.response.data as {
-        message?: unknown;
-        issues?: Array<{ message?: unknown }>;
-      };
-      const firstIssueMessage = data.issues?.find((issue) => typeof issue.message === "string")?.message;
-      if (typeof firstIssueMessage === "string" && firstIssueMessage.trim()) {
-        return firstIssueMessage;
-      }
-
-      if (typeof data.message === "string" && data.message.trim()) {
-        return data.message;
-      }
-    }
-
-    if (typeof value.message === "string" && value.message.trim()) {
-      return value.message;
-    }
-  }
-
-  return "Request failed";
-}
+import { BET_AMOUNT_ERROR_MESSAGE } from "../../../../../shared/src/schemas/wager";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { toErrorMessage } from "../utils";
 
 function validateBetAmount(value: string): string | null {
   const trimmedValue = value.trim();
-  if (!trimmedValue) {
-    return BET_AMOUNT_ERROR_MESSAGE;
-  }
-
+  if (!trimmedValue) return BET_AMOUNT_ERROR_MESSAGE;
   const amount = Number(trimmedValue);
-  if (!Number.isFinite(amount) || amount < 0.01) {
-    return BET_AMOUNT_ERROR_MESSAGE;
-  }
-
-  if (!Number.isInteger(amount * 100)) {
-    return BET_AMOUNT_ERROR_MESSAGE;
-  }
-
+  if (!Number.isFinite(amount) || amount < 0.01) return BET_AMOUNT_ERROR_MESSAGE;
+  if (!Number.isInteger(amount * 100)) return BET_AMOUNT_ERROR_MESSAGE;
   return null;
 }
 
@@ -95,7 +53,6 @@ export function WagerInlineBetMenu({
     }
 
     const amount = Number(betAmount);
-
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/wagers/${wagerId}/bets`, {
@@ -104,12 +61,10 @@ export function WagerInlineBetMenu({
         body: JSON.stringify({ outcomeId, amount }),
       });
       const json = (await response.json().catch(() => ({}))) as { data?: { id?: number }; message?: string } | null;
-
-      if (!response.ok) {
-        throw new Error(json?.message ?? "Failed to place bet");
-      }
-
-      setSuccessMessage(json?.data?.id ? `Bet placed successfully (id ${json.data.id})` : "Bet placed successfully");
+      if (!response.ok) throw new Error(json?.message ?? "Failed to place bet");
+      setSuccessMessage(
+        json?.data?.id ? `Bet placed successfully (id ${json.data.id})` : "Bet placed successfully",
+      );
       setBetAmount("");
       await onBetPlaced?.();
     } catch (submitError) {
@@ -143,7 +98,6 @@ export function WagerInlineBetMenu({
               setBetError(null);
               return;
             }
-
             setBetError(validateBetAmount(nextValue));
           }}
           type="text"
@@ -151,13 +105,11 @@ export function WagerInlineBetMenu({
           placeholder="0.00"
         />
       </label>
-
       <div className="mt-3 flex items-center gap-2">
         <Button type="submit" size="sm" disabled={isSubmitting}>
           {isSubmitting ? "Placing..." : "Place Bet"}
         </Button>
       </div>
-
       {successMessage && <p className="mt-2 text-xs text-emerald-300">{successMessage}</p>}
       {betError && <p className="mt-2 text-xs text-rose-300">{betError}</p>}
     </form>
