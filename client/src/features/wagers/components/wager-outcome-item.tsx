@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { formatMoney } from "../utils";
 
 type WagerStatus = "OPEN" | "PENDING" | "CLOSED";
 
@@ -17,11 +18,6 @@ interface WagerOutcomeItemProps {
   isMenuOpen: boolean;
   menu?: ReactNode;
   interactionAttribute?: string;
-}
-
-function formatMoney(value: string): string {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue.toFixed(2) : value;
 }
 
 export function WagerOutcomeItem({
@@ -45,8 +41,8 @@ export function WagerOutcomeItem({
         isWinningOutcome
           ? "border-amber-400/70 bg-amber-500/5 hover:border-amber-300 hover:bg-amber-500/10"
           : isCurrentUserOutcome
-          ? "border-emerald-400/60 bg-emerald-500/10 hover:border-emerald-400/80 hover:bg-emerald-500/20"
-          : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/30"
+            ? "border-emerald-400/60 bg-emerald-500/10 hover:border-emerald-400/80 hover:bg-emerald-500/20"
+            : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/30"
       }`}
     >
       <button
