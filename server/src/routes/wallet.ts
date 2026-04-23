@@ -2,7 +2,7 @@ import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
 import { HttpError } from "../errors";
 import { getWalletOverview } from "../services/wallet-service";
-import { getUserById } from "../services/user-service";
+import { getUserById } from "../services/user";
 import { getWalletResponseSchema } from "../../../shared/src/schemas/wallet";
 
 export const walletRoutes = new Elysia({ prefix: "/wallet" })
