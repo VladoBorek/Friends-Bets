@@ -3,15 +3,15 @@ import { z } from "zod";
 import { getMeResponseSchema } from "@pb138/shared/schemas/user";
 import { searchUsersByEmail } from "../../services/user";
 import { getOptionalAuthenticatedUser, getAuthenticatedUser, authPlugin } from "../../plugins/auth";
-import { HttpError } from "../../errors";
 
 export const profileRoutes = new Elysia()
   .use(authPlugin)
-  // Protected: Get Me (using optional to avoid throwing in derive if not wanted, but here we want it)
+  // Protected: Get Me
   .get("/me", async (context) => {
     const user = await getOptionalAuthenticatedUser(context as any);
     if (!user) {
-      throw new HttpError(401, "Unauthorized");
+      context.set.status = 401;
+      return { message: "Unauthorized" };
     }
     return getMeResponseSchema.parse({ data: user });
   })
