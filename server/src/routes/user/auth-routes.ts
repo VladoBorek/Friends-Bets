@@ -3,6 +3,7 @@ import {
   createUserRequestSchema,
   loginRequestSchema,
   loginResponseSchema,
+  requestPasswordResetRequestSchema,
   resetPasswordRequestSchema,
   resendVerificationByEmailRequestSchema,
   verifyEmailRequestSchema,
@@ -12,6 +13,7 @@ import {
   createUser,
   getUserByCredentials,
   getUserByEmail,
+  requestPasswordReset,
   resendVerificationEmailByAddress,
   resetPasswordByToken,
   verifyEmailToken,
@@ -115,4 +117,11 @@ export const authRoutes = new Elysia()
     const parsedBody = resetPasswordRequestSchema.parse(body);
     await resetPasswordByToken(parsedBody.token, parsedBody.password);
     return { message: "Password reset successful." };
+  })
+
+  // Public: request password reset email
+  .post("/request-password-reset", async ({ body }) => {
+    const parsedBody = requestPasswordResetRequestSchema.parse(body);
+    await requestPasswordReset(parsedBody.email);
+    return { message: "If an account exists for this email, a reset link has been sent." };
   });

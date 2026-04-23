@@ -1,3 +1,5 @@
+import { Outlet } from "@tanstack/react-router";
+import { Navbar } from "../components/layout/navbar";
 
 import { Link, Outlet, useRouter } from "@tanstack/react-router";
 import { AlertCircle, Menu, X } from "lucide-react";

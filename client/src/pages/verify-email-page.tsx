@@ -2,7 +2,8 @@ import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuth } from "../lib/auth-context";
-import { Card, CardTitle, CardDescription } from "../components/ui/card";
+import { AuthLayout } from "../components/layout/auth-layout";
+import { Button } from "../components/ui/button";
 
 type VerifyState = "loading" | "success" | "error";
 
@@ -29,8 +30,8 @@ export function VerifyEmailPage() {
           body: JSON.stringify({ token }),
         });
 
+        const json = (await res.json().catch(() => null)) as { message?: string } | null;
         if (!res.ok) {
-          const json = (await res.json().catch(() => null)) as { message?: string } | null;
           setState("error");
           setMessage(json?.message ?? "Verification failed.");
           return;
@@ -51,22 +52,35 @@ export function VerifyEmailPage() {
     void run();
   }, [navigate, refreshUser, search.token]);
 
+  const Icon = state === "loading" ? Loader2 : state === "success" ? CheckCircle2 : ShieldAlert;
+
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-6">
-      <Card className="p-6">
-        <div className="mb-4 flex items-center gap-2 text-cyan-200">
-          {state === "loading" && <Loader2 className="h-5 w-5 animate-spin" />}
-          {state === "success" && <CheckCircle2 className="h-5 w-5 text-emerald-300" />}
-          {state === "error" && <ShieldAlert className="h-5 w-5 text-rose-300" />}
-          <CardTitle className="text-lg font-semibold">Email Verification</CardTitle>
-        </div>
-
-        <CardDescription className="text-sm text-slate-300">{message}</CardDescription>
-
-        {state === "success" && (
-          <p className="mt-3 text-xs text-slate-400">Redirecting you to Dashboard...</p>
+    <AuthLayout
+      title="Email Verification"
+      description={message}
+      icon={Icon}
+      error={state === "error" ? message : null}
+      success={state === "success" ? message : null}
+    >
+      <div className="flex flex-col items-center gap-4">
+        {state === "loading" && (
+           <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
         )}
-      </Card>
-    </div>
+        
+        {state === "success" && (
+          <p className="text-center text-sm text-slate-400">Redirecting you to Dashboard...</p>
+        )}
+
+        {state !== "loading" && (
+          <Button
+            variant="secondary"
+            onClick={() => void navigate({ to: "/login" })}
+            className="w-full mt-4"
+          >
+            Go to Login
+          </Button>
+        )}
+      </div>
+    </AuthLayout>
   );
 }

@@ -27,7 +27,7 @@ import {
   placeBet,
   resolveWager,
 } from "../services/wager-service";
-import { getUserById } from "../services/user-service";
+import { getUserById } from "../services/user";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),

@@ -42,3 +42,28 @@ export async function getAuthenticatedUser(context: AuthContextLike) {
 
   return getUserById(profile.id);
 }
+
+export async function getOptionalAuthenticatedUser(context: AuthContextLike) {
+  const token = context.cookie.auth_session?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const profile = await context.jwt.verify(token);
+
+    if (
+      !profile ||
+      typeof profile !== "object" ||
+      !("id" in profile) ||
+      typeof profile.id !== "number"
+    ) {
+      return null;
+    }
+
+    return await getUserById(profile.id);
+  } catch {
+    return null;
+  }
+}

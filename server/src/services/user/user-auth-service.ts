@@ -127,3 +127,20 @@ export async function sendAdminPasswordReset(userId: number): Promise<void> {
     resetUrl,
   });
 }
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const user = await userRepository.findUserByEmail(email);
+  if (!user) {
+    // For security, don't leak that user doesn't exist.
+    return;
+  }
+
+  const { token } = buildPasswordResetToken(user.id);
+  const resetUrl = buildPasswordResetUrl(token);
+
+  await emailClient.sendPasswordResetEmail({
+    email: user.email,
+    username: user.username,
+    resetUrl,
+  });
+}
