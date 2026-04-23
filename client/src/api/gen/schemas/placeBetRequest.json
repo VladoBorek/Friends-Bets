@@ -1,1 +1,0 @@
-{"type":"object","required":["userId","outcomeId","amount"],"properties":{"userId":{"type":"integer","minimum":1},"outcomeId":{"type":"integer","minimum":1},"amount":{"type":"number","exclusiveMinimum":0}},"x-readme-ref-name":"PlaceBetRequest"}

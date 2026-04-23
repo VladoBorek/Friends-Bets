@@ -1,1 +1,0 @@
-{"type":"object","required":["id","userId","outcomeId","amount","createdAt"],"properties":{"id":{"type":"integer"},"userId":{"type":"integer"},"outcomeId":{"type":"integer"},"amount":{"type":"number"},"createdAt":{"type":"string","format":"date-time"}},"x-readme-ref-name":"Bet"}

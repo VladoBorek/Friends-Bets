@@ -1,1 +1,0 @@
-{"type":"string","enum":["OPEN","PENDING","CLOSED"],"x-readme-ref-name":"WagerStatus"}
