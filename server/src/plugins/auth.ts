@@ -1,12 +1,13 @@
 import { Elysia } from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import { HttpError } from "../errors";
-import { getUserById } from "../services/user-service";
+import { getUserById } from "../services/user";
+import { readServerConfig } from "../config";
 
 export const authPlugin = new Elysia({ name: "auth-plugin" }).use(
   jwt({
     name: "jwt",
-    secret: process.env.JWT_SECRET || "super-secret-pb138",
+    secret: readServerConfig().secrets.jwt,
   }),
 );
 
