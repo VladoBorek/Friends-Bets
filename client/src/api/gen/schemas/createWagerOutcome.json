@@ -1,1 +1,1 @@
-{"type":"object","required":["title"],"properties":{"title":{"type":"string","minLength":1,"maxLength":120},"odds":{"type":"number","exclusiveMinimum":0}},"x-readme-ref-name":"CreateWagerOutcome"}
+{"type":"object","required":["title"],"properties":{"title":{"type":"string","minLength":1,"maxLength":120}},"x-readme-ref-name":"CreateWagerOutcome"}

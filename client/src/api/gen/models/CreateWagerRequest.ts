@@ -23,11 +23,6 @@ export type CreateWagerRequest = {
     */
     categoryId: number;
     /**
-     * @minLength 1
-     * @type integer
-    */
-    createdById: number;
-    /**
      * @type boolean
     */
     isPublic: boolean;
@@ -35,4 +30,8 @@ export type CreateWagerRequest = {
      * @type array
     */
     outcomes: CreateWagerOutcome[];
+    /**
+     * @type array | undefined
+    */
+    invitedUserIds?: number[];
 };

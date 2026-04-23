@@ -11,8 +11,4 @@ export type CreateWagerOutcome = {
      * @type string
     */
     title: string;
-    /**
-     * @type number | undefined
-    */
-    odds?: number;
 };
