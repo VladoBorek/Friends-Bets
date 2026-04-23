@@ -169,7 +169,7 @@ async function seedUsers(userRoleId: number, adminRoleId: number) {
 			const isAdmin = adminUsernames.has(username);
 			const isVerified = !nonVerifiedUsernames.has(username);
 			const plainPassword = isAdmin ? defaultAdminPassword : defaultUserPassword;
-			// Hash the password using Bun's password utilities to match production verification
+			// Hash the password using bcrypt for secure storage
 			const passwordHash = await bcrypt.hash(plainPassword, 10);
 			const email = username === "richard" ? "risac13@seznam.cz" : `${username}@midnight-wager.club`;
 			return {
