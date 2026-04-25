@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { betAmountSchema } from "./wager";
 
 export const walletHistoryItemSchema = z.object({
   id: z.number().int(),
-  wagerId: z.number().int(),
+  wagerId: z.number().int().nullable(),
   wagerName: z.string(),
-  type: z.enum(["bet", "payout"]),
+  type: z.enum(["bet", "payout", "deposit", "withdraw"]),
   outcome: z.string(),
   walletImpact: z.string(),
   timestamp: z.string(),
@@ -19,5 +20,26 @@ export const getWalletResponseSchema = z.object({
   data: walletOverviewSchema,
 });
 
+export const MAX_WALLET_OPERATION_AMOUNT = 10_000;
+export const WALLET_AMOUNT_ERROR_MESSAGE =
+  `Amount must be between 0.01 and ${MAX_WALLET_OPERATION_AMOUNT.toFixed(2)}.`;
+
+export const walletOperationAmountSchema = betAmountSchema.refine(
+  (value) => value <= MAX_WALLET_OPERATION_AMOUNT,
+  { message: WALLET_AMOUNT_ERROR_MESSAGE },
+);
+
+export const walletBalanceMutationRequestSchema = z.object({
+  amount: walletOperationAmountSchema,
+});
+
+export const walletBalanceMutationResponseSchema = z.object({
+  data: z.object({
+    balance: z.string(),
+    transaction: walletHistoryItemSchema,
+  }),
+});
+
 export type WalletHistoryItem = z.infer<typeof walletHistoryItemSchema>;
 export type WalletOverview = z.infer<typeof walletOverviewSchema>;
+export type WalletBalanceMutationRequest = z.infer<typeof walletBalanceMutationRequestSchema>;

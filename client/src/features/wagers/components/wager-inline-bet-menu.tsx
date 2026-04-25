@@ -1,18 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { BET_AMOUNT_ERROR_MESSAGE } from "../../../../../shared/src/schemas/wager";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { toErrorMessage } from "../utils";
-
-function validateBetAmount(value: string): string | null {
-  const trimmedValue = value.trim();
-  if (!trimmedValue) return BET_AMOUNT_ERROR_MESSAGE;
-  const amount = Number(trimmedValue);
-  if (!Number.isFinite(amount) || amount < 0.01) return BET_AMOUNT_ERROR_MESSAGE;
-  if (!Number.isInteger(amount * 100)) return BET_AMOUNT_ERROR_MESSAGE;
-  return null;
-}
+import { toErrorMessage, validateBetInput } from "../utils";
 
 interface WagerInlineBetMenuProps {
   wagerId: number;
@@ -46,7 +36,7 @@ export function WagerInlineBetMenu({
       return;
     }
 
-    const validationMessage = validateBetAmount(betAmount);
+    const validationMessage = validateBetInput(betAmount);
     if (validationMessage) {
       setBetError(validationMessage);
       return;
@@ -98,7 +88,7 @@ export function WagerInlineBetMenu({
               setBetError(null);
               return;
             }
-            setBetError(validateBetAmount(nextValue));
+            setBetError(validateBetInput(nextValue));
           }}
           type="text"
           inputMode="decimal"

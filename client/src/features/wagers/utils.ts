@@ -1,8 +1,36 @@
+import { BET_AMOUNT_ERROR_MESSAGE, placeBetRequestSchema } from "../../../../shared/src/schemas/wager";
+import { WALLET_AMOUNT_ERROR_MESSAGE, walletBalanceMutationRequestSchema } from "../../../../shared/src/schemas/wallet";
+
 export const STATUS_LABELS: Record<string, string> = {
   OPEN: "Open",
   PENDING: "Pending",
   CLOSED: "Closed",
 };
+
+export function validateBetInput(value: string): string | null {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return BET_AMOUNT_ERROR_MESSAGE;
+
+  const validation = placeBetRequestSchema.safeParse({
+    outcomeId: 1,
+    amount: trimmedValue,
+  });
+
+  if (validation.success) return null;
+  return validation.error.issues[0]?.message ?? BET_AMOUNT_ERROR_MESSAGE;
+}
+
+export function validateWalletCreditInput(value: string): string | null {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return WALLET_AMOUNT_ERROR_MESSAGE;
+
+  const validation = walletBalanceMutationRequestSchema.safeParse({
+    amount: trimmedValue,
+  });
+
+  if (validation.success) return null;
+  return validation.error.issues[0]?.message ?? WALLET_AMOUNT_ERROR_MESSAGE;
+}
 
 export function statusColor(status: string) {
   if (status === "OPEN") return "border-cyan-400/50 bg-cyan-500/15 text-cyan-100";
