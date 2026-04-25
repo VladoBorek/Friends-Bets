@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
+import { FriendsPagination } from "../components/ui/friends/friends-pagination";
 import { WalletBalanceActionDialog } from "../features/wallet/components/wallet-balance-action-dialog";
+import { WalletTransactionFilters } from "../features/wallet/components/wallet-transaction-filters";
 import { WalletHistoryItemCard } from "../features/wallet/components/wallet-history-item";
+import {
+  filterWalletTransactions,
+  WALLET_TRANSACTION_PAGE_SIZE,
+  type WalletTransactionTypeFilter,
+} from "../features/wallet/wallet-transactions";
 import { validateWalletCreditInput } from "../features/wagers/utils";
 import { useAuth } from "../lib/auth-context";
 import type { WalletHistoryItem, WalletOverview } from "../../../shared/src/schemas/wallet";
@@ -55,10 +62,28 @@ export function WalletPage() {
   const [amountInput, setAmountInput] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [transactionSearch, setTransactionSearch] = useState("");
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<WalletTransactionTypeFilter>("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
   const walletActionsDisabled = isSuspended || isUnverified;
+
+  const filteredTransactions = useMemo(() => {
+    if (!wallet) {
+      return [];
+    }
+
+    return filterWalletTransactions(wallet.history, transactionSearch, transactionTypeFilter);
+  }, [transactionSearch, transactionTypeFilter, wallet]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / WALLET_TRANSACTION_PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * WALLET_TRANSACTION_PAGE_SIZE;
+    return filteredTransactions.slice(startIndex, startIndex + WALLET_TRANSACTION_PAGE_SIZE);
+  }, [filteredTransactions, safeCurrentPage]);
 
   const getAmountValidationMessage = (): string | null => {
     const amountValidationMessage = validateWalletCreditInput(amountInput);
@@ -79,6 +104,16 @@ export function WalletPage() {
     setActionError(null);
   };
 
+  const handleSearchChange = (value: string) => {
+    setTransactionSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleTypeFilterChange = (value: WalletTransactionTypeFilter) => {
+    setTransactionTypeFilter(value);
+    setCurrentPage(1);
+  };
+
   const closeModal = (force = false) => {
     if (isSubmitting && !force) {
       return;
@@ -87,6 +122,10 @@ export function WalletPage() {
     setActiveModal(null);
     setAmountInput("");
     setActionError(null);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const submitWalletAction = async (event: React.FormEvent) => {
@@ -209,15 +248,41 @@ export function WalletPage() {
 
       <Card>
         <CardTitle>History</CardTitle>
-        <div className="mt-4 grid gap-3">
-          {wallet.history.length === 0 && <p className="text-sm text-slate-400">No wallet history yet.</p>}
-          {wallet.history.map((item) => (
-            <WalletHistoryItemCard
-              key={item.id}
-              item={item}
-              formattedTimestamp={formatTimestamp(item.timestamp)}
-            />
-          ))}
+        <div className="mt-4 grid gap-4">
+          <WalletTransactionFilters
+            search={transactionSearch}
+            typeFilter={transactionTypeFilter}
+            onSearchChange={handleSearchChange}
+            onTypeFilterChange={handleTypeFilterChange}
+          />
+
+          <div className="grid gap-3">
+            {filteredTransactions.length === 0 ? (
+              <p className="text-sm text-slate-400">No wallet transactions match the current filters.</p>
+            ) : (
+              paginatedTransactions.map((item) => (
+                <WalletHistoryItemCard
+                  key={item.id}
+                  item={item}
+                  formattedTimestamp={formatTimestamp(item.timestamp)}
+                />
+              ))
+            )}
+          </div>
+
+          {filteredTransactions.length > 0 ? (
+            <div className="grid gap-3 pt-1">
+              <div className="text-center text-xs text-slate-500">
+                Showing {Math.min((safeCurrentPage - 1) * WALLET_TRANSACTION_PAGE_SIZE + 1, filteredTransactions.length)}-
+                {Math.min(safeCurrentPage * WALLET_TRANSACTION_PAGE_SIZE, filteredTransactions.length)} of {filteredTransactions.length}
+              </div>
+              <FriendsPagination
+                currentPage={safeCurrentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          ) : null}
         </div>
       </Card>
 
