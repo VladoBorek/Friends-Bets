@@ -3,6 +3,8 @@
 
 Friends-Bets is a full-stack web application for creating private betting groups with friends. Users can create wagers, invite friends, place bets, track outcomes, and manage wallet balances inside closed social groups.
 
+The project is built as a modern TypeScript-first monolithic application with a React frontend, REST API backend, PostgreSQL database, role-based access control, and CI/CD support. It focuses on clean architecture, type safety, maintainability, and production-ready development practices.
+
 My main responsibility in the project was the full-stack implementation of the Friends module. 
 This included:
 - the paginated friends overview page,
@@ -12,8 +14,6 @@ This included:
 - and implementing request acceptance and rejection flows.
 
 The groups module will also be implemented by me
-
-The project is built as a modern TypeScript-first monolithic application with a React frontend, REST API backend, PostgreSQL database, role-based access control, and CI/CD support. It focuses on clean architecture, type safety, maintainability, and production-ready development practices.
 
 # UI Screenshots
 <table>
