@@ -1,4 +1,49 @@
-# PB138 Project
+# Friends-Bets
+## Team project
+
+Friends-Bets is a full-stack web application for creating private betting groups with friends. Users can create wagers, invite friends, place bets, track outcomes, and manage wallet balances inside closed social groups.
+
+The project is built as a modern TypeScript-first monolithic application with a React frontend, REST API backend, PostgreSQL database, role-based access control, and CI/CD support. It focuses on clean architecture, type safety, maintainability, and production-ready development practices.
+
+# UI Screenshots
+### Wagers
+
+![Wagers](./docs/screenshots/wagers.png)
+
+### Wager Detail
+
+![Wager detail](./docs/screenshots/wager_detail.png)
+
+### Friends
+
+![Friends](./docs/screenshots/friends.png)
+
+### Wallet
+
+![Wallet](./docs/screenshots/wallet.png)
+
+### Admin
+
+![Admin](./docs/screenshots/admin.png)
+
+
+# Tech Stack
+## Frontend
+- React
+- TypeScript
+- TanStack Router
+- Tailwind CSS
+- Vite
+
+## Backend
+- Node.js
+- TypeScript
+- Express-style REST API
+- PostgreSQL
+- Drizzle ORM
+- Docker
+- Authentication and authorization services
+
 
 Clean client-server split with dedicated packages:
 - `client` (React + Vite + generated API hooks)
