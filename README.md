@@ -8,23 +8,55 @@ The project is built as a modern TypeScript-first monolithic application with a 
 # UI Screenshots
 ### Wagers
 
-![Wagers](./docs/screenshots/wagers.png)
+## Screenshots
 
-### Wager Detail
+<table>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/wagers.png">
+        <img src="./docs/screenshots/wagers.png" alt="Wagers page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/wager_detail.png">
+        <img src="./docs/screenshots/wager_detail.png" alt="Wager detail page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Wagers</strong></td>
+    <td align="center"><strong>Wager Detail</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/friends.png">
+        <img src="./docs/screenshots/friends.png" alt="Friends page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/wallet.png">
+        <img src="./docs/screenshots/wallet.png" alt="Wallet page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Friends</strong></td>
+    <td align="center"><strong>Wallet</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/admin.png">
+        <img src="./docs/screenshots/admin.png" alt="Admin page" width="100%">
+      </a>
+    </td>
+    <td></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Admin</strong></td>
+    <td></td>
+  </tr>
+</table>
 
-![Wager detail](./docs/screenshots/wager_detail.png)
-
-### Friends
-
-![Friends](./docs/screenshots/friends.png)
-
-### Wallet
-
-![Wallet](./docs/screenshots/wallet.png)
-
-### Admin
-
-![Admin](./docs/screenshots/admin.png)
 
 
 # Tech Stack
