@@ -2,7 +2,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/db";
 import { Outcome, Transaction, Wallet, Wager } from "../db/schema";
 import { HttpError } from "../errors";
-import type { WalletHistoryItem, WalletOverview } from "../../../shared/src/schemas/wallet";
+import type { WalletHistoryItem, WalletOverview, WalletTransactionsQuery } from "../../../shared/src/schemas/wallet";
 
 function formatMoney(value: number): string {
   return value.toFixed(2);
@@ -83,6 +83,92 @@ export async function getWalletOverview(userId: number): Promise<WalletOverview>
   return {
     balance: wallet.balance ?? "0",
     history: rows.map(mapTransactionToHistoryItem),
+  };
+}
+
+export async function getWalletTransactionsPaginated(
+  userId: number,
+  query: WalletTransactionsQuery,
+): Promise<{
+  data: WalletHistoryItem[];
+  pagination: { total: number; limit: number; offset: number; hasMore: boolean };
+}> {
+  const [wallet] = await db
+    .select({
+      id: Wallet.id,
+    })
+    .from(Wallet)
+    .where(eq(Wallet.user_id, userId))
+    .limit(1);
+
+  if (!wallet) {
+    throw new HttpError(404, "Wallet not found");
+  }
+
+  const limit = Math.min(query.limit, 50);
+  const offset = Math.max(0, query.offset);
+
+  // Build the where clause based on filters and search
+  const whereConditions = [
+    eq(Transaction.wallet_id, wallet.id),
+    inArray(Transaction.type, ["bet", "payout", "deposit", "withdraw"]),
+  ];
+
+  if (query.type !== "ALL") {
+    whereConditions.push(eq(Transaction.type, query.type));
+  }
+
+  if (query.search.trim()) {
+    const searchPattern = `%${query.search.trim()}%`;
+    const displayName = sql<string>`COALESCE(
+      ${Wager.title},
+      ${Outcome.title},
+      CASE
+        WHEN ${Transaction.type} = 'deposit' THEN 'Wallet deposit'
+        WHEN ${Transaction.type} = 'withdraw' THEN 'Wallet withdrawal'
+        ELSE ${Transaction.type}
+      END
+    )`;
+    whereConditions.push(sql`${displayName} ILIKE ${searchPattern}`);
+  }
+
+  // Get total count
+  const countResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(Transaction)
+    .leftJoin(Outcome, eq(Transaction.outcome_id, Outcome.id))
+    .leftJoin(Wager, eq(Outcome.wager_id, Wager.id))
+    .where(and(...whereConditions));
+
+  const total = Number(countResult[0]?.count ?? 0);
+
+  // Get paginated data
+  const rows = await db
+    .select({
+      id: Transaction.id,
+      wagerId: Outcome.wager_id,
+      type: Transaction.type,
+      amount: Transaction.amount,
+      wagerName: Wager.title,
+      outcomeName: Outcome.title,
+      createdAt: Transaction.created_at,
+    })
+    .from(Transaction)
+    .leftJoin(Outcome, eq(Transaction.outcome_id, Outcome.id))
+    .leftJoin(Wager, eq(Outcome.wager_id, Wager.id))
+    .where(and(...whereConditions))
+    .orderBy(desc(Transaction.created_at))
+    .limit(limit)
+    .offset(offset);
+
+  return {
+    data: rows.map(mapTransactionToHistoryItem),
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    },
   };
 }
 

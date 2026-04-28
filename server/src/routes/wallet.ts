@@ -2,12 +2,19 @@ import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
 import { HttpError } from "../errors";
 import { ensureUserIsNotSuspended, ensureUserIsVerified } from "../services/wager-service";
-import { depositToWallet, getWalletOverview, withdrawFromWallet } from "../services/wallet-service";
+import {
+  depositToWallet,
+  getWalletOverview,
+  getWalletTransactionsPaginated,
+  withdrawFromWallet,
+} from "../services/wallet-service";
 import { getUserById } from "../services/user-service";
 import {
   getWalletResponseSchema,
   walletBalanceMutationRequestSchema,
   walletBalanceMutationResponseSchema,
+  walletTransactionsQuerySchema,
+  paginatedWalletTransactionsResponseSchema,
 } from "@pb138/shared/schemas/wallet";
 
 export const walletRoutes = new Elysia({ prefix: "/wallet" })
@@ -35,6 +42,12 @@ export const walletRoutes = new Elysia({ prefix: "/wallet" })
     const user = await getCurrentUser();
     const data = await getWalletOverview(user.id);
     return getWalletResponseSchema.parse({ data });
+  })
+  .get("/transactions", async ({ query, getCurrentUser }) => {
+    const user = await getCurrentUser();
+    const parsedQuery = walletTransactionsQuerySchema.parse(query);
+    const result = await getWalletTransactionsPaginated(user.id, parsedQuery);
+    return paginatedWalletTransactionsResponseSchema.parse(result);
   })
   .post("/deposit", async ({ body, getCurrentUser }) => {
     const user = await getCurrentUser();

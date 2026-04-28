@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { FriendsPagination } from "../components/ui/friends/friends-pagination";
 import { WalletBalanceActionDialog } from "../features/wallet/components/wallet-balance-action-dialog";
 import { WalletTransactionFilters } from "../features/wallet/components/wallet-transaction-filters";
 import { WalletHistoryItemCard } from "../features/wallet/components/wallet-history-item";
-import {
-  filterWalletTransactions,
-  WALLET_TRANSACTION_PAGE_SIZE,
-  type WalletTransactionTypeFilter,
-} from "../features/wallet/wallet-transactions";
+import { WALLET_TRANSACTION_PAGE_SIZE, type WalletTransactionTypeFilter } from "../features/wallet/wallet-transactions";
 import { validateWalletCreditInput } from "../features/wagers/utils";
 import { useAuth } from "../lib/auth-context";
-import type { WalletHistoryItem, WalletOverview } from "../../../shared/src/schemas/wallet";
+import { walletKeys } from "../api/wallet-query-options";
+import { fetchWalletTransactions } from "../api/wallet-api";
+import { Route } from "../routes/wallet";
+import { Loader2 } from "lucide-react";
+import type { WalletHistoryItem, WalletOverview, WalletTransactionsQuery } from "../../../shared/src/schemas/wallet";
 
 function formatMoney(value: string): string {
   const numericValue = Number(value);
@@ -54,36 +56,53 @@ async function extractErrorMessage(response: Response, fallback: string): Promis
 }
 
 export function WalletPage() {
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const { user } = useAuth();
+
   const [wallet, setWallet] = useState<WalletOverview | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [walletError, setWalletError] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<"deposit" | "withdraw" | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [transactionSearch, setTransactionSearch] = useState("");
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState<WalletTransactionTypeFilter>("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
   const walletActionsDisabled = isSuspended || isUnverified;
 
-  const filteredTransactions = useMemo(() => {
-    if (!wallet) {
-      return [];
-    }
+  // Fetch paginated transactions
+  const [searchInput, setSearchInput] = useState(() => (typeof search.search === "string" ? search.search : ""));
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    return filterWalletTransactions(wallet.history, transactionSearch, transactionTypeFilter);
-  }, [transactionSearch, transactionTypeFilter, wallet]);
+  const transactionsQuery = useQuery({
+    queryKey: walletKeys.transactions(search.page, search.type, search.search),
+    queryFn: () =>
+      fetchWalletTransactions({
+        page: search.page,
+        limit: WALLET_TRANSACTION_PAGE_SIZE,
+        type: (search.type as unknown) as WalletTransactionsQuery["type"],
+        search: typeof search.search === "string" ? search.search : undefined,
+      }),
+    staleTime: 30_000,
+  });
 
-  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / WALLET_TRANSACTION_PAGE_SIZE));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedTransactions = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * WALLET_TRANSACTION_PAGE_SIZE;
-    return filteredTransactions.slice(startIndex, startIndex + WALLET_TRANSACTION_PAGE_SIZE);
-  }, [filteredTransactions, safeCurrentPage]);
+  const lastTransactionsRef = useRef<WalletHistoryItem[] | null>(null);
+  const lastPaginationRef = useRef<{ total: number; limit: number; offset: number; hasMore: boolean } | null>(
+    null,
+  );
+
+  if (transactionsQuery.data) {
+    lastTransactionsRef.current = transactionsQuery.data.data;
+    lastPaginationRef.current = transactionsQuery.data.pagination;
+  }
+
+  const visibleTransactions = (transactionsQuery.data?.data ?? lastTransactionsRef.current ?? []) as WalletHistoryItem[];
+  const visiblePagination = transactionsQuery.data?.pagination ?? lastPaginationRef.current;
+
+  const totalPages = visiblePagination ? Math.ceil(visiblePagination.total / visiblePagination.limit) : 1;
+  const safeCurrentPage = Math.min(search.page, totalPages);
 
   const getAmountValidationMessage = (): string | null => {
     const amountValidationMessage = validateWalletCreditInput(amountInput);
@@ -105,13 +124,22 @@ export function WalletPage() {
   };
 
   const handleSearchChange = (value: string) => {
-    setTransactionSearch(value);
-    setCurrentPage(1);
+    setSearchInput(value);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      void navigate({
+        to: "/wallet",
+        search: { page: 1, type: search.type, search: value },
+      });
+    }, 300);
   };
 
   const handleTypeFilterChange = (value: WalletTransactionTypeFilter) => {
-    setTransactionTypeFilter(value);
-    setCurrentPage(1);
+    void navigate({
+      to: "/wallet",
+      search: { page: 1, type: value, search: search.search },
+    });
   };
 
   const closeModal = (force = false) => {
@@ -125,7 +153,10 @@ export function WalletPage() {
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    void navigate({
+      to: "/wallet",
+      search: { page, type: search.type, search: search.search },
+    });
   };
 
   const submitWalletAction = async (event: React.FormEvent) => {
@@ -172,6 +203,9 @@ export function WalletPage() {
           : current,
       );
 
+      // Refetch transactions to get the updated list
+      void transactionsQuery.refetch();
+
       closeModal(true);
     } catch (submitError) {
       setActionError(submitError instanceof Error ? submitError.message : "Unable to update wallet balance");
@@ -199,9 +233,9 @@ export function WalletPage() {
           return;
         }
 
-        setError(loadError instanceof Error ? loadError.message : "Unable to load wallet");
+        setWalletError(loadError instanceof Error ? loadError.message : "Unable to load wallet");
       } finally {
-        setIsLoading(false);
+        setWalletLoading(false);
       }
     }
 
@@ -209,17 +243,20 @@ export function WalletPage() {
     return () => controller.abort();
   }, []);
 
-  if (isLoading) {
+  if (walletLoading) {
     return <p className="text-slate-300">Loading wallet...</p>;
   }
 
-  if (error) {
-    return <p className="text-rose-300">{error}</p>;
+  if (walletError) {
+    return <p className="text-rose-300">{walletError}</p>;
   }
 
   if (!wallet) {
     return <p className="text-slate-300">Wallet not found.</p>;
   }
+
+  // Do not block rendering the entire page while transactions load.
+  // Transactions-specific loading/error states are handled inside the History card below.
 
   return (
     <div className="grid gap-4">
@@ -250,17 +287,17 @@ export function WalletPage() {
         <CardTitle>History</CardTitle>
         <div className="mt-4 grid gap-4">
           <WalletTransactionFilters
-            search={transactionSearch}
-            typeFilter={transactionTypeFilter}
+            search={searchInput}
+            typeFilter={search.type as WalletTransactionTypeFilter}
             onSearchChange={handleSearchChange}
             onTypeFilterChange={handleTypeFilterChange}
           />
 
           <div className="grid gap-3">
-            {filteredTransactions.length === 0 ? (
+            {visibleTransactions.length === 0 ? (
               <p className="text-sm text-slate-400">No wallet transactions match the current filters.</p>
             ) : (
-              paginatedTransactions.map((item) => (
+              visibleTransactions.map((item) => (
                 <WalletHistoryItemCard
                   key={item.id}
                   item={item}
@@ -269,20 +306,27 @@ export function WalletPage() {
               ))
             )}
           </div>
-
-          {filteredTransactions.length > 0 ? (
-            <div className="grid gap-3 pt-1">
-              <div className="text-center text-xs text-slate-500">
-                Showing {Math.min((safeCurrentPage - 1) * WALLET_TRANSACTION_PAGE_SIZE + 1, filteredTransactions.length)}-
-                {Math.min(safeCurrentPage * WALLET_TRANSACTION_PAGE_SIZE, filteredTransactions.length)} of {filteredTransactions.length}
+          <div className="relative">
+            {visibleTransactions.length > 0 && visiblePagination ? (
+              <div className="grid gap-3 pt-1">
+                <div className="text-center text-xs text-slate-500">
+                  Showing {Math.min((safeCurrentPage - 1) * WALLET_TRANSACTION_PAGE_SIZE + 1, visiblePagination.total)}-
+                  {Math.min(safeCurrentPage * WALLET_TRANSACTION_PAGE_SIZE, visiblePagination.total)} of {visiblePagination.total}
+                </div>
+                <FriendsPagination
+                  currentPage={safeCurrentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
-              <FriendsPagination
-                currentPage={safeCurrentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          ) : null}
+            ) : null}
+
+            {transactionsQuery.isFetching && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
+                <Loader2 className="h-8 w-8 animate-spin text-cyan-200" />
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 
