@@ -1,6 +1,18 @@
 import { useState, useEffect, useMemo } from "react";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 
+export type SuspensionUnit = "hours" | "days" | "months";
+
+export interface UserActions {
+  deleteUser: (user: UserSummary) => Promise<boolean>;
+  updateRole: (user: UserSummary, roleName: string) => Promise<boolean>;
+  suspendUser: (user: UserSummary, durationValue: number, durationUnit: SuspensionUnit) => Promise<boolean>;
+  unsuspendUser: (user: UserSummary) => Promise<boolean>;
+  resendVerification: (user: UserSummary) => Promise<boolean>;
+  resetPassword: (user: UserSummary) => Promise<boolean>;
+  refresh: () => Promise<void>;
+}
+
 export function useUsers() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +70,7 @@ export function useUsers() {
   const performAction = async (
     endpoint: string,
     method: string,
-    body?: any,
+    body?: Record<string, unknown>,
     successMessage?: string
   ) => {
     setFeedback(null);
@@ -69,7 +81,7 @@ export function useUsers() {
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data = await res.json().catch(() => ({}));
+      const data: { message?: string } = await res.json().catch(() => ({}));
       
       if (!res.ok) {
         setFeedback({ type: "error", message: data.message ?? "Action failed" });
@@ -79,7 +91,7 @@ export function useUsers() {
       setFeedback({ type: "success", message: successMessage ?? data.message ?? "Action successful" });
       await fetchUsers();
       return true;
-    } catch (e) {
+    } catch {
       setFeedback({ type: "error", message: "Network error occurred" });
       return false;
     }
@@ -91,7 +103,7 @@ export function useUsers() {
   const updateRole = (user: UserSummary, roleName: string) => 
     performAction(`/api/users/admin/users/${user.id}/role`, "PATCH", { roleName }, `Role updated for ${user.username}.`);
 
-  const suspendUser = (user: UserSummary, durationValue: number, durationUnit: string) => 
+  const suspendUser = (user: UserSummary, durationValue: number, durationUnit: SuspensionUnit) => 
     performAction(`/api/users/admin/users/${user.id}/suspend`, "PATCH", { durationValue, durationUnit }, `User ${user.username} suspended.`);
 
   const unsuspendUser = (user: UserSummary) => 
@@ -103,6 +115,16 @@ export function useUsers() {
   const resetPassword = (user: UserSummary) => 
     performAction(`/api/users/admin/users/${user.id}/reset-password`, "POST", undefined, `Password reset email sent to ${user.email}.`);
 
+  const actions: UserActions = {
+    deleteUser,
+    updateRole,
+    suspendUser,
+    unsuspendUser,
+    resendVerification,
+    resetPassword,
+    refresh: fetchUsers,
+  };
+
   return {
     users: filteredUsers,
     allUsers: users,
@@ -112,14 +134,6 @@ export function useUsers() {
     feedback,
     setFeedback,
     stats,
-    actions: {
-      deleteUser,
-      updateRole,
-      suspendUser,
-      unsuspendUser,
-      resendVerification,
-      resetPassword,
-      refresh: fetchUsers
-    }
+    actions,
   };
 }

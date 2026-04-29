@@ -18,7 +18,7 @@
     "db:migrate": "npm run db:migrate -w @pb138/server",
     "db:seed": "npm run db:seed -w @pb138/server",
     "cli:query": "npm run cli:query -w @pb138/server",
-    "setup": "tsx scripts/setup.ts",
+    "setup": "npx --yes tsx scripts/setup.ts",
     "server": "npm run start -w @pb138/server",
     "dev": "run-p client server"
   },
