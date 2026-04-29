@@ -1,13 +1,14 @@
 import { Input } from "../../../components/ui/input";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { UserActionMenu } from "./user-action-menu";
+import type { UserActions } from "../hooks/use-users";
 
 interface UserTableProps {
   users: UserSummary[];
   isLoading: boolean;
   query: string;
   onQueryChange: (query: string) => void;
-  actions: any;
+  actions: UserActions;
 }
 
 export function UserTable({ users, isLoading, query, onQueryChange, actions }: UserTableProps) {

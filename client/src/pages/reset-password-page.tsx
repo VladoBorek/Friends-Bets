@@ -37,8 +37,8 @@ export function ResetPasswordPage() {
       if (!res.ok) throw new Error(json.message || "Failed to request reset.");
 
       setSuccess(json.message || "Reset link sent if account exists.");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to request reset.");
     } finally {
       setIsLoading(false);
     }
@@ -66,11 +66,9 @@ export function ResetPasswordPage() {
       if (!res.ok) throw new Error(json.message || "Password reset failed.");
 
       setSuccess(json.message || "Password reset successful.");
-      window.setTimeout(() => {
-        void navigate({ to: "/login" });
-      }, 1500);
-    } catch (err: any) {
-      setError(err.message);
+      await navigate({ to: "/login", replace: true });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Password reset failed.");
     } finally {
       setIsLoading(false);
     }

@@ -11,18 +11,20 @@ export interface RouterContext {
   };
 }
 
+function RootRouteComponent() {
+  const location = useLocation();
+  const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
+  const isPublic = publicPaths.has(location.pathname);
+
+  if (isPublic) {
+    return <Outlet />;
+  }
+
+  return <RootLayout />;
+}
+
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: () => {
-    const location = useLocation();
-    const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
-    const isPublic = publicPaths.has(location.pathname);
-
-    if (isPublic) {
-      return <Outlet />;
-    }
-
-    return <RootLayout />;
-  },
+  component: RootRouteComponent,
   beforeLoad: async ({ context, location }) => {
     const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
     const isPublic = publicPaths.has(location.pathname);

@@ -3,19 +3,13 @@ import { Ellipsis, KeyRound, ShieldAlert, Trash2, UserRound, Users } from "lucid
 import { Button } from "../../../components/ui/button";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { useAuth } from "../../../lib/auth-context";
+import type { UserActions, SuspensionUnit } from "../hooks/use-users";
 
 interface UserActionMenuProps {
   user: UserSummary;
   index: number;
   status: "active" | "non-verified" | "suspended";
-  actions: {
-    deleteUser: (user: UserSummary) => void;
-    updateRole: (user: UserSummary, roleName: string) => void;
-    suspendUser: (user: UserSummary, durationValue: number, durationUnit: string) => void;
-    unsuspendUser: (user: UserSummary) => void;
-    resendVerification: (user: UserSummary) => void;
-    resetPassword: (user: UserSummary) => void;
-  };
+  actions: UserActions;
 }
 
 export function UserActionMenu({ user, index, status, actions }: UserActionMenuProps) {
@@ -23,7 +17,7 @@ export function UserActionMenu({ user, index, status, actions }: UserActionMenuP
   const [isOpen, setIsOpen] = useState(false);
   const [showSuspensionEditor, setShowSuspensionEditor] = useState(false);
   const [suspensionValue, setSuspensionValue] = useState("24");
-  const [suspensionUnit, setSuspensionUnit] = useState<"hours" | "days" | "months">("hours");
+  const [suspensionUnit, setSuspensionUnit] = useState<SuspensionUnit>("hours");
 
   const close = () => {
     setIsOpen(false);
@@ -120,7 +114,7 @@ export function UserActionMenu({ user, index, status, actions }: UserActionMenuP
                 />
                 <select
                   value={suspensionUnit}
-                  onChange={(e) => setSuspensionUnit(e.target.value as any)}
+                  onChange={(e) => setSuspensionUnit(e.target.value as SuspensionUnit)}
                   className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100"
                 >
                   <option value="hours">hours</option>
