@@ -21,16 +21,24 @@ import {
   ensureUserIsVerified,
   getWagerById,
   listBets,
-  listCategories,
   listComments,
   listWagers,
   placeBet,
   resolveWager,
 } from "../services/wager-service";
+import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  listCategoriesWithUsage,
+} from "../services/category";
 import { getUserById } from "../services/user";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
+});
+const createCategoryBodySchema = z.object({
+  name: z.string().min(1).max(80),
 });
 
 export const wagerRoutes = new Elysia({ prefix: "/wagers" })
@@ -78,6 +86,35 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
   .get("/categories", async () => {
     const data = await listCategories();
     return listCategoriesResponseSchema.parse({ data });
+  })
+  .get("/categories/admin", async ({ getCurrentUser }) => {
+    const user = await getCurrentUser();
+    if (user.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const data = await listCategoriesWithUsage();
+    return { data };
+  })
+  .post("/categories", async ({ body, getCurrentUser }) => {
+    const user = await getCurrentUser();
+    if (user.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedBody = createCategoryBodySchema.parse(body);
+    const data = await createCategory(parsedBody.name);
+    return { data };
+  })
+  .delete("/categories/:id", async ({ params, getCurrentUser }) => {
+    const user = await getCurrentUser();
+    if (user.roleName !== "ADMIN") {
+      throw new HttpError(403, "Admin privileges required");
+    }
+
+    const parsedParams = idParamsSchema.parse(params);
+    await deleteCategory(parsedParams.id);
+    return { message: "Category deleted successfully" };
   })
   .get("/:id", async ({ params, getOptionalCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);

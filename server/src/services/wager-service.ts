@@ -4,7 +4,6 @@ import { Bet, Category, Comment, Outcome, Transaction, User, Wallet, Wager, Wage
 import { HttpError } from "../errors";
 import type {
   Bet as BetType,
-  CategorySummary,
   CreateWagerRequest,
   PlaceBetRequest,
   ResolveWagerRequest,
@@ -275,16 +274,6 @@ export async function getWagerById(id: number, currentUserId?: number): Promise<
   }
 
   return detail;
-}
-
-export async function listCategories(): Promise<CategorySummary[]> {
-  return db
-    .select({
-      id: Category.id,
-      name: Category.name,
-    })
-    .from(Category)
-    .orderBy(asc(Category.name));
 }
 
 export async function createWager(input: CreateWagerRequest, createdById: number): Promise<WagerDetail> {
