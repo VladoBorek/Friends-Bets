@@ -43,6 +43,10 @@ export function formatMoney(value: string | number): string {
   return Number.isFinite(n) ? n.toFixed(2) : String(value);
 }
 
+export function formatCurrency(value: string | number): string {
+  return `$${formatMoney(value)}`;
+}
+
 export function toErrorMessage(error: unknown): string {
   if (error && typeof error === "object") {
     const v = error as { response?: { data?: unknown }; message?: unknown };

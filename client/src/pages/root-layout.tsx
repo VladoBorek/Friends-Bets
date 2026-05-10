@@ -1,9 +1,11 @@
 
 import { Link, Outlet, useRouter } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { AlertCircle, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Button } from "../components/ui/button";
+import { formatCurrency } from "../features/wagers/utils";
+import { useWalletOverview } from "../api/wallet-query-options";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
@@ -17,11 +19,38 @@ const placeholderNavItems = [{ label: "Friends & Groups" }] as const;
 export function RootLayout() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
+  const walletOverview = useWalletOverview(user?.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isResendLoading, setIsResendLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const isAdmin = user?.roleName === "ADMIN";
   const isVerified = user?.isVerified ?? false;
+
+  const renderWalletBalance = () => {
+    if (walletOverview.isLoading) {
+      return (
+        <div className="inline-flex items-center rounded-lg border border-transparent px-3 py-1.5 text-sm">
+          <div className="h-5 w-24 animate-pulse rounded bg-slate-800/80" />
+        </div>
+      );
+    }
+
+    if (walletOverview.error || !walletOverview.data?.data) {
+      return (
+        <div className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-sm text-rose-300">
+          <AlertCircle className="h-4 w-4" />
+          <span>{formatCurrency(0)}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="inline-flex items-center rounded-lg border border-cyan-400/35 bg-cyan-500/16 px-3 py-1.5 text-sm font-medium text-cyan-100">
+        <span>Balance</span>
+        <span className="ml-1.5 tabular-nums text-cyan-200">{formatCurrency(walletOverview.data.data.balance)}</span>
+      </div>
+    );
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -136,6 +165,7 @@ export function RootLayout() {
               </nav>
 
               <div className="inline-flex items-center gap-2">
+                {renderWalletBalance()}
                 {!isVerified && (
                   <Button
                     variant="secondary"
@@ -195,6 +225,7 @@ export function RootLayout() {
                 )}
               </nav>
               <div className="flex flex-col gap-2">
+                {renderWalletBalance()}
                 {!isVerified && (
                   <Button
                     variant="secondary"

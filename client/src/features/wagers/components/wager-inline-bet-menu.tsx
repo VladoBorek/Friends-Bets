@@ -1,8 +1,16 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
+import { useAuth } from "../../../lib/auth-context";
 import { toErrorMessage, validateBetInput } from "../utils";
+import {
+  applyWalletBalanceDelta,
+  publishWalletBalanceDelta,
+  publishWalletBalanceRefresh,
+  refreshWalletOverview,
+} from "../../../api/wallet-query-options";
 
 interface WagerInlineBetMenuProps {
   wagerId: number;
@@ -21,6 +29,8 @@ export function WagerInlineBetMenu({
   disabledMessage,
   onBetPlaced,
 }: WagerInlineBetMenuProps) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [betAmount, setBetAmount] = useState("");
   const [betError, setBetError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -43,7 +53,18 @@ export function WagerInlineBetMenu({
     }
 
     const amount = Number(betAmount);
+    const currentUserId = user?.id;
+    let optimisticApplied = false;
+
     setIsSubmitting(true);
+
+    if (typeof currentUserId === "number") {
+      optimisticApplied = applyWalletBalanceDelta(queryClient, currentUserId, -amount);
+      if (optimisticApplied) {
+        publishWalletBalanceDelta(currentUserId, -amount);
+      }
+    }
+
     try {
       const response = await fetch(`/api/wagers/${wagerId}/bets`, {
         method: "POST",
@@ -57,7 +78,19 @@ export function WagerInlineBetMenu({
       );
       setBetAmount("");
       await onBetPlaced?.();
+
+      if (typeof currentUserId === "number") {
+        void refreshWalletOverview(queryClient).catch((error: unknown) => {
+          console.error("[wallet-sync] Failed to refresh wallet balance after bet success", error);
+        });
+        publishWalletBalanceRefresh(currentUserId);
+      }
     } catch (submitError) {
+      if (optimisticApplied && typeof currentUserId === "number") {
+        applyWalletBalanceDelta(queryClient, currentUserId, amount);
+        publishWalletBalanceDelta(currentUserId, amount);
+      }
+
       setBetError(toErrorMessage(submitError));
     } finally {
       setIsSubmitting(false);

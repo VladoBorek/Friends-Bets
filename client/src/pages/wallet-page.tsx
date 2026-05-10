@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
@@ -8,18 +8,25 @@ import { WalletBalanceActionDialog } from "../features/wallet/components/wallet-
 import { WalletTransactionFilters } from "../features/wallet/components/wallet-transaction-filters";
 import { WalletHistoryItemCard } from "../features/wallet/components/wallet-history-item";
 import { WALLET_TRANSACTION_PAGE_SIZE, type WalletTransactionTypeFilter } from "../features/wallet/wallet-transactions";
-import { validateWalletCreditInput } from "../features/wagers/utils";
+import { formatCurrency, validateWalletCreditInput } from "../features/wagers/utils";
 import { useAuth } from "../lib/auth-context";
-import { walletKeys } from "../api/wallet-query-options";
+import {
+  publishWalletBalanceRefresh,
+  useWalletOverview,
+  walletKeys,
+} from "../api/wallet-query-options";
 import { fetchWalletTransactions } from "../api/wallet-api";
 import { Route } from "../routes/wallet";
 import { Loader2 } from "lucide-react";
-import type { WalletHistoryItem, WalletOverview, WalletTransactionsQuery } from "../../../shared/src/schemas/wallet";
+import { z } from "zod";
+import type {
+  WalletHistoryItem,
+  WalletOverview,
+  WalletTransactionsQuery,
+} from "../../../shared/src/schemas/wallet";
+import { walletBalanceMutationResponseSchema } from "../../../shared/src/schemas/wallet";
 
-function formatMoney(value: string): string {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue.toFixed(2) : value;
-}
+type WalletBalanceMutationResponse = z.infer<typeof walletBalanceMutationResponseSchema>;
 
 function formatTimestamp(value: string): string {
   const date = new Date(value);
@@ -58,15 +65,15 @@ async function extractErrorMessage(response: Response, fallback: string): Promis
 export function WalletPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-
-  const [wallet, setWallet] = useState<WalletOverview | null>(null);
-  const [walletLoading, setWalletLoading] = useState(true);
-  const [walletError, setWalletError] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<"deposit" | "withdraw" | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const walletQuery = useWalletOverview(user?.id);
+  const wallet = walletQuery.data?.data ?? null;
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
@@ -189,22 +196,39 @@ export function WalletPage() {
         throw new Error(await extractErrorMessage(response, "Unable to update wallet balance"));
       }
 
-      const json = (await response.json().catch(() => null)) as {
-        data?: { balance?: string; transaction?: WalletHistoryItem };
-      } | null;
+      const json = (await response.json().catch(() => null)) as WalletBalanceMutationResponse | null;
+      const nextBalance = json?.data?.balance;
+      const nextTransaction = json?.data?.transaction;
 
-      setWallet((current) =>
-        current
-          ? {
-              ...current,
-              balance: json?.data?.balance ?? current.balance,
-              history: json?.data?.transaction ? [json.data.transaction, ...current.history] : current.history,
-            }
-          : current,
-      );
+      if (user?.id && nextBalance) {
+        queryClient.setQueryData(walletKeys.overview(user.id), (current: { data: WalletOverview } | undefined) => {
+          const currentData = current?.data;
 
-      // Refetch transactions to get the updated list
-      void transactionsQuery.refetch();
+          if (!currentData) {
+            return {
+              data: {
+                balance: nextBalance,
+                history: nextTransaction ? [nextTransaction] : [],
+              },
+            };
+          }
+
+          return {
+            data: {
+              ...currentData,
+              balance: nextBalance,
+              history: nextTransaction ? [nextTransaction, ...currentData.history] : currentData.history,
+            },
+          };
+        });
+
+        publishWalletBalanceRefresh(user.id);
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: walletKeys.all }),
+        transactionsQuery.refetch(),
+      ]);
 
       closeModal(true);
     } catch (submitError) {
@@ -214,41 +238,12 @@ export function WalletPage() {
     }
   };
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadWallet() {
-      try {
-        const response = await fetch("/api/wallet/me", { signal: controller.signal });
-
-        if (!response.ok) {
-          throw new Error(await extractErrorMessage(response, "Unable to load wallet"));
-        }
-
-        const json = (await response.json().catch(() => null)) as { data?: WalletOverview } | null;
-
-        setWallet(json?.data ?? null);
-      } catch (loadError) {
-        if (loadError instanceof DOMException && loadError.name === "AbortError") {
-          return;
-        }
-
-        setWalletError(loadError instanceof Error ? loadError.message : "Unable to load wallet");
-      } finally {
-        setWalletLoading(false);
-      }
-    }
-
-    void loadWallet();
-    return () => controller.abort();
-  }, []);
-
-  if (walletLoading) {
+  if (walletQuery.isLoading) {
     return <p className="text-slate-300">Loading wallet...</p>;
   }
 
-  if (walletError) {
-    return <p className="text-rose-300">{walletError}</p>;
+  if (walletQuery.error) {
+    return <p className="text-rose-300">{walletQuery.error instanceof Error ? walletQuery.error.message : "Unable to load wallet"}</p>;
   }
 
   if (!wallet) {
@@ -265,7 +260,7 @@ export function WalletPage() {
         <CardDescription className="mt-2">
           Current balance and wager history affecting the active account.
         </CardDescription>
-        <div className="mt-4 text-3xl font-semibold text-cyan-200">{formatMoney(wallet.balance)}</div>
+        <div className="mt-4 text-3xl font-semibold text-cyan-200">{formatCurrency(wallet.balance)}</div>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={() => openModal("deposit")} disabled={walletActionsDisabled}>
             Deposit
