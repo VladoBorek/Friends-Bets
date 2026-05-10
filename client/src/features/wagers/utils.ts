@@ -44,7 +44,7 @@ export function formatMoney(value: string | number): string {
 }
 
 export function formatCurrency(value: string | number): string {
-  return `$${formatMoney(value)}`;
+  return `${formatMoney(value)}`;
 }
 
 export function toErrorMessage(error: unknown): string {
