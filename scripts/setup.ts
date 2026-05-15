@@ -26,13 +26,7 @@ interface Step {
 }
 
 const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-const bunCmd = process.platform === "win32" ? "bun.exe" : "bun";
 const dockerCmd = process.platform === "win32" ? "docker.exe" : "docker";
-
-async function getPackageManager(): Promise<"bun" | "npm"> {
-  // Prefer NPM for workspace operations as it's the primary package manager used here
-  return "npm";
-}
 
 const steps: Step[] = [
   {
@@ -139,22 +133,18 @@ async function ensurePostgresContainer(): Promise<void> {
   console.log(`${GREEN}✓ PostgreSQL container 'pb138' created and started${RESET}`);
 }
 
-async function runStep(step: Step, stepNumber: number, totalSteps: number, packageManager: "bun" | "npm"): Promise<boolean> {
+async function runStep(step: Step, stepNumber: number, totalSteps: number): Promise<boolean> {
   const prefix = `[${stepNumber}/${totalSteps}]`;
   console.log(`\n${BLUE}${prefix} ${step.name}${RESET}`);
   if (step.description) {
     console.log(`  ${YELLOW}→ ${step.description}${RESET}`);
   }
 
-  const cmd = step.cmd === "PACKAGE_MANAGER" ? (packageManager === "bun" ? bunCmd : npmCmd) : step.cmd;
+  const cmd = step.cmd === "PACKAGE_MANAGER" ? npmCmd : step.cmd;
   const args = [...step.args];
 
   if (step.cmd === "PACKAGE_MANAGER" && step.workspace) {
-    if (packageManager === "bun") {
-      args.push("--filter", step.workspace);
-    } else {
-      args.push("-w", step.workspace);
-    }
+    args.push("-w", step.workspace);
   }
 
   return new Promise((resolve) => {
@@ -195,8 +185,6 @@ async function main() {
   console.log(`${BLUE}  PB138 Full Project Setup${RESET}`);
   console.log(`${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}`);
 
-  const packageManager = await getPackageManager();
-  console.log(`${GREEN}✓ Using package manager: ${packageManager}${RESET}`);
 
   // Check .env exists
   const envPath = resolve(process.cwd(), ".env");
@@ -222,7 +210,7 @@ async function main() {
 
   let failed = false;
   for (let i = 0; i < steps.length; i++) {
-    const success = await runStep(steps[i], i + 1, steps.length, packageManager);
+    const success = await runStep(steps[i], i + 1, steps.length);
     if (!success) {
       failed = true;
       break;
