@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { WagerDetail } from "../../../shared/src/schemas/wager";
 import { Card, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -13,6 +14,7 @@ import { WagerInlineBetMenu } from "../features/wagers/components/wager-inline-b
 import { WagerOutcomeItem } from "../features/wagers/components/wager-outcome-item";
 import { formatMoney, toErrorMessage } from "../features/wagers/utils";
 import { useAuth } from "../lib/auth-context";
+import { publishWalletBalanceRefresh, refreshWalletOverview } from "../api/wallet-query-options";
 
 interface WagerDetailPageProps {
   wagerId: number;
@@ -20,6 +22,7 @@ interface WagerDetailPageProps {
 
 export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [detail, setDetail] = useState<WagerDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,6 +103,13 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       setShowResolveModal(false);
       setActionSuccess("Wager resolved — payouts processed.");
       await refreshDetail();
+
+      if (typeof user?.id === "number") {
+        void refreshWalletOverview(queryClient).catch((error: unknown) => {
+          console.error("[wallet-sync] Failed to refresh wallet balance after payout", error);
+        });
+        publishWalletBalanceRefresh(user.id);
+      }
     } catch (e) {
       setResolveError(toErrorMessage(e));
     } finally {

@@ -1,18 +1,16 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { BET_AMOUNT_ERROR_MESSAGE } from "../../../../../shared/src/schemas/wager";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { toErrorMessage } from "../utils";
-
-function validateBetAmount(value: string): string | null {
-  const trimmedValue = value.trim();
-  if (!trimmedValue) return BET_AMOUNT_ERROR_MESSAGE;
-  const amount = Number(trimmedValue);
-  if (!Number.isFinite(amount) || amount < 0.01) return BET_AMOUNT_ERROR_MESSAGE;
-  if (!Number.isInteger(amount * 100)) return BET_AMOUNT_ERROR_MESSAGE;
-  return null;
-}
+import { useAuth } from "../../../lib/auth-context";
+import { toErrorMessage, validateBetInput } from "../utils";
+import {
+  applyWalletBalanceDelta,
+  publishWalletBalanceDelta,
+  publishWalletBalanceRefresh,
+  refreshWalletOverview,
+} from "../../../api/wallet-query-options";
 
 interface WagerInlineBetMenuProps {
   wagerId: number;
@@ -31,6 +29,8 @@ export function WagerInlineBetMenu({
   disabledMessage,
   onBetPlaced,
 }: WagerInlineBetMenuProps) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [betAmount, setBetAmount] = useState("");
   const [betError, setBetError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -46,14 +46,25 @@ export function WagerInlineBetMenu({
       return;
     }
 
-    const validationMessage = validateBetAmount(betAmount);
+    const validationMessage = validateBetInput(betAmount);
     if (validationMessage) {
       setBetError(validationMessage);
       return;
     }
 
     const amount = Number(betAmount);
+    const currentUserId = user?.id;
+    let optimisticApplied = false;
+
     setIsSubmitting(true);
+
+    if (typeof currentUserId === "number") {
+      optimisticApplied = applyWalletBalanceDelta(queryClient, currentUserId, -amount);
+      if (optimisticApplied) {
+        publishWalletBalanceDelta(currentUserId, -amount);
+      }
+    }
+
     try {
       const response = await fetch(`/api/wagers/${wagerId}/bets`, {
         method: "POST",
@@ -67,7 +78,19 @@ export function WagerInlineBetMenu({
       );
       setBetAmount("");
       await onBetPlaced?.();
+
+      if (typeof currentUserId === "number") {
+        void refreshWalletOverview(queryClient).catch((error: unknown) => {
+          console.error("[wallet-sync] Failed to refresh wallet balance after bet success", error);
+        });
+        publishWalletBalanceRefresh(currentUserId);
+      }
     } catch (submitError) {
+      if (optimisticApplied && typeof currentUserId === "number") {
+        applyWalletBalanceDelta(queryClient, currentUserId, amount);
+        publishWalletBalanceDelta(currentUserId, amount);
+      }
+
       setBetError(toErrorMessage(submitError));
     } finally {
       setIsSubmitting(false);
@@ -98,7 +121,7 @@ export function WagerInlineBetMenu({
               setBetError(null);
               return;
             }
-            setBetError(validateBetAmount(nextValue));
+            setBetError(validateBetInput(nextValue));
           }}
           type="text"
           inputMode="decimal"

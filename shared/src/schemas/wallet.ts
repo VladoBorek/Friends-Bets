@@ -1,13 +1,36 @@
 import { z } from "zod";
+import { betAmountSchema } from "./wager";
 
 export const walletHistoryItemSchema = z.object({
   id: z.number().int(),
-  wagerId: z.number().int(),
+  wagerId: z.number().int().nullable(),
   wagerName: z.string(),
-  type: z.enum(["bet", "payout"]),
+  type: z.enum(["bet", "payout", "deposit", "withdraw"]),
   outcome: z.string(),
   walletImpact: z.string(),
   timestamp: z.string(),
+});
+
+const paginationQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(50).default(10),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+const paginationMetaSchema = z.object({
+  total: z.number().int().nonnegative(),
+  limit: z.number().int().positive(),
+  offset: z.number().int().nonnegative(),
+  hasMore: z.boolean(),
+});
+
+export const walletTransactionsQuerySchema = paginationQuerySchema.extend({
+  type: z.enum(["ALL", "bet", "payout", "deposit", "withdraw"]).default("ALL"),
+  search: z.string().trim().max(200).default(""),
+});
+
+export const paginatedWalletTransactionsResponseSchema = z.object({
+  data: z.array(walletHistoryItemSchema),
+  pagination: paginationMetaSchema,
 });
 
 export const walletOverviewSchema = z.object({
@@ -19,5 +42,28 @@ export const getWalletResponseSchema = z.object({
   data: walletOverviewSchema,
 });
 
+export const MAX_WALLET_OPERATION_AMOUNT = 10_000;
+export const WALLET_AMOUNT_ERROR_MESSAGE =
+  `Amount must be between 0.01 and ${MAX_WALLET_OPERATION_AMOUNT.toFixed(2)}.`;
+
+export const walletOperationAmountSchema = betAmountSchema.refine(
+  (value) => value <= MAX_WALLET_OPERATION_AMOUNT,
+  { message: WALLET_AMOUNT_ERROR_MESSAGE },
+);
+
+export const walletBalanceMutationRequestSchema = z.object({
+  amount: walletOperationAmountSchema,
+});
+
+export const walletBalanceMutationResponseSchema = z.object({
+  data: z.object({
+    balance: z.string(),
+    transaction: walletHistoryItemSchema,
+  }),
+});
+
 export type WalletHistoryItem = z.infer<typeof walletHistoryItemSchema>;
 export type WalletOverview = z.infer<typeof walletOverviewSchema>;
+export type WalletBalanceMutationRequest = z.infer<typeof walletBalanceMutationRequestSchema>;
+export type WalletTransactionsQuery = z.infer<typeof walletTransactionsQuerySchema>;
+export type PaginatedWalletTransactionsResponse = z.infer<typeof paginatedWalletTransactionsResponseSchema>;

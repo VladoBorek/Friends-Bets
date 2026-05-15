@@ -81,18 +81,21 @@ export const listCategoriesResponseSchema = z.object({
   data: z.array(categorySummarySchema),
 });
 
-export const BET_AMOUNT_ERROR_MESSAGE = "Bet amount must be at least 0.01.";
+export const MIN_CREDIT_AMOUNT = 0.01;
+export const BET_AMOUNT_ERROR_MESSAGE = `Bet amount must be at least ${MIN_CREDIT_AMOUNT.toFixed(2)}.`;
+
+export const betAmountSchema = z.coerce
+  .number()
+  .refine((value) => Number.isFinite(value) && value >= MIN_CREDIT_AMOUNT, {
+    message: BET_AMOUNT_ERROR_MESSAGE,
+  })
+  .refine((value) => Number.isInteger(value * 100), {
+    message: BET_AMOUNT_ERROR_MESSAGE,
+  });
 
 export const placeBetRequestSchema = z.object({
   outcomeId: z.coerce.number().int().positive(),
-  amount: z.coerce
-    .number()
-    .refine((value) => Number.isFinite(value) && value >= 0.01, {
-      message: BET_AMOUNT_ERROR_MESSAGE,
-    })
-    .refine((value) => Number.isInteger(value * 100), {
-      message: BET_AMOUNT_ERROR_MESSAGE,
-    }),
+  amount: betAmountSchema,
 });
 
 export const resolveWagerRequestSchema = z.object({
