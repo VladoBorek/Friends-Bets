@@ -1,8 +1,24 @@
+# CI/CD Pipeline
+#
+# Every push:        lint, unit-tests, build
+# On MR:            + integration-tests, e2e-tests
+# On merge to main: + deploy
+#
+# When a branch has an open MR, only the MR pipeline runs (no duplicate branch pipeline).
+# Read-only jobs use cache policy: pull to avoid unnecessary cache uploads.
+
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    - when: never
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+.cache_pull: &cache_pull
+  key: "${CI_PROJECT_PATH_SLUG}-${CI_COMMIT_REF_SLUG}-node24"
+  paths:
+    - node_modules/
+  policy: pull
 
 default:
   image: node:24
@@ -15,16 +31,53 @@ default:
     policy: pull-push
 
 stages:
-  - validate
+  - test
+  - build
+  - deploy
 
 lint:
-  stage: validate
+  stage: test
+  cache:
+    <<: *cache_pull
   script:
     - npm ci
     - npm run lint
 
+unit-tests: # TODO
+  stage: test
+  cache:
+    <<: *cache_pull
+  script:
+    - echo "TODO"
+
+integration-tests: # TODO
+  stage: test
+  cache:
+    <<: *cache_pull
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - echo "TODO"
+
+e2e-tests: # TODO
+  stage: test
+  cache:
+    <<: *cache_pull
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - echo "TODO"
+
 build:
-  stage: validate
+  stage: build
   script:
     - npm ci
+    - npm run api:generate
     - npm run build
+
+deploy: # TODO
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - echo "TODO"
