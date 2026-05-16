@@ -1,5 +1,5 @@
 import type { Bet as BetType } from "@pb138/shared/schemas/wager";
-import type { BetDetailRow, BetRow } from "../../repositories/bet-repository";
+import type { BetDetailRow, BetRow } from "../../../repositories/bet-repository";
 import { formatMoney, parseMoney } from "../wager-utils";
 
 export type WagerBet = {

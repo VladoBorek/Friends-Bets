@@ -4,7 +4,7 @@ import { Outcome, Transaction, Wallet, Wager } from "../db/schema";
 
 export type WalletRow = {
   id: number;
-  balance: string;
+  balance: string | null;
 };
 
 export type TransactionRow = {

@@ -2,7 +2,7 @@ import type {
   WagerDetail,
   WagerSummary,
 } from "@pb138/shared/schemas/wager";
-import type { WagerBaseRow, WagerOutcomeRow } from "../../repositories/wager-repository";
+import type { WagerBaseRow, WagerOutcomeRow } from "../../../repositories/wager-repository";
 import { calculateOdds, formatMoney, normalizeStatus, parseMoney } from "../wager-utils";
 
 export function mapWagerOutcome(row: WagerOutcomeRow, totalPool: number) {
