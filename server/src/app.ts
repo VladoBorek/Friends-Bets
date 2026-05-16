@@ -7,7 +7,7 @@ import { ZodError } from "zod";
 import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
 import { wagerRoutes } from "./routes/wagers";
-import { userRoutes } from "./routes/users";
+import { userRoutes } from "./routes/user";
 import { emailRoutes } from "./routes/email";
 import { walletRoutes } from "./routes/wallet";
 import { friendRoutes } from "./routes/friends";

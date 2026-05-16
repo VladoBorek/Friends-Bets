@@ -1,5 +1,4 @@
-
-import { Link, Outlet, useRouter } from "@tanstack/react-router";
+import { Link, Outlet, useLocation, useRouter } from "@tanstack/react-router";
 import { AlertCircle, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
@@ -16,6 +15,19 @@ const routeNavItems = [
 ] as const;
 
 const placeholderNavItems = [{ label: "Friends & Groups" }] as const;
+
+export function RootRouteComponent() {
+  const location = useLocation();
+  const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
+  const isPublic = publicPaths.has(location.pathname);
+
+  if (isPublic) {
+    return <Outlet />;
+  }
+
+  return <RootLayout />;
+}
+
 export function RootLayout() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();

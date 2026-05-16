@@ -8,7 +8,7 @@ import {
   getWalletTransactionsPaginated,
   withdrawFromWallet,
 } from "../services/wallet-service";
-import { getUserById } from "../services/user-service";
+import { getUserById } from "../services/user";
 import {
   getWalletResponseSchema,
   walletBalanceMutationRequestSchema,
