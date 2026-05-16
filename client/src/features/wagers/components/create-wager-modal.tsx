@@ -124,7 +124,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
           <DialogTitle>Create Wager</DialogTitle>
         </DialogHeader>
 
-        <form className="grid gap-4 px-6 py-5" onSubmit={onSubmit}>
+        <form className="grid gap-4 overflow-y-auto px-6 py-5" onSubmit={onSubmit}>
           <div className="grid gap-2">
             <label className="text-sm text-slate-300" htmlFor="modal-title">Title</label>
             <Input id="modal-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
