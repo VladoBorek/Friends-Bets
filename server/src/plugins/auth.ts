@@ -11,7 +11,7 @@ export const authPlugin = new Elysia({ name: "auth-plugin" }).use(
   }),
 );
 
-type AuthContextLike = {
+export type AuthContextLike = {
   jwt: {
     verify(token: string): Promise<unknown>;
   };
