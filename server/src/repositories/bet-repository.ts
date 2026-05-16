@@ -79,6 +79,16 @@ export async function listBetsByWager(wagerId: number): Promise<BetDetailRow[]> 
     .orderBy(desc(Bet.amount));
 }
 
+export async function wagerHasBets(wagerId: number): Promise<boolean> {
+  const [row] = await db
+    .select({ id: Bet.id })
+    .from(Bet)
+    .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
+    .where(eq(Outcome.wager_id, wagerId))
+    .limit(1);
+  return row !== undefined;
+}
+
 export async function listWinningBets(
   outcomeId: number,
   wagerId: number,

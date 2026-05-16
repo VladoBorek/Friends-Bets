@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/db";
-import { WagerVisibility } from "../db/schema";
+import { User, WagerVisibility } from "../db/schema";
 
 export async function findWagerVisibility(
   wagerId: number,
@@ -13,6 +13,20 @@ export async function findWagerVisibility(
     .limit(1);
 
   return row ?? null;
+}
+
+export async function deleteWagerVisibilities(wagerId: number): Promise<void> {
+  await db.delete(WagerVisibility).where(eq(WagerVisibility.wager_id, wagerId));
+}
+
+export async function listWagerVisibilityUsers(
+  wagerId: number,
+): Promise<{ id: number; username: string; email: string }[]> {
+  return db
+    .select({ id: User.id, username: User.username, email: User.email })
+    .from(WagerVisibility)
+    .innerJoin(User, eq(WagerVisibility.user_id, User.id))
+    .where(eq(WagerVisibility.wager_id, wagerId));
 }
 
 export async function createWagerVisibilities(

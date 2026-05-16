@@ -3,13 +3,15 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { WagerDetail } from "../../../../shared/src/schemas/wager";
 import { Card, CardTitle } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
 import { BetsSection } from "../../features/wagers/components/bets-section";
 import { CommentSection } from "../../features/wagers/components/comment-section";
+import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
+import { DeleteWagerModal } from "../../features/wagers/components/delete-wager-modal";
 import { EndBettingModal } from "../../features/wagers/components/end-betting-modal";
 import { PoolBar } from "../../features/wagers/components/pool-bar";
 import { ResolveWagerModal } from "../../features/wagers/components/resolve-wager-modal";
 import { StatusBadge } from "../../features/wagers/components/status-badge";
+import { WagerActionsMenu } from "../../features/wagers/components/wager-actions-menu";
 import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
 import { formatMoney, toErrorMessage } from "../../features/wagers/utils";
@@ -37,6 +39,11 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [betsRefreshKey, setBetsRefreshKey] = useState(0);
@@ -126,6 +133,21 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     }
   };
 
+  const handleDelete = async () => {
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/wagers/${wagerId}`, { method: "DELETE" });
+      const json = (await response.json().catch(() => null)) as { message?: string } | null;
+      if (!response.ok) throw new Error(json?.message ?? "Failed to delete wager");
+      void navigate({ to: "/wagers" });
+    } catch (e) {
+      setDeleteError(toErrorMessage(e));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) return <p className="text-slate-300">Loading wager…</p>;
   if (pageError || !detail) return <p className="text-rose-300">{pageError ?? "Wager not found."}</p>;
 
@@ -143,8 +165,8 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
             ? "Account must be verified to perform this action."
             : "Betting is unavailable for this account.";
 
-  const canEndBetting = isCreator && detail.status === "OPEN";
-  const canResolve = isCreator && detail.status !== "CLOSED";
+  const canEndBetting = detail.status === "OPEN";
+  const canResolve = detail.status !== "CLOSED";
 
   return (
     <div className="mx-auto grid max-w-3xl gap-5">
@@ -167,39 +189,26 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       <Card className="grid gap-4">
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-semibold leading-snug text-slate-100">{detail.title}</h1>
-          <StatusBadge status={detail.status} />
+          <div className="flex items-center gap-2">
+            <StatusBadge status={detail.status} />
+            {isCreator && (
+              <WagerActionsMenu
+                wager={detail}
+                canEndBetting={canEndBetting}
+                canResolve={canResolve}
+                onEndBetting={() => { setEndBettingError(null); setShowEndBettingModal(true); }}
+                onResolve={() => { setResolveError(null); setShowResolveModal(true); }}
+                onEdit={() => setShowEditModal(true)}
+                onDelete={() => { setDeleteError(null); setShowDeleteModal(true); }}
+              />
+            )}
+          </div>
         </div>
 
         {detail.description && (
           <p className="text-sm leading-relaxed text-slate-400">{detail.description}</p>
         )}
 
-        {(canEndBetting || canResolve) && (
-          <div className="flex flex-wrap gap-2">
-            {canEndBetting && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => { setEndBettingError(null); setShowEndBettingModal(true); }}
-                className="border border-amber-500/40 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15"
-              >
-                End Betting
-              </Button>
-            )}
-            {canResolve && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => { setResolveError(null); setShowResolveModal(true); }}
-                className="border border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15"
-              >
-                Resolve Wager
-              </Button>
-            )}
-          </div>
-        )}
         {actionSuccess && <p className="text-sm text-emerald-300">{actionSuccess}</p>}
 
         <div className="flex flex-wrap gap-6 border-t border-slate-800 pt-4">
@@ -298,6 +307,23 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         onConfirm={(id) => void handleResolve(id)}
         isLoading={isResolving}
         error={resolveError}
+      />
+
+      <CreateWagerModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        onCreated={() => {}}
+        editingWager={detail}
+        onEdited={() => void refreshDetail()}
+      />
+
+      <DeleteWagerModal
+        open={showDeleteModal}
+        onOpenChange={(open) => { setShowDeleteModal(open); if (!open) setDeleteError(null); }}
+        wagerTitle={detail.title}
+        onConfirm={() => void handleDelete()}
+        isLoading={isDeleting}
+        error={deleteError}
       />
     </div>
   );

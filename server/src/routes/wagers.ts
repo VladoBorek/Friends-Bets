@@ -17,7 +17,10 @@ import {
   listCategoriesForQuery,
   getWagerById,
   listWagers,
+  listWagerInvitations,
   createWager,
+  updateWager,
+  deleteWager,
   closeWagerBetting,
   resolveWager,
   placeBet,
@@ -129,6 +132,25 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const parsedBody = createWagerRequestSchema.parse(body);
     const data = await createWager(parsedBody, creator.id);
     return createWagerResponseSchema.parse({ data });
+  })
+  .patch("/:id", async ({ params, body, getCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const parsedBody = createWagerRequestSchema.parse(body);
+    const user = await getCurrentUser();
+    const data = await updateWager(parsedParams.id, parsedBody, user.id);
+    return getWagerResponseSchema.parse({ data });
+  })
+  .delete("/:id", async ({ params, getCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const user = await getCurrentUser();
+    await deleteWager(parsedParams.id, user.id);
+    return { message: "Wager deleted successfully" };
+  })
+  .get("/:id/invitations", async ({ params, getCurrentUser }) => {
+    const parsedParams = idParamsSchema.parse(params);
+    const user = await getCurrentUser();
+    const data = await listWagerInvitations(parsedParams.id, user.id);
+    return { data };
   })
   .post("/:id/bets", async ({ params, body, getCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);

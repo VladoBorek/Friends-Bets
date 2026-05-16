@@ -170,6 +170,22 @@ export async function createWager(input: {
   return wager.id;
 }
 
+export async function updateWagerFields(
+  wagerId: number,
+  input: { title: string; description: string | null; categoryId: number; isPublic: boolean },
+): Promise<void> {
+  await db.update(Wager).set({
+    title: input.title,
+    description: input.description,
+    category_id: input.categoryId,
+    is_public: input.isPublic,
+  }).where(eq(Wager.id, wagerId));
+}
+
+export async function deleteWagerById(wagerId: number): Promise<void> {
+  await db.delete(Wager).where(eq(Wager.id, wagerId));
+}
+
 export async function updateWagerStatus(
   wagerId: number,
   status: "OPEN" | "PENDING" | "CLOSED",
