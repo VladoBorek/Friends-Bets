@@ -36,8 +36,13 @@ const groupMemberParamsSchema = z.object({
   userId: z.coerce.number().int().positive(),
 });
 
+// All group routes require an authenticated user.
+// Services decide whether the user is just a member or must be an owner.
+
 export const groupRoutes = new Elysia({ prefix: "/groups" })
   .use(authPlugin)
+
+  // Lists only groups where the current user is a member.
   .get("", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const query = groupsListQuerySchema.parse(context.query);
@@ -45,6 +50,8 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return paginatedGroupsResponseSchema.parse(result);
   })
+
+  // Creates a new group and automatically makes the current user its owner.
   .post("", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const body = createGroupRequestSchema.parse(context.body);
@@ -52,6 +59,8 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupResponseSchema.parse({ data });
   })
+
+  // Joins an existing group by invite code.
   .post("/join", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const body = joinGroupByInviteRequestSchema.parse(context.body);
@@ -59,6 +68,8 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupResponseSchema.parse({ data });
   })
+
+  // Returns group details, but only if the current user belongs to it.
   .get("/:groupId", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
@@ -66,6 +77,8 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupResponseSchema.parse({ data });
   })
+
+  // Updates group metadata. The service enforces owner-only access.
   .patch("/:groupId", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
@@ -74,6 +87,8 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupResponseSchema.parse({ data });
   })
+
+  // Deletes the whole group. The service prevents non-owners from doing this.
   .delete("/:groupId", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
@@ -82,6 +97,9 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupActionResponseSchema.parse({ message: "Group deleted successfully" });
   })
+
+  // Allows the current user to leave the group.
+  // The service prevents the last owner from leaving.
   .post("/:groupId/leave", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
@@ -90,6 +108,9 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupActionResponseSchema.parse({ message: "Left group successfully" });
   })
+
+  // Lists group members with pagination.
+  // Only existing members can view the member list.
   .get("/:groupId/members", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
@@ -98,6 +119,8 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return paginatedGroupMembersResponseSchema.parse(result);
   })
+
+  // Adds a user to the group. The service enforces owner-only access.
   .post("/:groupId/members", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
@@ -106,6 +129,9 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupMemberResponseSchema.parse({ data });
   })
+
+  // Removes a user from the group.
+  // The service prevents removing the last owner.
   .delete("/:groupId/members/:userId", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupMemberParamsSchema.parse(context.params);
