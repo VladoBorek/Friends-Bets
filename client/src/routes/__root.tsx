@@ -1,5 +1,5 @@
-import { createRootRouteWithContext, Outlet, redirect, useLocation } from "@tanstack/react-router";
-import { RootLayout } from "../pages/root-layout";
+import { createRootRouteWithContext, redirect } from "@tanstack/react-router";
+import { RootRouteComponent } from "../pages/root-layout";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 
 export interface RouterContext {
@@ -9,18 +9,6 @@ export interface RouterContext {
     refreshUser: () => Promise<UserSummary | null>;
     logout: () => Promise<void>;
   };
-}
-
-function RootRouteComponent() {
-  const location = useLocation();
-  const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
-  const isPublic = publicPaths.has(location.pathname);
-
-  if (isPublic) {
-    return <Outlet />;
-  }
-
-  return <RootLayout />;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
