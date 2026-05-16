@@ -15,6 +15,10 @@ const paginationMetaSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const updateGroupMemberRoleRequestSchema = z.object({
+  role: groupRoleSchema,
+});
+
 export const groupsListQuerySchema = paginationQuerySchema.extend({
   q: z.string().trim().max(100).default(""),
 });
@@ -85,6 +89,7 @@ export const groupActionResponseSchema = z.object({
 });
 
 export type GroupRole = z.infer<typeof groupRoleSchema>;
+export type UpdateGroupMemberRoleRequest = z.infer<typeof updateGroupMemberRoleRequestSchema>;
 export type GroupsListQuery = z.infer<typeof groupsListQuerySchema>;
 export type GroupMembersListQuery = z.infer<typeof groupMembersListQuerySchema>;
 export type CreateGroupRequest = z.infer<typeof createGroupRequestSchema>;

@@ -57,7 +57,7 @@ export async function addGroupMember(
   groupId: number,
   input: AddGroupMemberRequest,
 ) {
-  await requireGroupOwner(groupId, currentUserId);
+  await requireGroupMember(groupId, currentUserId);
 
   const user = await userRepository.findUserById(input.userId);
 
