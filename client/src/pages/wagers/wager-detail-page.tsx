@@ -1,21 +1,21 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { WagerDetail } from "../../../shared/src/schemas/wager";
-import { Card, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { BetsSection } from "../features/wagers/components/bets-section";
-import { CommentSection } from "../features/wagers/components/comment-section";
-import { EndBettingModal } from "../features/wagers/components/end-betting-modal";
-import { PoolBar } from "../features/wagers/components/pool-bar";
-import { ResolveWagerModal } from "../features/wagers/components/resolve-wager-modal";
-import { StatusBadge } from "../features/wagers/components/status-badge";
-import { WagerInlineBetMenu } from "../features/wagers/components/wager-inline-bet-menu";
-import { WagerOutcomeItem } from "../features/wagers/components/wager-outcome-item";
-import { formatMoney, toErrorMessage } from "../features/wagers/utils";
-import { useAuth } from "../lib/auth-context";
-import { publishWalletBalanceRefresh, refreshWalletOverview } from "../api/wallet-query-options";
-import { friendsKeys } from "../api/friends-query-options";
+import type { WagerDetail } from "../../../../shared/src/schemas/wager";
+import { Card, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { BetsSection } from "../../features/wagers/components/bets-section";
+import { CommentSection } from "../../features/wagers/components/comment-section";
+import { EndBettingModal } from "../../features/wagers/components/end-betting-modal";
+import { PoolBar } from "../../features/wagers/components/pool-bar";
+import { ResolveWagerModal } from "../../features/wagers/components/resolve-wager-modal";
+import { StatusBadge } from "../../features/wagers/components/status-badge";
+import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
+import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
+import { formatMoney, toErrorMessage } from "../../features/wagers/utils";
+import { useAuth } from "../../lib/auth-context";
+import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet-query-options";
+import { friendsKeys } from "../../api/friends-query-options";
 
 interface WagerDetailPageProps {
   wagerId: number;
