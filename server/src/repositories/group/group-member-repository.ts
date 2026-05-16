@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne, sql, sum } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql, sum, desc } from "drizzle-orm";
 import type { GroupRole } from "@pb138/shared/schemas/groups";
 import { db } from "../../db/db";
 import { GroupMembership, Outcome, Role, Transaction, User, Wager, Wallet } from "../../db/schema";
@@ -43,30 +43,6 @@ function memberSearchCondition(query: string) {
   return sql`lower(${User.username}) like ${pattern} or lower(${User.email}) like ${pattern}`;
 }
 
-async function getMemberNetPnlByUserId(groupId: number, userIds: number[]) {
-  if (userIds.length === 0) {
-    return new Map<number, string>();
-  }
-
-  const rows = await db
-    .select({
-      userId: Wallet.user_id,
-      netPnl: sum(Transaction.amount),
-    })
-    .from(Transaction)
-    .innerJoin(Wallet, eq(Wallet.id, Transaction.wallet_id))
-    .innerJoin(Outcome, eq(Outcome.id, Transaction.outcome_id))
-    .innerJoin(Wager, eq(Wager.id, Outcome.wager_id))
-    .where(and(eq(Wager.group_id, groupId), inArray(Wallet.user_id, userIds)))
-    .groupBy(Wallet.user_id);
-
-  return new Map(
-    rows
-      .filter((row): row is { userId: number; netPnl: string | null } => row.userId !== null)
-      .map((row) => [row.userId, row.netPnl ?? "0"]),
-  );
-}
-
 export async function findMembership(
   groupId: number,
   userId: number,
@@ -96,7 +72,14 @@ export async function listGroupMembers(
   limit: number,
   offset: number,
 ): Promise<GroupMemberRow[]> {
-  const members = await db
+  const netPnl = sql<string>`
+    COALESCE(
+      SUM(${Transaction.amount}) FILTER (WHERE ${Wager.group_id} = ${groupId}),
+      0
+    )
+  `;
+
+  return db
     .select({
       membershipId: GroupMembership.id,
       groupRole: GroupMembership.role,
@@ -108,25 +91,34 @@ export async function listGroupMembers(
       isVerified: User.is_verified,
       suspendedUntil: User.suspended_until,
       createdAt: User.created_at,
+      netPnl,
     })
     .from(GroupMembership)
     .innerJoin(User, eq(User.id, GroupMembership.user_id))
     .innerJoin(Role, eq(Role.id, User.role_id))
+    .leftJoin(Wallet, eq(Wallet.user_id, User.id))
+    .leftJoin(Transaction, eq(Transaction.wallet_id, Wallet.id))
+    .leftJoin(Outcome, eq(Outcome.id, Transaction.outcome_id))
+    .leftJoin(Wager, eq(Wager.id, Outcome.wager_id))
     .where(and(eq(GroupMembership.group_id, groupId), memberSearchCondition(query)))
-    .orderBy(asc(User.username), asc(User.id))
+    .groupBy(
+      GroupMembership.id,
+      GroupMembership.role,
+      GroupMembership.joined_at,
+      User.id,
+      User.username,
+      User.email,
+      Role.name,
+      User.is_verified,
+      User.suspended_until,
+      User.created_at,
+    )
+    .orderBy(desc(netPnl), asc(User.username), asc(User.id))
     .limit(limit)
     .offset(offset);
-
-  const netPnlByUserId = await getMemberNetPnlByUserId(
-    groupId,
-    members.map((member) => member.id),
-  );
-
-  return members.map((member) => ({
-    ...member,
-    netPnl: netPnlByUserId.get(member.id) ?? "0",
-  }));
 }
+
+
 export async function addGroupMember(
   groupId: number,
   userId: number,

@@ -56,9 +56,6 @@ export function GroupsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-100">Groups</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Manage private groups, members, and group activity.
-          </p>
         </div>
 
         <Button type="button" onClick={() => setIsCreateOpen(true)} className="gap-2">
