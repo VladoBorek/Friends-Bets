@@ -7,7 +7,7 @@ import {
   getWalletOverview,
   getWalletTransactionsPaginated,
   withdrawFromWallet,
-} from "../services/wallet-service";
+} from "../services/wallet";
 import { getUserById } from "../services/user";
 import {
   getWalletResponseSchema,
