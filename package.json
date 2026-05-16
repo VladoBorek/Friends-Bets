@@ -13,7 +13,7 @@
     "build": "npm run build -w @pb138/client && npm run build -w @pb138/server",
     "lint": "npm run lint -w @pb138/client && npm run lint -w @pb138/server && eslint scripts",
     "preview": "npm run preview -w @pb138/client",
-    "test": "npm run test -w @pb138/client",
+    "test": "npm run test -w @pb138/client && npm run test -w @pb138/server",
     "api:generate": "npm run api:generate -w @pb138/client",
     "db:generate": "npm run db:generate -w @pb138/server",
     "db:migrate": "npm run db:migrate -w @pb138/server",

@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test": "vitest run",
     "start": "npx tsx src/index.ts",
     "build": "tsc --noEmit",
     "lint": "eslint src scripts",
