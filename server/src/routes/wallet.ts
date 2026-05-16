@@ -1,13 +1,13 @@
 import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
 import { HttpError } from "../errors";
-import { ensureUserIsNotSuspended, ensureUserIsVerified } from "../services/wager-service";
+import { ensureUserIsNotSuspended, ensureUserIsVerified } from "../services/wagers";
 import {
   depositToWallet,
   getWalletOverview,
   getWalletTransactionsPaginated,
   withdrawFromWallet,
-} from "../services/wallet-service";
+} from "../services/wallet";
 import { getUserById } from "../services/user";
 import {
   getWalletResponseSchema,

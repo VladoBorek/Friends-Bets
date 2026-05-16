@@ -1,15 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import type { WagerSummary } from "../../../shared/src/schemas/wager";
-import { Card, CardDescription, CardTitle } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import { CreateWagerModal } from "../features/wagers/components/create-wager-modal";
-import { StatusBadge } from "../features/wagers/components/status-badge";
-import { WagerInlineBetMenu } from "../features/wagers/components/wager-inline-bet-menu";
-import { WagerOutcomeItem } from "../features/wagers/components/wager-outcome-item";
-import { formatMoney } from "../features/wagers/utils";
-import { useAuth } from "../lib/auth-context";
+import type { WagerSummary } from "@pb138/shared/schemas/wager";
+import { Card, CardDescription, CardTitle } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
+import { StatusBadge } from "../../features/wagers/components/status-badge";
+import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
+import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
+import { formatMoney } from "../../features/wagers/utils";
+import { useAuth } from "../../lib/auth-context";
 
 type StatusFilter = "ALL" | "OPEN" | "PENDING" | "CLOSED";
 type InvolvementFilter = "ALL" | "MINE" | "MY_BETS";

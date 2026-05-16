@@ -14,25 +14,25 @@ import {
 } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../errors";
 import {
-  closeWagerBetting,
-  createComment,
-  createWager,
-  ensureUserIsNotSuspended,
-  ensureUserIsVerified,
+  listCategoriesForQuery,
   getWagerById,
+  listWagers,
+  createWager,
+  closeWagerBetting,
+  resolveWager,
+  placeBet,
   listBets,
   listComments,
-  listWagers,
-  placeBet,
-  resolveWager,
-} from "../services/wager-service";
+  createComment,
+  ensureUserIsVerified,
+  ensureUserIsNotSuspended,
+} from "../services/wagers";
+import { getUserById } from "../services/user";
 import {
   createCategory,
   deleteCategory,
-  listCategories,
   listCategoriesWithUsage,
 } from "../services/category";
-import { getUserById } from "../services/user";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -84,7 +84,7 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     return listWagersResponseSchema.parse({ data });
   })
   .get("/categories", async () => {
-    const data = await listCategories();
+    const data = await listCategoriesForQuery();
     return listCategoriesResponseSchema.parse({ data });
   })
   .get("/categories/admin", async ({ getCurrentUser }) => {
