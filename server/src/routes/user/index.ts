@@ -11,7 +11,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
     new Elysia()
       .derive((context) => {
         return {
-          getCurrentUser: () => getAuthenticatedUser(context as AuthContextLike)
+          getCurrentUser: () => getAuthenticatedUser(context as unknown as AuthContextLike)
         };
       })
       .use(adminRoutes)
