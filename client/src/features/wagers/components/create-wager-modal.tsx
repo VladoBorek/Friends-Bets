@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../components/ui/dialog";
+import { FormItem } from "../../../components/ui/form-item";
 import { Input } from "../../../components/ui/input";
 import { Switch } from "../../../components/ui/switch";
 import { Textarea } from "../../../components/ui/textarea";
@@ -125,22 +126,19 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
         </DialogHeader>
 
         <form className="grid gap-4 overflow-y-auto px-6 py-5" onSubmit={onSubmit}>
-          <div className="grid gap-2">
-            <label className="text-sm text-slate-300" htmlFor="modal-title">Title</label>
+          <FormItem label="Title" htmlFor="modal-title">
             <Input id="modal-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
+          </FormItem>
 
-          <div className="grid gap-2">
-            <label className="text-sm text-slate-300" htmlFor="modal-description">Description</label>
+          <FormItem label="Description" htmlFor="modal-description">
             <Textarea
               id="modal-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
+          </FormItem>
 
-          <div className="grid gap-2">
-            <label className="text-sm text-slate-300" htmlFor="modal-category">Category</label>
+          <FormItem label="Category" htmlFor="modal-category">
             <select
               id="modal-category"
               value={selectedCategoryId}
@@ -152,7 +150,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-          </div>
+          </FormItem>
 
           <div className="grid gap-2">
             <label className="text-sm text-slate-300">
