@@ -38,40 +38,60 @@ export const Wallet = pgTable("wallet", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-export const Group = pgTable("group", {
-  id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  invite_code: varchar("invite_code"),
-  created_at: timestamp("created_at").defaultNow(),
-});
+export const Group = pgTable(
+  "group",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name").notNull(),
+    description: text("description"),
+    invite_code: varchar("invite_code"),
+    created_at: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("group_invite_code_unique").on(table.invite_code),
+    index("group_created_at_idx").on(table.created_at),
+  ],
+);
 
-export const GroupMembership = pgTable("group_membership", {
-  id: serial("id").primaryKey(),
-  user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
-  group_id: integer("group_id").references(() => Group.id, { onDelete: "cascade" }).notNull(),
-  role: varchar("role").notNull(), // OWNER, MEMBER
-  joined_at: timestamp("joined_at").defaultNow(),
-});
-
+export const GroupMembership = pgTable(
+  "group_membership",
+  {
+    id: serial("id").primaryKey(),
+    user_id: integer("user_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+    group_id: integer("group_id").references(() => Group.id, { onDelete: "cascade" }).notNull(),
+    role: varchar("role").notNull(),
+    joined_at: timestamp("joined_at").defaultNow(),
+  },
+  (table) => [
+    check("group_membership_role_check", sql`${table.role} in ('OWNER', 'MEMBER')`),
+    uniqueIndex("group_membership_user_group_unique").on(table.user_id, table.group_id),
+    index("group_membership_user_idx").on(table.user_id),
+    index("group_membership_group_idx").on(table.group_id),
+  ],
+);
 export const Category = pgTable("category", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull(),
 });
 
-export const Wager = pgTable("wager", {
-  id: serial("id").primaryKey(),
-  title: varchar("title").notNull(),
-  description: text("description"),
-  status: varchar("status").default("OPEN"), // OPEN, PENDING, CLOSED
-  category_id: integer("category_id").references(() => Category.id).notNull(),
-  created_by_id: integer("created_by_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
-  is_public: boolean("is_public").default(false),
-  created_at: timestamp("created_at").defaultNow(),
-  // Extended UI fields
-  pool: varchar("pool"),
-},
-  (table) => [index("wager_status_created_at_idx").on(table.status, table.created_at)],
+export const Wager = pgTable(
+  "wager",
+  {
+    id: serial("id").primaryKey(),
+    title: varchar("title").notNull(),
+    description: text("description"),
+    status: varchar("status").default("OPEN"),
+    category_id: integer("category_id").references(() => Category.id).notNull(),
+    created_by_id: integer("created_by_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+    group_id: integer("group_id").references(() => Group.id, { onDelete: "set null" }),
+    is_public: boolean("is_public").default(false),
+    created_at: timestamp("created_at").defaultNow(),
+    pool: varchar("pool"),
+  },
+  (table) => [
+    index("wager_status_created_at_idx").on(table.status, table.created_at),
+    index("wager_group_status_idx").on(table.group_id, table.status),
+  ],
 );
 
 export const WagerVisibility = pgTable("wager_visibility", {
