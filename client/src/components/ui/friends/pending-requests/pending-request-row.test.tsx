@@ -9,8 +9,8 @@ function makeRequest(overrides: Record<string, unknown> = {}) {
     status: "PENDING" as const,
     createdAt: "2024-01-01T00:00:00Z",
     respondedAt: null,
-    requester: { id: 10, username: "alice", email: "alice@example.com" },
-    addressee: { id: 20, username: "bob", email: "bob@example.com" },
+    requester: { id: 10, username: "alice", email: "alice@example.com", roleName: null, createdAt: null },
+    addressee: { id: 20, username: "bob", email: "bob@example.com", roleName: null, createdAt: null },
     ...overrides,
   };
 }

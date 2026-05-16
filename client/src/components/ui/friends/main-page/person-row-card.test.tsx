@@ -8,6 +8,8 @@ function makeFriend(overrides: Record<string, unknown> = {}) {
     id: 1,
     username: "johndoe",
     email: "john@example.com",
+    roleName: null,
+    createdAt: null,
     stats: {
       totalWagers: 10,
       wins: 6,

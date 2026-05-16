@@ -8,6 +8,8 @@ function makeCandidate(overrides: Record<string, unknown> = {}) {
     id: 42,
     username: "johndoe",
     email: "john@example.com",
+    roleName: null,
+    createdAt: null,
     relationshipState: "AVAILABLE" as const,
     friendshipId: null,
     ...overrides,

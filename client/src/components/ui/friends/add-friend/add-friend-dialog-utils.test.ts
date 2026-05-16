@@ -26,7 +26,7 @@ describe("buildButtonLabel", () => {
 
 describe("filterUsers", () => {
   function makeUser(id: number, username: string, email: string) {
-    return { id, username, email, relationshipState: "AVAILABLE" as const, friendshipId: null };
+    return { id, username, email, roleName: null, createdAt: null, relationshipState: "AVAILABLE" as const, friendshipId: null };
   }
 
   const users = [
