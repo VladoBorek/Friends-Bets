@@ -16,13 +16,13 @@ import {
   updateUserRole,
 } from "../../services/user";
 import { HttpError } from "../../errors";
-import { getAuthenticatedUser, authPlugin } from "../../plugins/auth";
+import { getAuthenticatedUser, authPlugin, type AuthContextLike } from "../../plugins/auth";
 
 const userIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-async function ensureAdmin(context: any) {
+async function ensureAdmin(context: AuthContextLike) {
   const user = await getAuthenticatedUser(context);
   if (user.roleName !== "ADMIN") {
     throw new HttpError(403, "Admin privileges required");

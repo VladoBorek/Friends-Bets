@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { authPlugin, getAuthenticatedUser } from "../../plugins/auth";
+import { authPlugin, getAuthenticatedUser, type AuthContextLike } from "../../plugins/auth";
 import { authRoutes } from "./auth-routes";
 import { adminRoutes } from "./admin-routes";
 import { profileRoutes } from "./profile-routes";
@@ -11,7 +11,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
     new Elysia()
       .derive((context) => {
         return {
-          getCurrentUser: () => getAuthenticatedUser(context as any)
+          getCurrentUser: () => getAuthenticatedUser(context as AuthContextLike)
         };
       })
       .use(adminRoutes)
