@@ -1,6 +1,5 @@
-// client/src/components/ui/groups/group-detail-dialog.tsx
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
@@ -91,9 +90,7 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
         >
           <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
             <Card className="rounded-2xl border-slate-800 bg-slate-950/45 p-4">
-              <p className="text-sm text-slate-400">{group.description ?? "No description yet."}</p>
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-2xl font-semibold text-slate-100">{group.memberCount}</p>
                   <p className="text-xs text-slate-500">members</p>
@@ -104,10 +101,15 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
                 </div>
               </div>
 
+              <div className="mt-5 border-t border-slate-800 pt-5">
+                <p className="text-sm text-slate-400">Your net P/L</p>
+                <p className="mt-2 font-mono text-2xl font-semibold text-slate-100">{group.netPnl}</p>
+              </div>
+
               <div className="mt-5 flex flex-col gap-2">
                 <Button type="button" onClick={() => setIsInviteOpen(true)} className="gap-2">
                   <UserPlus className="h-4 w-4" />
-                  Invite User
+                  Invite Friend
                 </Button>
 
                 <Button
@@ -163,21 +165,13 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
                 </div>
               )}
 
-              <FriendsPagination
-                currentPage={memberPage}
-                totalPages={totalPages}
-                onPageChange={setMemberPage}
-              />
+              <FriendsPagination currentPage={memberPage} totalPages={totalPages} onPageChange={setMemberPage} />
             </section>
           </div>
         </FriendsDialogShell>
       </Dialog>
 
-      <InviteGroupMemberDialog
-        groupId={group.id}
-        open={isInviteOpen}
-        onOpenChange={setIsInviteOpen}
-      />
+      <InviteGroupMemberDialog groupId={group.id} open={isInviteOpen} onOpenChange={setIsInviteOpen} />
     </>
   );
 }

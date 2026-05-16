@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import type { GroupMemberSummary } from "@pb138/shared/schemas/groups";
+import { cn } from "../../../lib/utils";
 import { Button } from "../button";
 
 type GroupMemberRowProps = {
@@ -16,6 +17,13 @@ function getInitials(username: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+function getMoneyTone(value: string) {
+  const numericValue = Number(value);
+  if (numericValue > 0) return "text-emerald-300";
+  if (numericValue < 0) return "text-rose-300";
+  return "text-slate-300";
 }
 
 export function GroupMemberRow({
@@ -42,19 +50,25 @@ export function GroupMemberRow({
         </div>
       </div>
 
-      {canRemove ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={isRemoving}
-          onClick={() => onRemove(member.id)}
-          className="shrink-0 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
-          aria-label={`Remove ${member.username}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      ) : null}
+      <div className="flex shrink-0 items-center gap-3">
+        <span className={cn("font-mono text-sm font-semibold", getMoneyTone(member.netPnl))}>
+          {member.netPnl}
+        </span>
+
+        {canRemove ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isRemoving}
+            onClick={() => onRemove(member.id)}
+            className="text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
+            aria-label={`Remove ${member.username}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
