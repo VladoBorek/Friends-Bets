@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseMoney, formatMoney, calculatePayout, calculateOdds } from "./money";
+import { parseMoney, formatMoney, calculatePayout, calculateOdds } from "./wager-utils";
 
 describe("parseMoney", () => {
   it("returns a number value unchanged", () => {
