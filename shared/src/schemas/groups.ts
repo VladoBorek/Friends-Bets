@@ -50,6 +50,12 @@ export const joinGroupByInviteRequestSchema = z.object({
   inviteCode: z.string().trim().min(1).max(120),
 });
 
+export const groupPreviewMemberSchema = z.object({
+  id: z.number().int(),
+  username: z.string(),
+  netPnl: z.string(),
+});
+
 export const groupSummarySchema = z.object({
   id: z.number().int(),
   name: z.string(),
@@ -59,6 +65,7 @@ export const groupSummarySchema = z.object({
   memberCount: z.number().int().nonnegative(),
   activeWagerCount: z.number().int().nonnegative(),
   netPnl: z.string(),
+  topMembers: z.array(groupPreviewMemberSchema),
   createdAt: z.string().nullable(),
 });
 
@@ -101,3 +108,4 @@ export type AddGroupMemberRequest = z.infer<typeof addGroupMemberRequestSchema>;
 export type JoinGroupByInviteRequest = z.infer<typeof joinGroupByInviteRequestSchema>;
 export type GroupSummary = z.infer<typeof groupSummarySchema>;
 export type GroupMemberSummary = z.infer<typeof groupMemberSummarySchema>;
+export type GroupPreviewMember = z.infer<typeof groupPreviewMemberSchema>;

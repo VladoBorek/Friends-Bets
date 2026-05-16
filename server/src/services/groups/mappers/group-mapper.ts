@@ -22,10 +22,14 @@ export function mapGroupSummary(row: GroupRow): GroupSummary {
     memberCount: row.memberCount,
     activeWagerCount: row.activeWagerCount,
     netPnl: formatSignedMoney(row.netPnl),
+    topMembers: row.topMembers.map((member) => ({
+      id: member.id,
+      username: member.username,
+      netPnl: formatSignedMoney(member.netPnl),
+    })),
     createdAt: row.createdAt?.toISOString() ?? null,
   };
 }
-
 export function mapGroupMemberSummary(row: GroupMemberRow): GroupMemberSummary {
   return {
     id: row.id,

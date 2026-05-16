@@ -78,6 +78,7 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
 
   const pagination = membersQuery.data?.pagination ?? null;
   const members = membersQuery.data?.data ?? [];
+  const memberCount = pagination?.total ?? group.memberCount;
   const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
 
   return (
@@ -85,14 +86,14 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
       <Dialog open={open} onOpenChange={onOpenChange}>
         <FriendsDialogShell
           title={group.name}
-          contentClassName="sm:max-w-5xl"
-          bodyClassName="max-h-[calc(85vh-88px)] overflow-y-auto"
-        >
-          <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
-            <Card className="rounded-2xl border-slate-800 bg-slate-950/45 p-4">
+          contentClassName="w-[calc(100vw-1rem)] sm:max-w-5xl"
+          bodyClassName="max-h-[calc(100vh-7rem)] overflow-y-auto lg:overflow-hidden"
+          >
+          <div className="grid gap-4 lg:max-h-[calc(85vh-88px)] lg:grid-cols-[18rem_minmax(0,1fr)] lg:overflow-hidden">
+            <Card className="flex min-h-0 flex-col rounded-2xl border-slate-800 bg-slate-950/45 p-4 lg:min-h-[28rem]">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-2xl font-semibold text-slate-100">{group.memberCount}</p>
+                  <p className="text-2xl font-semibold text-slate-100">{memberCount}</p>
                   <p className="text-xs text-slate-500">members</p>
                 </div>
                 <div>
@@ -135,41 +136,45 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
               </div>
             </Card>
 
-            <section className="flex min-w-0 flex-col gap-3">
-              <div className="flex items-center justify-between text-sm text-slate-400">
-                <span>{pagination?.total ?? group.memberCount} members</span>
+            <section className="flex min-h-0 min-w-0 flex-col gap-3">
+              <div className="flex shrink-0 items-center justify-between text-sm text-slate-400">
+                <span>{memberCount} members</span>
                 <span>
                   Page {memberPage} / {totalPages}
                 </span>
               </div>
 
-              {membersQuery.isLoading ? (
-                <Card className="rounded-2xl border-slate-800 p-4 text-sm text-slate-400">
-                  Loading members...
-                </Card>
-              ) : membersQuery.isError ? (
-                <Card className="rounded-2xl border-rose-500/20 bg-rose-500/5 p-4 text-sm text-rose-200">
-                  {membersQuery.error instanceof Error ? membersQuery.error.message : "Unable to load members."}
-                </Card>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {members.map((member) => (
-                    <GroupMemberRow
-                      key={member.id}
-                      member={member}
-                      canRemove={Boolean(canManage && member.id !== user?.id)}
-                      isRemoving={removingUserId === member.id}
-                      onRemove={(userId) => removeMemberMutation.mutate(userId)}
-                    />
-                  ))}
-                </div>
-              )}
+              <div className="min-h-0 lg:max-h-[34rem] lg:flex-1 lg:overflow-y-auto lg:pr-2">
+                {membersQuery.isLoading ? (
+                  <Card className="rounded-2xl border-slate-800 p-4 text-sm text-slate-400">
+                    Loading members...
+                  </Card>
+                ) : membersQuery.isError ? (
+                  <Card className="rounded-2xl border-rose-500/20 bg-rose-500/5 p-4 text-sm text-rose-200">
+                    {membersQuery.error instanceof Error ? membersQuery.error.message : "Unable to load members."}
+                  </Card>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {members.map((member) => (
+                      <GroupMemberRow
+                        key={member.id}
+                        member={member}
+                        canRemove={Boolean(canManage && member.id !== user?.id)}
+                        isRemoving={removingUserId === member.id}
+                        onRemove={(userId) => removeMemberMutation.mutate(userId)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              <FriendsPagination currentPage={memberPage} totalPages={totalPages} onPageChange={setMemberPage} />
+              <div className="shrink-0">
+                <FriendsPagination currentPage={memberPage} totalPages={totalPages} onPageChange={setMemberPage} />
+              </div>
             </section>
           </div>
-        </FriendsDialogShell>
-      </Dialog>
+      </FriendsDialogShell>
+    </Dialog>
 
       <InviteGroupMemberDialog groupId={group.id} open={isInviteOpen} onOpenChange={setIsInviteOpen} />
     </>

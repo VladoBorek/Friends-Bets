@@ -45,7 +45,6 @@ export async function getGroup(currentUserId: number, groupId: number) {
   return mapGroupSummary(group);
 }
 
-
 export async function createGroup(currentUserId: number, input: CreateGroupRequest) {
   const group = await groupRepository.createGroup({
     name: input.name,
@@ -65,14 +64,14 @@ export async function createGroup(currentUserId: number, input: CreateGroupReque
     ),
   );
 
-  return mapGroupSummary({
-    ...group,
-    currentUserRole: "OWNER",
-    memberCount: 1 + uniqueMemberIds.length,
-    activeWagerCount: 0,
-  });
-}
+  const createdGroup = await groupRepository.findGroupForUser(group.id, currentUserId);
 
+  if (!createdGroup) {
+    throw new HttpError(404, "Group not found");
+  }
+
+  return mapGroupSummary(createdGroup);
+}
 export async function updateGroup(
   currentUserId: number,
   groupId: number,

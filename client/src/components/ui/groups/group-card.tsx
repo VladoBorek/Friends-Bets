@@ -1,5 +1,5 @@
 import { MoreHorizontal, Trophy, UsersRound } from "lucide-react";
-import type { GroupSummary } from "@pb138/shared/schemas/groups";
+import type { GroupPreviewMember, GroupSummary } from "@pb138/shared/schemas/groups";
 import { cn } from "../../../lib/utils";
 
 type GroupCardProps = {
@@ -15,8 +15,13 @@ function getMoneyTone(value: string) {
   return "text-slate-300";
 }
 
+function buildPreviewRows(topMembers: GroupPreviewMember[]) {
+  return Array.from({ length: 3 }, (_, index) => topMembers[index] ?? null);
+}
+
 export function GroupCard({ group, isSelected, onClick }: GroupCardProps) {
   const isOwner = group.currentUserRole === "OWNER";
+  const previewRows = buildPreviewRows(group.topMembers);
 
   return (
     <button type="button" onClick={onClick} className="group h-full w-full text-left">
@@ -46,13 +51,9 @@ export function GroupCard({ group, isSelected, onClick }: GroupCardProps) {
                 ) : null}
               </div>
 
-              <p className="mt-1 text-sm text-slate-400">
-                {group.memberCount} members · {group.activeWagerCount} active wagers
-              </p>
+              <p className="mt-1 text-sm text-slate-400">{group.memberCount} members</p>
             </div>
           </div>
-
-          <MoreHorizontal className="h-5 w-5 shrink-0 text-slate-500" />
         </div>
 
         <div className="mt-8">
@@ -69,19 +70,22 @@ export function GroupCard({ group, isSelected, onClick }: GroupCardProps) {
               </span>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-semibold text-slate-100">Active wagers</span>
-              <span className="font-mono text-sm font-semibold text-emerald-300">
-                {group.activeWagerCount}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-semibold text-slate-100">Members</span>
-              <span className="font-mono text-sm font-semibold text-slate-100">
-                {group.memberCount}
-              </span>
-            </div>
+            {previewRows.map((member, index) => (
+              <div key={member?.id ?? `empty-${index}`} className="flex h-5 items-center justify-between gap-4">
+                {member ? (
+                  <>
+                    <span className="truncate text-sm font-semibold text-slate-100">
+                      {index + 1}. {member.username}
+                    </span>
+                    <span className={cn("font-mono text-sm font-semibold", getMoneyTone(member.netPnl))}>
+                      {member.netPnl}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm text-slate-600">No member yet</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </article>
