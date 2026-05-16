@@ -1,7 +1,7 @@
 import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
 import { HttpError } from "../errors";
-import { ensureUserIsNotSuspended, ensureUserIsVerified } from "../services/wager-service";
+import { ensureUserIsNotSuspended, ensureUserIsVerified } from "../services/wagers/wager-validation";
 import {
   depositToWallet,
   getWalletOverview,
