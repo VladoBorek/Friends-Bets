@@ -1,3 +1,4 @@
+// client/src/components/ui/groups/group-detail-dialog.tsx
 import { useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { deleteGroup, leaveGroup } from "../../../api/groups/groups-api";
 import { removeGroupMember } from "../../../api/groups/group-members-api";
 import { groupsKeys, groupsQueries } from "../../../api/groups/groups-query-options";
 import { useAuth } from "../../../lib/auth-context";
+import { cn } from "../../../lib/utils";
 import { Button } from "../button";
 import { Card } from "../card";
 import { Dialog } from "../dialog";
@@ -14,7 +16,6 @@ import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
 import { FriendsPagination } from "../friends/friends-pagination";
 import { GroupMemberRow } from "./group-member-row";
 import { InviteGroupMemberDialog } from "./invite-group-member-dialog";
-import { cn } from "../../../lib/utils";
 
 type GroupDetailDialogProps = {
   group: GroupSummary | null;
@@ -96,11 +97,11 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
       <Dialog open={open} onOpenChange={onOpenChange}>
         <FriendsDialogShell
           title={group.name}
-          contentClassName="w-[calc(100vw-1rem)] sm:max-w-5xl"
-          bodyClassName="max-h-[calc(100vh-7rem)] overflow-y-auto lg:overflow-hidden"
-          >
-          <div className="grid gap-4 lg:max-h-[calc(85vh-88px)] lg:grid-cols-[18rem_minmax(0,1fr)] lg:overflow-hidden">
-            <Card className="flex min-h-0 flex-col rounded-2xl border-slate-800 bg-slate-950/45 p-4 lg:min-h-[28rem]">
+          contentClassName="w-[calc(100vw-1rem)] max-h-[calc(100dvh-2rem)] sm:max-w-5xl"
+          bodyClassName="max-h-[calc(100dvh-8rem)] overflow-y-auto xl:overflow-hidden"
+        >
+          <div className="flex flex-col gap-4 xl:h-[calc(100dvh-12rem)] xl:min-h-0 xl:flex-row">
+            <Card className="flex shrink-0 flex-col rounded-2xl border-slate-800 bg-slate-950/45 p-4 xl:w-72">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-2xl font-semibold text-slate-100">{memberCount}</p>
@@ -148,7 +149,7 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
               </div>
             </Card>
 
-            <section className="flex min-h-0 min-w-0 flex-col gap-3">
+            <section className="flex min-w-0 flex-col gap-3 xl:min-h-0 xl:flex-1">
               <div className="flex shrink-0 items-center justify-between text-sm text-slate-400">
                 <span>{memberCount} members</span>
                 <span>
@@ -156,7 +157,7 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
                 </span>
               </div>
 
-              <div className="min-h-0 lg:max-h-[34rem] lg:flex-1 lg:overflow-y-auto lg:pr-2">
+              <div className="xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-2">
                 {membersQuery.isLoading ? (
                   <Card className="rounded-2xl border-slate-800 p-4 text-sm text-slate-400">
                     Loading members...
@@ -180,13 +181,13 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
                 )}
               </div>
 
-              <div className="shrink-0">
+              <div className="shrink-0 pb-2">
                 <FriendsPagination currentPage={memberPage} totalPages={totalPages} onPageChange={setMemberPage} />
               </div>
             </section>
           </div>
-      </FriendsDialogShell>
-    </Dialog>
+        </FriendsDialogShell>
+      </Dialog>
 
       <InviteGroupMemberDialog groupId={group.id} open={isInviteOpen} onOpenChange={setIsInviteOpen} />
     </>

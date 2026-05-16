@@ -1,4 +1,4 @@
-import { MoreHorizontal, Trophy, UsersRound } from "lucide-react";
+import { Trophy, UsersRound } from "lucide-react";
 import type { GroupPreviewMember, GroupSummary } from "@pb138/shared/schemas/groups";
 import { cn } from "../../../lib/utils";
 
