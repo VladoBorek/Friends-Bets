@@ -1,6 +1,6 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql, sum } from "drizzle-orm";
 import { db } from "../../db/db";
-import { Group, GroupMembership, Wager } from "../../db/schema";
+import { Group, GroupMembership, Outcome, Transaction, Wager, Wallet } from "../../db/schema";
 
 export type GroupRow = {
   id: number;
@@ -10,6 +10,7 @@ export type GroupRow = {
   currentUserRole: string;
   memberCount: number;
   activeWagerCount: number;
+  netPnl: string;
   createdAt: Date | null;
 };
 
@@ -27,6 +28,31 @@ function groupSearchCondition(query: string) {
 
   return sql`lower(${Group.name}) like ${`%${normalized}%`}`;
 }
+
+async function getCurrentUserNetPnlByGroupId(userId: number, groupIds: number[]) {
+  if (groupIds.length === 0) {
+    return new Map<number, string>();
+  }
+
+  const rows = await db
+    .select({
+      groupId: Wager.group_id,
+      netPnl: sum(Transaction.amount),
+    })
+    .from(Transaction)
+    .innerJoin(Wallet, eq(Wallet.id, Transaction.wallet_id))
+    .innerJoin(Outcome, eq(Outcome.id, Transaction.outcome_id))
+    .innerJoin(Wager, eq(Wager.id, Outcome.wager_id))
+    .where(and(eq(Wallet.user_id, userId), inArray(Wager.group_id, groupIds)))
+    .groupBy(Wager.group_id);
+
+  return new Map(
+    rows
+      .filter((row): row is { groupId: number; netPnl: string | null } => row.groupId !== null)
+      .map((row) => [row.groupId, row.netPnl ?? "0"]),
+  );
+}
+
 
 export async function findGroupById(groupId: number) {
   const [row] = await db
@@ -64,7 +90,7 @@ export async function listGroupsForUser(
   limit: number,
   offset: number,
 ): Promise<GroupRow[]> {
-  return db
+  const groups = await db
     .select({
       ...groupSelect,
       currentUserRole: GroupMembership.role,
@@ -81,6 +107,16 @@ export async function listGroupsForUser(
     .orderBy(desc(Group.created_at), desc(Group.id))
     .limit(limit)
     .offset(offset);
+
+  const netPnlByGroupId = await getCurrentUserNetPnlByGroupId(
+    userId,
+    groups.map((group) => group.id),
+  );
+
+  return groups.map((group) => ({
+    ...group,
+    netPnl: netPnlByGroupId.get(group.id) ?? "0",
+  }));
 }
 
 export async function findGroupForUser(groupId: number, userId: number): Promise<GroupRow | null> {
@@ -100,7 +136,15 @@ export async function findGroupForUser(groupId: number, userId: number): Promise
     .groupBy(Group.id, Group.name, Group.description, Group.invite_code, Group.created_at, GroupMembership.role)
     .limit(1);
 
-  return rows[0] ?? null;
+  const group = rows[0];
+  if (!group) return null;
+
+  const netPnlByGroupId = await getCurrentUserNetPnlByGroupId(userId, [group.id]);
+
+  return {
+    ...group,
+    netPnl: netPnlByGroupId.get(group.id) ?? "0",
+  };
 }
 
 export async function createGroup(input: {

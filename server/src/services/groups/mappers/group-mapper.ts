@@ -21,6 +21,7 @@ export function mapGroupSummary(row: GroupRow): GroupSummary {
     currentUserRole: normalizeGroupRole(row.currentUserRole),
     memberCount: row.memberCount,
     activeWagerCount: row.activeWagerCount,
+    netPnl: formatSignedMoney(row.netPnl),
     createdAt: row.createdAt?.toISOString() ?? null,
   };
 }
@@ -36,6 +37,15 @@ export function mapGroupMemberSummary(row: GroupMemberRow): GroupMemberSummary {
     createdAt: row.createdAt?.toISOString() ?? null,
     membershipId: row.membershipId,
     groupRole: normalizeGroupRole(row.groupRole),
+    netPnl: formatSignedMoney(row.netPnl),
     joinedAt: row.joinedAt?.toISOString() ?? null,
   };
+}
+
+function formatSignedMoney(value: string | number | null | undefined): string {
+  const numericValue = Number(value ?? 0);
+  if (!Number.isFinite(numericValue)) return "0.00";
+
+  const fixed = numericValue.toFixed(2);
+  return numericValue > 0 ? `+${fixed}` : fixed;
 }

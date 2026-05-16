@@ -15,6 +15,7 @@ const paginationMetaSchema = z.object({
   hasMore: z.boolean(),
 });
 
+
 export const updateGroupMemberRoleRequestSchema = z.object({
   role: groupRoleSchema,
 });
@@ -57,6 +58,7 @@ export const groupSummarySchema = z.object({
   currentUserRole: groupRoleSchema,
   memberCount: z.number().int().nonnegative(),
   activeWagerCount: z.number().int().nonnegative(),
+  netPnl: z.string(),
   createdAt: z.string().nullable(),
 });
 
@@ -64,6 +66,7 @@ export const groupMemberSummarySchema = userSummarySchema.extend({
   membershipId: z.number().int(),
   groupRole: groupRoleSchema,
   joinedAt: z.string().nullable(),
+  netPnl: z.string(),
 });
 
 export const paginatedGroupsResponseSchema = z.object({
