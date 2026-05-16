@@ -1,4 +1,4 @@
-import { MoreHorizontal, UsersRound } from "lucide-react";
+import { MoreHorizontal, Trophy, UsersRound } from "lucide-react";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
 import { cn } from "../../../lib/utils";
 
@@ -8,18 +8,24 @@ type GroupCardProps = {
   onClick: () => void;
 };
 
+function getMoneyTone(value: string) {
+  const numericValue = Number(value);
+  if (numericValue > 0) return "text-emerald-300";
+  if (numericValue < 0) return "text-rose-300";
+  return "text-slate-300";
+}
+
 export function GroupCard({ group, isSelected, onClick }: GroupCardProps) {
   const isOwner = group.currentUserRole === "OWNER";
 
   return (
-    <button type="button" onClick={onClick} className="group w-full text-left">
+    <button type="button" onClick={onClick} className="group h-full w-full text-left">
       <article
         className={cn(
-          "min-h-56 rounded-2xl border border-slate-800 bg-slate-900/70 p-5",
+          "flex h-80 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 p-6",
           "transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out",
           "motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:scale-[1.015]",
           "group-hover:border-cyan-500/35 group-hover:bg-slate-900 group-hover:shadow-[0_24px_70px_-32px_rgba(8,145,178,0.45)]",
-          "focus-within:outline-none focus-within:ring-2 focus-within:ring-cyan-500/60",
           isSelected && "border-cyan-500/45 bg-cyan-500/10 shadow-[0_24px_70px_-32px_rgba(8,145,178,0.55)]",
         )}
       >
@@ -49,22 +55,32 @@ export function GroupCard({ group, isSelected, onClick }: GroupCardProps) {
           <MoreHorizontal className="h-5 w-5 shrink-0 text-slate-500" />
         </div>
 
-        {group.description ? (
-          <p className="mt-5 line-clamp-2 text-sm leading-6 text-slate-400">{group.description}</p>
-        ) : (
-          <p className="mt-5 text-sm text-slate-500">No description yet.</p>
-        )}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <Trophy className="h-4 w-4" />
+            Overall Performance
+          </div>
 
-        <div className="mt-7 border-t border-slate-800 pt-4">
-          <p className="text-xs font-semibold uppercase text-slate-500">Group Activity</p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-2xl font-semibold text-slate-100">{group.memberCount}</p>
-              <p className="text-xs text-slate-500">members</p>
+          <div className="mt-5 grid gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-semibold text-slate-100">Your net P/L</span>
+              <span className={cn("font-mono text-sm font-semibold", getMoneyTone(group.netPnl))}>
+                {group.netPnl}
+              </span>
             </div>
-            <div>
-              <p className="text-2xl font-semibold text-emerald-300">{group.activeWagerCount}</p>
-              <p className="text-xs text-slate-500">active wagers</p>
+
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-semibold text-slate-100">Active wagers</span>
+              <span className="font-mono text-sm font-semibold text-emerald-300">
+                {group.activeWagerCount}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-semibold text-slate-100">Members</span>
+              <span className="font-mono text-sm font-semibold text-slate-100">
+                {group.memberCount}
+              </span>
             </div>
           </div>
         </div>
