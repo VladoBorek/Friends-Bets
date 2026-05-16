@@ -17,16 +17,17 @@ import {
   listCategoriesForQuery,
   getWagerById,
   listWagers,
-} from "../services/wagers/wager-query-service";
-import {
   createWager,
   closeWagerBetting,
   resolveWager,
-} from "../services/wagers/wager-command-service";
-import { placeBet, listBets } from "../services/wagers/bet-service";
-import { listComments, createComment } from "../services/wagers/wager-comment-service";
+  placeBet,
+  listBets,
+  listComments,
+  createComment,
+  ensureUserIsVerified,
+  ensureUserIsNotSuspended,
+} from "../services/wagers";
 import { getUserById } from "../services/user";
-import { ensureUserIsVerified, ensureUserIsNotSuspended } from "../services/wagers/wager-validation";
 import {
   createCategory,
   deleteCategory,

@@ -18,15 +18,17 @@ import {
 
 } from "@pb138/shared/schemas/friends";
 import { authPlugin, getAuthenticatedUser } from "../plugins/auth";
-import { listFriends, listFriendRequests, discoverUsers } from "../services/friends/friend-query-service";
 import {
+  listFriends,
+  listFriendRequests,
+  discoverUsers,
   sendFriendRequest,
   acceptFriendRequest,
   rejectFriendRequest,
-} from "../services/friends/friend-request-service";
-import { removeFriend } from "../services/friends/friend-relationship-service";
-
-import { getFriendStats, listFriendWagers } from "../services/friends/friend-stats-service";
+  removeFriend,
+  getFriendStats,
+  listFriendWagers,
+} from "../services/friends";
 
 const requestIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
