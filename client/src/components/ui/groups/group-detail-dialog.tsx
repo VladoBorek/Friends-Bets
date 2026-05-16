@@ -14,12 +14,22 @@ import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
 import { FriendsPagination } from "../friends/friends-pagination";
 import { GroupMemberRow } from "./group-member-row";
 import { InviteGroupMemberDialog } from "./invite-group-member-dialog";
+import { cn } from "../../../lib/utils";
 
 type GroupDetailDialogProps = {
   group: GroupSummary | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+function getMoneyTone(value: string) {
+  const numericValue = Number(value);
+
+  if (numericValue > 0) return "text-emerald-300";
+  if (numericValue < 0) return "text-rose-300";
+
+  return "text-slate-100";
+}
 
 export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDialogProps) {
   const queryClient = useQueryClient();
@@ -104,7 +114,9 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
 
               <div className="mt-5 border-t border-slate-800 pt-5">
                 <p className="text-sm text-slate-400">Your net P/L</p>
-                <p className="mt-2 font-mono text-2xl font-semibold text-slate-100">{group.netPnl}</p>
+                <p className={cn("mt-2 font-mono text-2xl font-semibold", getMoneyTone(group.netPnl))}>
+                  {group.netPnl}
+                </p>
               </div>
 
               <div className="mt-5 flex flex-col gap-2">
