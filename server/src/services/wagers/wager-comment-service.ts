@@ -5,8 +5,10 @@ import {
   listCommentsByWager,
   createComment as repoCreateComment,
 } from "../../repositories/comment-repository";
+import { HttpError } from "../../errors";
 import { mapWagerComment, type WagerComment } from "./mappers/comment-mapper";
 import { getWagerById } from "./wager-query-service";
+import { ensureUserIsNotSuspended, ensureUserIsVerified } from "./wager-validation";
 
 export async function listComments(wagerId: number, requestingUserId?: number): Promise<WagerComment[]> {
   await getWagerById(wagerId, requestingUserId);
@@ -22,18 +24,36 @@ export async function createComment(
 ): Promise<WagerComment> {
   await getWagerById(wagerId, userId);
 
+  const [commentingUser] = await db
+    .select({
+      username: User.username,
+      isVerified: User.is_verified,
+      suspendedUntil: User.suspended_until,
+    })
+    .from(User)
+    .where(eq(User.id, userId))
+    .limit(1);
+
+  if (!commentingUser) {
+    throw new HttpError(404, "User not found");
+  }
+
+  ensureUserIsVerified(commentingUser, "comment");
+  ensureUserIsNotSuspended(
+    { suspendedUntil: commentingUser.suspendedUntil?.toISOString() ?? null },
+    "comment",
+  );
+
   const commentRow = await repoCreateComment({
     wagerId,
     userId,
     content,
   });
 
-  const [user] = await db.select({ username: User.username }).from(User).where(eq(User.id, userId)).limit(1);
-
   return {
     id: commentRow.id,
     userId,
-    username: user?.username ?? "Unknown",
+    username: commentingUser.username,
     content,
     createdAt: (commentRow.createdAt ?? new Date()).toISOString(),
   };

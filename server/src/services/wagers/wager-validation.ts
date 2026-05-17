@@ -1,12 +1,18 @@
 import { HttpError } from "../../errors";
 
-export function ensureUserIsVerified(user: { isVerified?: boolean | null }): void {
+export function ensureUserIsVerified(
+  user: { isVerified?: boolean | null },
+  action = "perform this action",
+): void {
   if (user.isVerified === false) {
-    throw new HttpError(403, "Account must be verified to perform this action.");
+    throw new HttpError(403, `Account must be verified to ${action}.`);
   }
 }
 
-export function ensureUserIsNotSuspended(user: { suspendedUntil?: string | null }): void {
+export function ensureUserIsNotSuspended(
+  user: { suspendedUntil?: string | null },
+  action = "perform this action",
+): void {
   if (!user.suspendedUntil) {
     return;
   }
@@ -17,6 +23,6 @@ export function ensureUserIsNotSuspended(user: { suspendedUntil?: string | null 
   }
 
   if (suspensionEndsAt.getTime() > Date.now()) {
-    throw new HttpError(403, "Suspended users cannot perform this action");
+    throw new HttpError(403, `Suspended users cannot ${action}`);
   }
 }

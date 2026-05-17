@@ -154,6 +154,8 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
   .post("/:id/comments", async ({ params, body, getCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
     const user = await getCurrentUser();
+    ensureUserIsVerified(user, "comment");
+    ensureUserIsNotSuspended(user, "comment");
     const { content } = z.object({ content: z.string().min(1).max(2000) }).parse(body);
     const data = await createComment(parsedParams.id, user.id, content);
     return { data };
