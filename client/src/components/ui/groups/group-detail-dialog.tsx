@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { ChevronDown, UserPlus } from "lucide-react";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
 import { deleteGroup, leaveGroup } from "../../../api/groups/groups-api";
 import { removeGroupMember } from "../../../api/groups/group-members-api";
@@ -38,6 +38,7 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
 
   const [memberPage, setMemberPage] = useState(1);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<number | null>(null);
 
   const groupId = group?.id ?? 0;
@@ -92,6 +93,9 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
   const memberCount = pagination?.total ?? group.memberCount;
   const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
 
+  const description = group.description?.trim() || "No description provided.";
+  const canExpandDescription = description.length > 180 || description.includes("\n");
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,7 +106,14 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
         >
           <div className="flex flex-col gap-4 xl:h-[calc(100dvh-12rem)] xl:min-h-0 xl:flex-row">
             <Card className="flex shrink-0 flex-col rounded-2xl border-slate-800 bg-slate-950/45 p-4 xl:w-72">
-              <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-sm text-slate-400">Your net P/L</p>
+                <p className={cn("mt-2 font-mono text-2xl font-semibold", getMoneyTone(group.netPnl))}>
+                  {group.netPnl}
+                </p>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-800 pt-5">
                 <div>
                   <p className="text-2xl font-semibold text-slate-100">{memberCount}</p>
                   <p className="text-xs text-slate-500">members</p>
@@ -114,13 +125,31 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
               </div>
 
               <div className="mt-5 border-t border-slate-800 pt-5">
-                <p className="text-sm text-slate-400">Your net P/L</p>
-                <p className={cn("mt-2 font-mono text-2xl font-semibold", getMoneyTone(group.netPnl))}>
-                  {group.netPnl}
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Description</p>
+                <p
+                  className={cn(
+                    "mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-300",
+                    !isDescriptionExpanded && "line-clamp-4",
+                  )}
+                >
+                  {description}
                 </p>
+
+                {canExpandDescription ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsDescriptionExpanded((current) => !current)}
+                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-cyan-300 hover:text-cyan-200"
+                  >
+                    {isDescriptionExpanded ? "Show less" : "Show full description"}
+                    <ChevronDown
+                      className={cn("h-4 w-4 transition-transform", isDescriptionExpanded && "rotate-180")}
+                    />
+                  </button>
+                ) : null}
               </div>
 
-              <div className="mt-5 flex flex-col gap-2">
+              <div className="mt-5 flex flex-col gap-2 border-t border-slate-800 pt-5">
                 <Button type="button" onClick={() => setIsInviteOpen(true)} className="gap-2">
                   <UserPlus className="h-4 w-4" />
                   Invite Friend
