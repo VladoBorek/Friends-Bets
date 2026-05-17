@@ -16,8 +16,8 @@ interface WagerOutcomeItemProps {
   currentUserBetOutcomeTitle: string | null;
   onClick: () => void;
   isMenuOpen: boolean;
-  menu?: ReactNode;
   disabled?: boolean;
+  menu?: ReactNode;
   interactionAttribute?: string;
 }
 
@@ -28,32 +28,26 @@ export function WagerOutcomeItem({
   currentUserBetOutcomeTitle,
   onClick,
   isMenuOpen,
-  menu,
   disabled = false,
+  menu,
   interactionAttribute = "data-outcome-interactive",
 }: WagerOutcomeItemProps) {
   const isCurrentUserOutcome = Boolean(
-    currentUserBetAmount &&
-    currentUserBetOutcomeTitle === outcome.title,
+    currentUserBetAmount && currentUserBetOutcomeTitle === outcome.title,
   );
-
-  const isWinningOutcome =
-    wagerStatus === "CLOSED" && outcome.isWinner;
-
-  const interactionProps = {
-    [interactionAttribute]: "true",
-  };
+  const isWinningOutcome = wagerStatus === "CLOSED" && outcome.isWinner;
+  const interactionProps = { [interactionAttribute]: "true" };
 
   const containerClass = isWinningOutcome
     ? disabled
-      ? "border-amber-400/40 bg-amber-500/5 opacity-60"
+      ? "border-amber-400/40 bg-amber-500/5 opacity-80"
       : "border-amber-400/70 bg-amber-500/5 hover:border-amber-300 hover:bg-amber-500/10"
     : isCurrentUserOutcome
       ? disabled
-        ? "border-emerald-400/40 bg-emerald-500/10 opacity-60"
+        ? "border-emerald-400/40 bg-emerald-500/10 opacity-80"
         : "border-emerald-400/60 bg-emerald-500/10 hover:border-emerald-400/80 hover:bg-emerald-500/20"
       : disabled
-        ? "border-slate-700 opacity-60"
+        ? "border-slate-700 opacity-80"
         : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/30";
 
   return (
@@ -63,24 +57,18 @@ export function WagerOutcomeItem({
     >
       <button
         type="button"
-        {...interactionProps}
         disabled={disabled}
+        {...interactionProps}
         onClick={(event) => {
           event.stopPropagation();
           if (disabled) return;
           onClick();
         }}
-        className={`flex w-full flex-col gap-2 rounded-sm text-left ${
-          disabled
-            ? "cursor-not-allowed"
-            : "cursor-pointer"
-        }`}
+        className={`flex w-full flex-col gap-2 rounded-sm text-left ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium text-slate-100">
-              {outcome.title}
-            </p>
+            <p className="font-medium text-slate-100">{outcome.title}</p>
             {isCurrentUserOutcome && (
               <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-1 text-[11px] text-emerald-200">
                 Your bet: {formatMoney(currentUserBetAmount ?? "0")}
@@ -92,14 +80,8 @@ export function WagerOutcomeItem({
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-slate-400">
-            Bet volume: {formatMoney(outcome.totalBet)}
-          </p>
-          {isWinningOutcome && (
-            <span className="text-[11px] text-amber-300">
-              Winning outcome
-            </span>
-          )}
+          <p className="text-xs text-slate-400">Bet volume: {formatMoney(outcome.totalBet)}</p>
+          {isWinningOutcome && <span className="text-[11px] text-amber-300">Winning outcome</span>}
         </div>
       </button>
 

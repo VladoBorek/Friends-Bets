@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../components/ui/dialog";
+import { FormItem } from "../../../components/ui/form-item";
 
 interface ResolveWagerModalProps {
   open: boolean;
@@ -38,9 +39,9 @@ export function ResolveWagerModal({
           <DialogDescription className="text-slate-300">
             Select the winning outcome to close betting and distribute payouts.
           </DialogDescription>
-          <label className="flex flex-col gap-1 text-xs text-slate-300">
-            Winning outcome
+          <FormItem label="Winning outcome" htmlFor="resolve-outcome">
             <select
+              id="resolve-outcome"
               value={selectedId?.toString() ?? ""}
               onChange={(e) => setSelectedId(e.target.value ? Number(e.target.value) : null)}
               className="rounded border border-slate-700 bg-slate-900 p-2 text-white"
@@ -50,7 +51,7 @@ export function ResolveWagerModal({
                 <option key={o.id} value={o.id.toString()}>{o.title}</option>
               ))}
             </select>
-          </label>
+          </FormItem>
           {error && <p className="text-sm text-rose-300">{error}</p>}
           <div className="flex gap-3 pt-1">
             <Button

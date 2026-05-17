@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
-import { createWagerRequestSchema, type CategorySummary } from "../../../../../shared/src/schemas/wager";
+import { createWagerRequestSchema, type CategorySummary, type WagerDetail } from "../../../../../shared/src/schemas/wager";
 import { Button } from "../../../components/ui/button";
 import {
   Dialog,
@@ -8,11 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../components/ui/dialog";
+import { FormItem } from "../../../components/ui/form-item";
 import { Input } from "../../../components/ui/input";
 import { Switch } from "../../../components/ui/switch";
 import { Textarea } from "../../../components/ui/textarea";
 import { useAuth } from "../../../lib/auth-context";
 import { toErrorMessage } from "../utils";
+import { GroupSearchSection, type GroupInvitation } from "./group-search-section";
 import { UserSearchSection, type UserSearchResult } from "./user-search-section";
 
 const MAX_OUTCOMES = 8;
@@ -22,9 +24,11 @@ interface CreateWagerModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  editingWager?: WagerDetail;
+  onEdited?: () => void;
 }
 
-export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerModalProps) {
+export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, onEdited }: CreateWagerModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -33,15 +37,27 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
   const [outcomes, setOutcomes] = useState<string[]>(["Yes", "No"]);
   const [isPublic, setIsPublic] = useState(true);
   const [invitedUsers, setInvitedUsers] = useState<UserSearchResult[]>([]);
+  const [groupInvitations, setGroupInvitations] = useState<GroupInvitation[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
+  const isEditing = editingWager !== undefined;
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setTitle("");
+      setDescription("");
+      setSelectedCategoryId("");
+      setOutcomes(["Yes", "No"]);
+      setIsPublic(true);
+      setInvitedUsers([]);
+      setGroupInvitations([]);
+      setErrorMessage(null);
+      return;
+    }
     const controller = new AbortController();
     setIsLoadingCategories(true);
     async function loadCategories() {
@@ -51,7 +67,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
         if (!response.ok) throw new Error(json?.message ?? "Unable to load categories");
         const loaded = json?.data ?? [];
         setCategories(loaded);
-        if (loaded.length > 0) setSelectedCategoryId(String(loaded[0].id));
+        if (loaded.length > 0 && !editingWager) setSelectedCategoryId(String(loaded[0].id));
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
         setErrorMessage(toErrorMessage(error));
@@ -61,7 +77,26 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
     }
     void loadCategories();
     return () => controller.abort();
-  }, [open]);
+  }, [open, editingWager]);
+
+  useEffect(() => {
+    if (!open || !editingWager) return;
+    setTitle(editingWager.title);
+    setDescription(editingWager.description ?? "");
+    setSelectedCategoryId(String(editingWager.categoryId));
+    setOutcomes(editingWager.outcomes.map((o) => o.title));
+    setIsPublic(editingWager.isPublic);
+    setInvitedUsers([]);
+    setGroupInvitations([]);
+    setErrorMessage(null);
+
+    if (!editingWager.isPublic) {
+      fetch(`/api/wagers/${editingWager.id}/invitations`)
+        .then((r) => r.json())
+        .then((json: { data?: UserSearchResult[] }) => { setInvitedUsers(json.data ?? []); })
+        .catch(() => {});
+    }
+  }, [open, editingWager]);
 
   function updateOutcome(index: number, value: string) {
     setOutcomes((prev) => prev.map((o, i) => (i === index ? value : o)));
@@ -78,6 +113,40 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
   function removeInvitedUser(id: number) {
     setInvitedUsers((prev) => prev.filter((u) => u.id !== id));
   }
+  function addGroupInvitation(group: GroupInvitation) {
+    setGroupInvitations((prev) => {
+      if (prev.some((g) => g.groupId === group.groupId)) return prev;
+      const alreadyExcluded = new Set(prev.flatMap((g) => [...g.excludedIds]));
+      const excludedIds = new Set(
+        group.members.filter((m) => alreadyExcluded.has(m.id)).map((m) => m.id),
+      );
+      return [...prev, { ...group, excludedIds }];
+    });
+  }
+  function updateGroupInvitation(groupId: number, newExcludedIds: Set<number>) {
+    setGroupInvitations((prev) => {
+      const target = prev.find((g) => g.groupId === groupId);
+      if (!target) return prev;
+
+      const justExcluded = [...newExcludedIds].filter((id) => !target.excludedIds.has(id));
+      const justIncluded = [...target.excludedIds].filter((id) => !newExcludedIds.has(id));
+
+      return prev.map((g) => {
+        if (g.groupId === groupId) return { ...g, excludedIds: newExcludedIds };
+        const next = new Set(g.excludedIds);
+        for (const id of justExcluded) {
+          if (g.members.some((m) => m.id === id)) next.add(id);
+        }
+        for (const id of justIncluded) {
+          next.delete(id);
+        }
+        return { ...g, excludedIds: next };
+      });
+    });
+  }
+  function removeGroupInvitation(groupId: number) {
+    setGroupInvitations((prev) => prev.filter((g) => g.groupId !== groupId));
+  }
 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,13 +154,20 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
     if (isSuspended) { setErrorMessage("Suspended users cannot create wagers."); return; }
     if (isUnverified) { setErrorMessage("Account must be verified to perform this action."); return; }
 
+    const groupUserIds = groupInvitations.flatMap((gi) =>
+      gi.members.filter((m) => !gi.excludedIds.has(m.id)).map((m) => m.id),
+    );
+    const allInvitedIds = isPublic
+      ? undefined
+      : [...new Set([...invitedUsers.map((u) => u.id), ...groupUserIds])];
+
     const parsed = createWagerRequestSchema.safeParse({
       title,
       description: description || undefined,
       categoryId: Number(selectedCategoryId),
       isPublic,
       outcomes: outcomes.map((o) => ({ title: o })),
-      invitedUserIds: isPublic ? undefined : invitedUsers.map((u) => u.id),
+      invitedUserIds: allInvitedIds,
     });
 
     if (!parsed.success) {
@@ -101,14 +177,20 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/wagers", {
-        method: "POST",
+      const url = isEditing ? `/api/wagers/${editingWager.id}` : "/api/wagers";
+      const method = isEditing ? "PATCH" : "POST";
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),
       });
       const json = (await response.json().catch(() => null)) as { data?: { id?: number }; message?: string } | null;
-      if (!response.ok) throw new Error(json?.message ?? "Unable to create wager");
-      onCreated();
+      if (!response.ok) throw new Error(json?.message ?? (isEditing ? "Unable to update wager" : "Unable to create wager"));
+      if (isEditing) {
+        onEdited?.();
+      } else {
+        onCreated();
+      }
       onOpenChange(false);
     } catch (error) {
       setErrorMessage(toErrorMessage(error));
@@ -121,26 +203,23 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader className="border-b border-slate-800 px-6 py-4">
-          <DialogTitle>Create Wager</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Wager" : "Create Wager"}</DialogTitle>
         </DialogHeader>
 
-        <form className="grid gap-4 px-6 py-5" onSubmit={onSubmit}>
-          <div className="grid gap-2">
-            <label className="text-sm text-slate-300" htmlFor="modal-title">Title</label>
+        <form className="grid gap-4 overflow-y-auto px-6 py-5" onSubmit={onSubmit}>
+          <FormItem label="Title" htmlFor="modal-title">
             <Input id="modal-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
+          </FormItem>
 
-          <div className="grid gap-2">
-            <label className="text-sm text-slate-300" htmlFor="modal-description">Description</label>
+          <FormItem label="Description" htmlFor="modal-description">
             <Textarea
               id="modal-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
+          </FormItem>
 
-          <div className="grid gap-2">
-            <label className="text-sm text-slate-300" htmlFor="modal-category">Category</label>
+          <FormItem label="Category" htmlFor="modal-category">
             <select
               id="modal-category"
               value={selectedCategoryId}
@@ -152,7 +231,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-          </div>
+          </FormItem>
 
           <div className="grid gap-2">
             <label className="text-sm text-slate-300">
@@ -189,12 +268,24 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
           <Switch
             id="modal-isPublic"
             checked={isPublic}
-            onChange={(checked) => { setIsPublic(checked); if (checked) setInvitedUsers([]); }}
+            onChange={(checked) => {
+              setIsPublic(checked);
+              if (checked) { setInvitedUsers([]); setGroupInvitations([]); }
+            }}
             label={isPublic ? "Public — visible to everyone" : "Private — visible only to you and invited users"}
           />
 
           {!isPublic && (
-            <UserSearchSection invitedUsers={invitedUsers} onAdd={addInvitedUser} onRemove={removeInvitedUser} />
+            <>
+              <UserSearchSection invitedUsers={invitedUsers} onAdd={addInvitedUser} onRemove={removeInvitedUser} />
+              <GroupSearchSection
+                addedGroups={groupInvitations}
+                currentUserId={user?.id}
+                onAddGroup={addGroupInvitation}
+                onUpdateGroup={updateGroupInvitation}
+                onRemoveGroup={removeGroupInvitation}
+              />
+            </>
           )}
 
           {isSuspended && <p className="text-sm text-amber-200">Suspended users cannot create wagers.</p>}
@@ -210,7 +301,9 @@ export function CreateWagerModal({ open, onOpenChange, onCreated }: CreateWagerM
               disabled={isSubmitting || isSuspended || isUnverified || isLoadingCategories || categories.length === 0}
               className="flex-1"
             >
-              {isSubmitting ? "Creating…" : "Create Wager"}
+              {isSubmitting
+                ? (isEditing ? "Saving…" : "Creating…")
+                : (isEditing ? "Save Changes" : "Create Wager")}
             </Button>
           </div>
         </form>

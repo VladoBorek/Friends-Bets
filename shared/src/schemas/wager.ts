@@ -2,6 +2,22 @@ import { z } from "zod";
 
 export const wagerStatusSchema = z.enum(["OPEN", "PENDING", "CLOSED"]);
 
+const paginationMetaSchema = z.object({
+  total: z.number().int().nonnegative(),
+  limit: z.number().int().positive(),
+  offset: z.number().int().nonnegative(),
+  hasMore: z.boolean(),
+});
+
+export const wagersListQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(50).default(10),
+  offset: z.coerce.number().int().min(0).default(0),
+  q: z.string().trim().max(200).default(""),
+  status: z.enum(["ALL", "OPEN", "PENDING", "CLOSED"]).default("ALL"),
+  category: z.string().default("ALL"),
+  involvement: z.enum(["ALL", "MINE", "MY_BETS"]).default("ALL"),
+});
+
 export const createWagerOutcomeSchema = z.object({
   title: z.string().min(1).max(120),
 });
@@ -62,6 +78,11 @@ export const wagerDetailSchema = wagerSummarySchema.extend({
 
 export const listWagersResponseSchema = z.object({
   data: z.array(wagerSummarySchema),
+});
+
+export const paginatedWagersResponseSchema = z.object({
+  data: z.array(wagerSummarySchema),
+  pagination: paginationMetaSchema,
 });
 
 export const getWagerResponseSchema = z.object({
@@ -125,3 +146,5 @@ export type CategorySummary = z.infer<typeof categorySummarySchema>;
 export type PlaceBetRequest = z.infer<typeof placeBetRequestSchema>;
 export type Bet = z.infer<typeof betSchema>;
 export type ResolveWagerRequest = z.infer<typeof resolveWagerRequestSchema>;
+export type WagersListQuery = z.infer<typeof wagersListQuerySchema>;
+export type PaginatedWagersResponse = z.infer<typeof paginatedWagersResponseSchema>;

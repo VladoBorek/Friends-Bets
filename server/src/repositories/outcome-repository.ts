@@ -39,6 +39,10 @@ export async function findOutcomeByIdAndWager(
   return row ?? null;
 }
 
+export async function deleteOutcomesByWager(wagerId: number): Promise<void> {
+  await db.delete(Outcome).where(eq(Outcome.wager_id, wagerId));
+}
+
 export async function createOutcomes(
   wagerId: number,
   outcomes: Array<{ title: string }>,

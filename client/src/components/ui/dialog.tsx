@@ -33,7 +33,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
         <BaseDialog.Popup
           ref={ref}
           className={cn(
-            "relative w-[calc(100vw-2rem)] max-w-3xl overflow-hidden rounded-2xl border border-cyan-500/20 bg-slate-900/95 shadow-[0_24px_80px_-24px_rgba(8,145,178,0.35)] backdrop-blur",
+            "relative flex flex-col w-[calc(100vw-2rem)] max-w-3xl overflow-hidden rounded-2xl border border-cyan-500/20 bg-slate-900/95 shadow-[0_24px_80px_-24px_rgba(8,145,178,0.35)] backdrop-blur",
             "max-h-[85vh]",
             "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
             "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
@@ -42,7 +42,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
           )}
           {...props}
         >
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex flex-col flex-1 min-h-0 overflow-hidden">
             {children}
             <BaseDialog.Close
               className="absolute right-4 top-4 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"

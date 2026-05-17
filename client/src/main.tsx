@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { setConfig as setApiClientConfig } from "@kubb/plugin-client/clients/fetch";
 import React from "react";

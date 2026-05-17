@@ -6,14 +6,16 @@ import type { CreateWagerRequest, ResolveWagerRequest, WagerDetail } from "@pb13
 import {
   findWagerByIdWithDetails,
   createWager as repoCreateWager,
+  updateWagerFields,
+  deleteWagerById,
   updateWagerStatus,
   listWagerOutcomes,
   updateOutcomeWinner,
 } from "../../repositories/wager-repository";
 import { findCategoryById } from "../../repositories/category-repository";
-import { createOutcomes } from "../../repositories/outcome-repository";
-import { createWagerVisibilities } from "../../repositories/wager-visibility-repository";
-import { listWinningBets } from "../../repositories/bet-repository";
+import { createOutcomes, deleteOutcomesByWager } from "../../repositories/outcome-repository";
+import { createWagerVisibilities, deleteWagerVisibilities } from "../../repositories/wager-visibility-repository";
+import { listWinningBets, wagerHasBets } from "../../repositories/bet-repository";
 import { mapWagerDetail } from "./mappers/wager-mapper";
 import { ensureUserIsVerified, ensureUserIsNotSuspended } from "./wager-validation";
 import { calculatePayout, formatMoney, parseMoney } from "./wager-utils";
@@ -74,6 +76,52 @@ export async function createWager(
 
   const outcomes = await listWagerOutcomes(wagerId);
   return mapWagerDetail(wagerRow, outcomes);
+}
+
+export async function updateWager(
+  wagerId: number,
+  input: CreateWagerRequest,
+  requestingUserId: number,
+): Promise<WagerDetail> {
+  const wagerRow = await findWagerByIdWithDetails(wagerId, requestingUserId);
+  if (!wagerRow) throw new HttpError(404, "Wager not found");
+  if (wagerRow.createdById !== requestingUserId) throw new HttpError(403, "Only the wager creator can edit this wager");
+  if (wagerRow.status !== "OPEN") throw new HttpError(400, "Only OPEN wagers can be edited");
+
+  if (await wagerHasBets(wagerId)) throw new HttpError(400, "Cannot edit a wager that has bets");
+
+  const category = await findCategoryById(input.categoryId);
+  if (!category) throw new HttpError(400, "Unknown categoryId");
+
+  await db.transaction(async () => {
+    await updateWagerFields(wagerId, {
+      title: input.title,
+      description: input.description ?? null,
+      categoryId: input.categoryId,
+      isPublic: input.isPublic,
+    });
+    await deleteOutcomesByWager(wagerId);
+    await createOutcomes(wagerId, input.outcomes.map((o) => ({ title: o.title })));
+    await deleteWagerVisibilities(wagerId);
+    if (!input.isPublic && input.invitedUserIds && input.invitedUserIds.length > 0) {
+      await createWagerVisibilities(wagerId, input.invitedUserIds);
+    }
+  });
+
+  const updated = await findWagerByIdWithDetails(wagerId, requestingUserId);
+  if (!updated) throw new HttpError(500, "Failed to load updated wager");
+  const outcomes = await listWagerOutcomes(wagerId);
+  return mapWagerDetail(updated, outcomes);
+}
+
+export async function deleteWager(wagerId: number, requestingUserId: number): Promise<void> {
+  const wagerRow = await findWagerByIdWithDetails(wagerId, requestingUserId);
+  if (!wagerRow) throw new HttpError(404, "Wager not found");
+  if (wagerRow.createdById !== requestingUserId) throw new HttpError(403, "Only the wager creator can delete this wager");
+
+  if (await wagerHasBets(wagerId)) throw new HttpError(400, "Cannot delete a wager that has bets");
+
+  await deleteWagerById(wagerId);
 }
 
 export async function closeWagerBetting(

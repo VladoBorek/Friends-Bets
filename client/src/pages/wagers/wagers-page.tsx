@@ -1,34 +1,27 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import type { WagerSummary } from "@pb138/shared/schemas/wager";
-import { Card, CardDescription, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
+import { useEffect, useState } from "react";
+import type { CategorySummary, PaginatedWagersResponse } from "@pb138/shared/schemas/wager";
 import { Button } from "../../components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { WagerPagination } from "../../components/ui/wagers/wager-pagination";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
-import { StatusBadge } from "../../features/wagers/components/status-badge";
-import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
-import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
-import { formatMoney } from "../../features/wagers/utils";
+import { WagerCard } from "../../features/wagers/components/wager-card";
+import { WagersFilterPanel, type StatusFilter, type InvolvementFilter } from "../../features/wagers/components/wagers-filter-panel";
+import { WAGERS_PAGE_SIZE } from "../../features/wagers/wagers-search";
 import { useAuth } from "../../lib/auth-context";
-
-type StatusFilter = "ALL" | "OPEN" | "PENDING" | "CLOSED";
-type InvolvementFilter = "ALL" | "MINE" | "MY_BETS";
-
-const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "OPEN", label: "Open" },
-  { value: "PENDING", label: "Pending" },
-  { value: "CLOSED", label: "Closed" },
-];
+import { Route } from "../../routes/wagers/index";
 
 export function WagersPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { page } = Route.useSearch();
   const { user } = useAuth();
-  const [wagers, setWagers] = useState<WagerSummary[] | null>(null);
+
+  const [result, setResult] = useState<PaginatedWagersResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [openBetMenu, setOpenBetMenu] = useState<{ wagerId: number; outcomeId: number } | null>(null);
+  const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
@@ -39,18 +32,41 @@ export function WagersPage() {
   const isUnverified = user?.isVerified === false;
   const readOnly = isSuspended || isUnverified;
 
+  const offset = (page - 1) * WAGERS_PAGE_SIZE;
+
+  const activeFilterCount = [
+    search !== "",
+    statusFilter !== "ALL",
+    categoryFilter !== "ALL",
+    involvementFilter !== "ALL",
+  ].filter(Boolean).length;
+
+  const buildUrl = () => {
+    const params = new URLSearchParams({
+      limit: String(WAGERS_PAGE_SIZE),
+      offset: String(offset),
+      q: search,
+      status: statusFilter,
+      category: categoryFilter,
+      involvement: involvementFilter,
+    });
+    return `/api/wagers?${params.toString()}`;
+  };
+
   const fetchWagers = async (signal?: AbortSignal) => {
-    const response = await fetch("/api/wagers", signal ? { signal } : undefined);
-    const json = (await response.json().catch(() => null)) as { data?: WagerSummary[]; message?: string } | null;
+    const response = await fetch(buildUrl(), signal ? { signal } : undefined);
+    const json = (await response.json().catch(() => null)) as PaginatedWagersResponse & { message?: string } | null;
     if (!response.ok) throw new Error(json?.message ?? "Unable to load wagers");
-    return json?.data ?? [];
+    if (!json) throw new Error("Unable to load wagers");
+    return json;
   };
 
   useEffect(() => {
     const controller = new AbortController();
+    setIsLoading(true);
     async function load() {
       try {
-        setWagers(await fetchWagers(controller.signal));
+        setResult(await fetchWagers(controller.signal));
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setError(e instanceof Error ? e.message : "Unable to load wagers");
@@ -60,47 +76,63 @@ export function WagersPage() {
     }
     void load();
     return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, statusFilter, categoryFilter, involvementFilter]);
+
+  useEffect(() => {
+    fetch("/api/wagers/categories")
+      .then((r) => r.json() as Promise<{ data: CategorySummary[] }>)
+      .then((json) => setCategories(json.data ?? []))
+      .catch(() => undefined);
   }, []);
 
-  const categories = useMemo(() => {
-    if (!wagers) return [];
-    return [...new Set(wagers.map((w) => w.categoryName))].sort();
-  }, [wagers]);
+  const handleFilterChange = <T,>(setter: (v: T) => void) => (value: T) => {
+    setter(value);
+    void navigate({ to: "/wagers", search: { page: 1 } });
+  };
 
-  const filtered = useMemo(() => {
-    if (!wagers) return [];
-    const q = search.toLowerCase().trim();
-    return wagers.filter((w) => {
-      if (q && !w.title.toLowerCase().includes(q) && !(w.description ?? "").toLowerCase().includes(q)) return false;
-      if (statusFilter !== "ALL" && w.status !== statusFilter) return false;
-      if (categoryFilter !== "ALL" && w.categoryName !== categoryFilter) return false;
-      if (involvementFilter === "MINE" && w.createdById !== user?.id) return false;
-      if (involvementFilter === "MY_BETS" && !w.currentUserBetAmount) return false;
-      return true;
-    });
-  }, [wagers, search, statusFilter, categoryFilter, involvementFilter, user?.id]);
+  const clearAllFilters = () => {
+    setSearch("");
+    setStatusFilter("ALL");
+    setCategoryFilter("ALL");
+    setInvolvementFilter("ALL");
+    void navigate({ to: "/wagers", search: { page: 1 } });
+  };
+
+  const filterPanelProps = {
+    search,
+    onSearchChange: handleFilterChange(setSearch),
+    statusFilter,
+    onStatusChange: handleFilterChange(setStatusFilter),
+    categoryFilter,
+    onCategoryChange: handleFilterChange(setCategoryFilter),
+    involvementFilter,
+    onInvolvementChange: handleFilterChange(setInvolvementFilter),
+    categories,
+    showInvolvement: Boolean(user),
+  };
+
+  const wagers = result?.data ?? [];
+  const pagination = result?.pagination ?? null;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
+
+  const handlePageChange = (newPage: number) => {
+    void navigate({ to: "/wagers", search: { page: newPage } });
+  };
 
   const navigateToWager = (wagerId: number) => {
     void navigate({ to: "/wagers/$wagerId", params: { wagerId: String(wagerId) } });
   };
 
-  const isOutcomeInteraction = (target: EventTarget | null) =>
-    target instanceof HTMLElement && Boolean(target.closest('[data-outcome-interactive="true"]'));
-
-  const toggleOutcomeBetMenu = (wagerId: number, outcomeId: number) => {
-    setOpenBetMenu((cur) =>
-      cur?.wagerId === wagerId && cur.outcomeId === outcomeId ? null : { wagerId, outcomeId },
-    );
-  };
-
   const refreshWagers = async () => {
-    setWagers(await fetchWagers());
+    const fresh = await fetchWagers();
+    setResult(fresh);
   };
 
   return (
     <div className="flex gap-6">
-      {/* ── Sidebar ── */}
-      <aside className="w-64 shrink-0">
+      {/* ── Sidebar (desktop only) ── */}
+      <aside className="hidden w-64 shrink-0 lg:block">
         <div className="sticky top-6 grid gap-4">
           <Button
             onClick={() => setModalOpen(true)}
@@ -109,173 +141,76 @@ export function WagersPage() {
           >
             + Create Wager
           </Button>
-
-          <div className="grid gap-2">
-            <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Search</label>
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Title or description…"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Status</label>
-            <div className="flex flex-col gap-1">
-              {STATUS_FILTERS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setStatusFilter(value)}
-                  className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
-                    statusFilter === value
-                      ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {categories.length > 0 && (
-            <div className="grid gap-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Category</label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="rounded border border-slate-700 bg-slate-900 p-2 text-sm text-white"
-              >
-                <option value="ALL">All categories</option>
-                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          )}
-
-          {user && (
-            <div className="grid gap-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Involvement</label>
-              <div className="flex flex-col gap-1">
-                {([["ALL", "All wagers"], ["MINE", "Created by me"], ["MY_BETS", "My bets"]] as const).map(
-                  ([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setInvolvementFilter(value)}
-                      className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
-                        involvementFilter === value
-                          ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-                          : "text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ),
-                )}
-              </div>
-            </div>
+          <WagersFilterPanel {...filterPanelProps} />
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="text-left text-xs text-slate-500 hover:text-rose-400 transition-colors"
+            >
+              Clear all filters
+            </button>
           )}
         </div>
       </aside>
 
       {/* ── List ── */}
       <div className="min-w-0 flex-1">
+        {/* Mobile-only action bar */}
+        <div className="mb-4 flex items-center gap-2 lg:hidden">
+          <Button
+            onClick={() => setModalOpen(true)}
+            disabled={isSuspended || isUnverified}
+            className="flex-1"
+          >
+            + Create Wager
+          </Button>
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(true)}
+            className="relative flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-300 transition-colors hover:border-slate-600 hover:text-slate-100"
+          >
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[11px] font-bold text-slate-900">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {pagination && (
+          <div className="mb-4 flex items-center justify-between text-sm text-slate-400">
+            <span>{pagination.total} wager{pagination.total !== 1 ? "s" : ""}</span>
+            <span>Page {page} / {totalPages}</span>
+          </div>
+        )}
+
         {isLoading && <p className="text-slate-300">Loading wagers…</p>}
         {error && <p className="text-rose-300">{error}</p>}
-        {!isLoading && !error && filtered.length === 0 && (
+        {!isLoading && !error && wagers.length === 0 && (
           <p className="text-slate-400">No wagers match the current filters.</p>
         )}
-        {!isLoading && !error && filtered.length > 0 && (
+        {!isLoading && !error && wagers.length > 0 && (
           <div className="grid gap-4">
-            {filtered.map((wager) => (
-              <Card
+            {wagers.map((wager) => (
+              <WagerCard
                 key={wager.id}
-                role="button"
-                tabIndex={0}
-                onClick={(event) => {
-                  if (isOutcomeInteraction(event.target)) return;
-                  navigateToWager(wager.id);
-                }}
-                onKeyDown={(event) => {
-                  if (event.target !== event.currentTarget) return;
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    navigateToWager(wager.id);
-                  }
-                }}
-                className="cursor-pointer transition-colors hover:border-cyan-500/40"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <CardTitle>{wager.title}</CardTitle>
-                  <StatusBadge status={wager.status} className="shrink-0" />
-                </div>
-                {wager.description && (
-                  <CardDescription className="mt-1">{wager.description}</CardDescription>
-                )}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                  <span>{wager.categoryName}</span>
-                  <span className="text-slate-600">·</span>
-                  <span>by {wager.creatorName}</span>
-                  <span className="ml-auto font-semibold text-cyan-200">
-                    Pool: {formatMoney(wager.totalPool)}
-                  </span>
-                </div>
-                {(isSuspended || isUnverified) && (
-                  <div className="mt-2 flex gap-2">
-                    {isSuspended && (
-                      <span className="rounded-full border border-amber-500/35 px-2 py-0.5 text-xs text-amber-200">
-                        Suspended
-                      </span>
-                    )}
-                    {isUnverified && (
-                      <span className="rounded-full border border-amber-500/35 px-2 py-0.5 text-xs text-amber-200">
-                        Unverified
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="mt-3 space-y-2">
-                  {wager.outcomes.map((outcome) => (
-                    <WagerOutcomeItem
-                      key={outcome.id}
-                      outcome={outcome}
-                      wagerStatus={wager.status}
-                      currentUserBetAmount={wager.currentUserBetAmount}
-                      currentUserBetOutcomeTitle={wager.currentUserBetOutcomeTitle}
-                      disabled={readOnly}
-                      onClick={() => {
-                        if (readOnly) return;
-                        toggleOutcomeBetMenu(wager.id, outcome.id);
-                      }}
-                      isMenuOpen={openBetMenu?.wagerId === wager.id && openBetMenu.outcomeId === outcome.id}
-                      menu={(
-                        <div data-outcome-interactive="true" className="mt-3">
-                          <WagerInlineBetMenu
-                            wagerId={wager.id}
-                            outcomeId={outcome.id}
-                            outcomeTitle={outcome.title}
-                            canPlaceBet={wager.status === "OPEN" && !isSuspended && !isUnverified && !wager.currentUserBetAmount}
-                            disabledMessage={
-                              wager.status !== "OPEN"
-                                ? "Betting is closed for this wager."
-                                : wager.currentUserBetAmount
-                                  ? `You already placed a bet of ${formatMoney(wager.currentUserBetAmount)} on ${wager.currentUserBetOutcomeTitle ?? "your selected outcome"}.`
-                                  : isSuspended
-                                    ? "Suspended users cannot place bets."
-                                    : isUnverified
-                                      ? "Account must be verified to perform this action."
-                                      : "Betting is unavailable for this account."
-                            }
-                            onBetPlaced={refreshWagers}
-                          />
-                        </div>
-                      )}
-                    />
-                  ))}
-                </div>
-              </Card>
+                wager={wager}
+                currentUserId={user?.id}
+                onClick={() => navigateToWager(wager.id)}
+              />
             ))}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="mt-6">
+            <WagerPagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>
@@ -285,6 +220,39 @@ export function WagersPage() {
         onOpenChange={setModalOpen}
         onCreated={refreshWagers}
       />
+
+      {/* Mobile filters dialog */}
+      <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <DialogContent>
+          <DialogHeader className="border-b border-slate-800 px-6 py-4">
+            <DialogTitle>
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[11px] font-bold text-slate-900">
+                  {activeFilterCount}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto px-6 py-5">
+            <WagersFilterPanel {...filterPanelProps} />
+          </div>
+          <div className="flex items-center gap-3 border-t border-slate-800 px-6 py-4">
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="text-sm text-slate-500 hover:text-rose-400 transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+            <Button onClick={() => setMobileFiltersOpen(false)} className="flex-1">
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

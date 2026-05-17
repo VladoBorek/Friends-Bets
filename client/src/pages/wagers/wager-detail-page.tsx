@@ -2,14 +2,18 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { WagerDetail } from "../../../../shared/src/schemas/wager";
+import { Accordion } from "../../components/ui/accordion";
 import { Card, CardTitle } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
+import { PillTag } from "../../components/ui/pill-tag";
 import { BetsSection } from "../../features/wagers/components/bets-section";
 import { CommentSection } from "../../features/wagers/components/comment-section";
+import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
+import { DeleteWagerModal } from "../../features/wagers/components/delete-wager-modal";
 import { EndBettingModal } from "../../features/wagers/components/end-betting-modal";
 import { PoolBar } from "../../features/wagers/components/pool-bar";
 import { ResolveWagerModal } from "../../features/wagers/components/resolve-wager-modal";
 import { StatusBadge } from "../../features/wagers/components/status-badge";
+import { WagerActionsMenu } from "../../features/wagers/components/wager-actions-menu";
 import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
 import { formatMoney, toErrorMessage } from "../../features/wagers/utils";
@@ -38,8 +42,14 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [betsRefreshKey, setBetsRefreshKey] = useState(0);
+  const [visibilityUsers, setVisibilityUsers] = useState<{ id: number; username: string; email: string }[]>([]);
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
@@ -50,6 +60,14 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       ? "Account must be verified to comment."
       : null;
   const isCreator = detail ? detail.createdById === user?.id : false;
+
+  useEffect(() => {
+    if (!detail || detail.isPublic || detail.createdById !== user?.id) return;
+    fetch(`/api/wagers/${wagerId}/invitations`)
+      .then((r) => r.json() as Promise<{ data: { id: number; username: string; email: string }[] }>)
+      .then((json) => setVisibilityUsers(json.data ?? []))
+      .catch(() => undefined);
+  }, [detail, user?.id, wagerId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -126,6 +144,21 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     }
   };
 
+  const handleDelete = async () => {
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/wagers/${wagerId}`, { method: "DELETE" });
+      const json = (await response.json().catch(() => null)) as { message?: string } | null;
+      if (!response.ok) throw new Error(json?.message ?? "Failed to delete wager");
+      void navigate({ to: "/wagers", search: { page: 1 } });
+    } catch (e) {
+      setDeleteError(toErrorMessage(e));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) return <p className="text-slate-300">Loading wager…</p>;
   if (pageError || !detail) return <p className="text-rose-300">{pageError ?? "Wager not found."}</p>;
 
@@ -143,8 +176,8 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
             ? "Account must be verified to perform this action."
             : "Betting is unavailable for this account.";
 
-  const canEndBetting = isCreator && detail.status === "OPEN";
-  const canResolve = isCreator && detail.status !== "CLOSED";
+  const canEndBetting = detail.status === "OPEN";
+  const canResolve = detail.status !== "CLOSED";
 
   return (
     <div className="mx-auto grid max-w-3xl gap-5">
@@ -152,54 +185,43 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       <div className="flex items-center gap-2 text-sm text-slate-400">
         <button
           type="button"
-          onClick={() => void navigate({ to: "/wagers" })}
+          onClick={() => void navigate({ to: "/wagers", search: { page: 1 } })}
           className="flex items-center gap-1 transition-colors hover:text-slate-200"
         >
           ← Back
         </button>
         <span className="text-slate-600">/</span>
-        <Link to="/wagers" className="transition-colors hover:text-slate-200">Wagers</Link>
+        <Link to="/wagers" search={{ page: 1 }} className="transition-colors hover:text-slate-200">Wagers</Link>
         <span className="text-slate-600">/</span>
         <span className="max-w-xs truncate text-slate-300">{detail.title}</span>
       </div>
 
       {/* ── Header card ── */}
       <Card className="grid gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold leading-snug text-slate-100">{detail.title}</h1>
-          <StatusBadge status={detail.status} />
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
+          <h1 className="flex-1 text-2xl font-semibold leading-snug text-slate-100">{detail.title}</h1>
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            <PillTag variant="category">{detail.categoryName}</PillTag>
+            {!detail.isPublic && <PillTag variant="private">Private</PillTag>}
+            <StatusBadge status={detail.status} />
+            {isCreator && (
+              <WagerActionsMenu
+                wager={detail}
+                canEndBetting={canEndBetting}
+                canResolve={canResolve}
+                onEndBetting={() => { setEndBettingError(null); setShowEndBettingModal(true); }}
+                onResolve={() => { setResolveError(null); setShowResolveModal(true); }}
+                onEdit={() => setShowEditModal(true)}
+                onDelete={() => { setDeleteError(null); setShowDeleteModal(true); }}
+              />
+            )}
+          </div>
         </div>
 
         {detail.description && (
           <p className="text-sm leading-relaxed text-slate-400">{detail.description}</p>
         )}
 
-        {(canEndBetting || canResolve) && (
-          <div className="flex flex-wrap gap-2">
-            {canEndBetting && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => { setEndBettingError(null); setShowEndBettingModal(true); }}
-                className="border border-amber-500/40 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15"
-              >
-                End Betting
-              </Button>
-            )}
-            {canResolve && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => { setResolveError(null); setShowResolveModal(true); }}
-                className="border border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15"
-              >
-                Resolve Wager
-              </Button>
-            )}
-          </div>
-        )}
         {actionSuccess && <p className="text-sm text-emerald-300">{actionSuccess}</p>}
 
         <div className="flex flex-wrap gap-6 border-t border-slate-800 pt-4">
@@ -216,11 +238,21 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
               <p className="text-xs text-slate-500">{detail.currentUserBetOutcomeTitle}</p>
             </div>
           )}
-          <div className="ml-auto flex flex-col justify-end gap-0.5 text-right text-xs text-slate-500">
-            <span>{detail.categoryName}</span>
-            <span>by <span className="text-slate-400">{detail.creatorName}</span></span>
-            {detail.createdAt && <span>{new Date(detail.createdAt).toLocaleDateString()}</span>}
+          <div className="ml-auto flex flex-col items-end gap-2 text-right text-xs text-slate-500">
+          
+          {/* Creator Tag */}
+          <div className="flex items-center gap-1.5">
+            <span>Created by:</span>
+            <PillTag variant="creator">{detail.creatorName}</PillTag>
           </div>
+
+          {/* Date */}
+          {detail.createdAt && (
+            <span className="mt-0.5">
+              {new Date(detail.createdAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
         </div>
 
         {(readOnly) && (
@@ -253,9 +285,9 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
               wagerStatus={detail.status}
               currentUserBetAmount={detail.currentUserBetAmount}
               currentUserBetOutcomeTitle={detail.currentUserBetOutcomeTitle}
-              disabled={readOnly}
+              disabled={readOnly || hasCurrentUserBet}
               onClick={() => {
-                if (readOnly) return;
+                if (readOnly || hasCurrentUserBet) return;
                 setOpenBetOutcomeId((cur) => (cur === outcome.id ? null : outcome.id));
               }}
               isMenuOpen={openBetOutcomeId === outcome.id}
@@ -275,6 +307,28 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       </Card>
 
       <BetsSection wagerId={wagerId} currentUserId={user?.id} outcomes={detail.outcomes} refreshKey={betsRefreshKey} />
+
+      {!detail.isPublic && visibilityUsers.length > 0 && (
+        <Accordion
+          title={
+            <div className="flex items-center gap-3">
+              <span className="text-xl font-semibold text-slate-100">Wager Members</span>
+              <span className="rounded-full border border-slate-600/50 bg-slate-800/40 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                {visibilityUsers.length} member{visibilityUsers.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          }
+        >
+          <div className="grid gap-1">
+            {visibilityUsers.map((u) => (
+              <div key={u.id} className="flex items-center gap-3 py-1">
+                <span className="text-sm text-slate-200">{u.username}</span>
+                <span className="text-xs text-slate-500">{u.email}</span>
+              </div>
+            ))}
+          </div>
+        </Accordion>
+      )}
 
       <CommentSection
         wagerId={wagerId}
@@ -298,6 +352,23 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         onConfirm={(id) => void handleResolve(id)}
         isLoading={isResolving}
         error={resolveError}
+      />
+
+      <CreateWagerModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        onCreated={() => {}}
+        editingWager={detail}
+        onEdited={() => void refreshDetail()}
+      />
+
+      <DeleteWagerModal
+        open={showDeleteModal}
+        onOpenChange={(open) => { setShowDeleteModal(open); if (!open) setDeleteError(null); }}
+        wagerTitle={detail.title}
+        onConfirm={() => void handleDelete()}
+        isLoading={isDeleting}
+        error={deleteError}
       />
     </div>
   );

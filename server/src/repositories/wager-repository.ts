@@ -1,4 +1,5 @@
-import { desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { db } from "../db/db";
 import { Bet, Category, Outcome, User, Wager } from "../db/schema";
 
@@ -90,35 +91,84 @@ export async function findWagerByIdWithDetails(
   return row ?? null;
 }
 
-export async function listWagersWithDetails(
-  currentUserId?: number,
-): Promise<WagerBaseRow[]> {
-  const currentUserBetAmount = currentUserId
+export type WagerListOptions = {
+  currentUserId?: number;
+  limit: number;
+  offset: number;
+  q: string;
+  status: string;
+  category: string;
+  involvement: string;
+};
+
+function buildWagerConditions(options: WagerListOptions): SQL | undefined {
+  const conditions: (SQL | undefined)[] = [];
+
+  conditions.push(
+    options.currentUserId
+      ? or(
+          eq(Wager.is_public, true),
+          eq(Wager.created_by_id, options.currentUserId),
+          sql`EXISTS (SELECT 1 FROM wager_visibility WHERE wager_visibility.wager_id = ${Wager.id} AND wager_visibility.user_id = ${options.currentUserId})`,
+        )
+      : eq(Wager.is_public, true),
+  );
+
+  if (options.q) {
+    const pattern = `%${options.q}%`;
+    conditions.push(or(ilike(Wager.title, pattern), ilike(Wager.description, pattern)));
+  }
+
+  if (options.status !== "ALL") {
+    conditions.push(eq(Wager.status, options.status));
+  }
+
+  if (options.category !== "ALL") {
+    conditions.push(eq(Category.name, options.category));
+  }
+
+  if (options.currentUserId && options.involvement === "MINE") {
+    conditions.push(eq(Wager.created_by_id, options.currentUserId));
+  } else if (options.currentUserId && options.involvement === "MY_BETS") {
+    conditions.push(
+      sql`EXISTS (SELECT 1 FROM bet INNER JOIN outcome ON outcome.id = bet.outcome_id WHERE outcome.wager_id = ${Wager.id} AND bet.user_id = ${options.currentUserId})`,
+    );
+  }
+
+  const defined = conditions.filter((c): c is SQL => c !== undefined);
+  return defined.length > 0 ? and(...defined) : undefined;
+}
+
+export async function countWagersWithFilters(options: WagerListOptions): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(Wager)
+    .innerJoin(Category, eq(Wager.category_id, Category.id))
+    .innerJoin(User, eq(Wager.created_by_id, User.id))
+    .where(buildWagerConditions(options));
+
+  return Number(row.count);
+}
+
+export async function listWagersWithDetails(options: WagerListOptions): Promise<WagerBaseRow[]> {
+  const currentUserBetAmount = options.currentUserId
     ? sql<string | null>`(
       SELECT COALESCE(SUM(${Bet.amount}), '0')
       FROM ${Bet}
       INNER JOIN ${Outcome} ON ${Outcome.id} = ${Bet.outcome_id}
-      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
+      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${options.currentUserId}
     )`
     : sql<string | null>`NULL`;
 
-  const currentUserBetOutcomeTitle = currentUserId
+  const currentUserBetOutcomeTitle = options.currentUserId
     ? sql<string | null>`(
       SELECT ${Outcome.title}
       FROM ${Bet}
       INNER JOIN ${Outcome} ON ${Outcome.id} = ${Bet.outcome_id}
-      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${currentUserId}
+      WHERE ${Outcome.wager_id} = ${Wager.id} AND ${Bet.user_id} = ${options.currentUserId}
       LIMIT 1
     )`
     : sql<string | null>`NULL`;
-
-  const visibilityFilter = currentUserId
-    ? or(
-        eq(Wager.is_public, true),
-        eq(Wager.created_by_id, currentUserId),
-        sql`EXISTS (SELECT 1 FROM wager_visibility WHERE wager_visibility.wager_id = ${Wager.id} AND wager_visibility.user_id = ${currentUserId})`,
-      )
-    : eq(Wager.is_public, true);
 
   return db
     .select({
@@ -129,8 +179,10 @@ export async function listWagersWithDetails(
     .from(Wager)
     .innerJoin(Category, eq(Wager.category_id, Category.id))
     .innerJoin(User, eq(Wager.created_by_id, User.id))
-    .where(visibilityFilter)
-    .orderBy(desc(Wager.created_at));
+    .where(buildWagerConditions(options))
+    .orderBy(desc(Wager.created_at))
+    .limit(options.limit)
+    .offset(options.offset);
 }
 
 export async function listWagerOutcomes(wagerId: number): Promise<WagerOutcomeRow[]> {
@@ -168,6 +220,22 @@ export async function createWager(input: {
     .returning({ id: Wager.id });
 
   return wager.id;
+}
+
+export async function updateWagerFields(
+  wagerId: number,
+  input: { title: string; description: string | null; categoryId: number; isPublic: boolean },
+): Promise<void> {
+  await db.update(Wager).set({
+    title: input.title,
+    description: input.description,
+    category_id: input.categoryId,
+    is_public: input.isPublic,
+  }).where(eq(Wager.id, wagerId));
+}
+
+export async function deleteWagerById(wagerId: number): Promise<void> {
+  await db.delete(Wager).where(eq(Wager.id, wagerId));
 }
 
 export async function updateWagerStatus(
