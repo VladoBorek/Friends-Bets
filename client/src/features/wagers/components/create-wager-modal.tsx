@@ -77,7 +77,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
     }
     void loadCategories();
     return () => controller.abort();
-  }, [open]);
+  }, [open, editingWager]);
 
   useEffect(() => {
     if (!open || !editingWager) return;
