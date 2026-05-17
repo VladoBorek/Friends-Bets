@@ -1,16 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import type { CategorySummary, PaginatedWagersResponse, WagerSummary } from "@pb138/shared/schemas/wager";
-import { Card, CardDescription, CardTitle } from "../../components/ui/card";
+import type { CategorySummary, PaginatedWagersResponse } from "@pb138/shared/schemas/wager";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { WagerPagination } from "../../components/ui/wagers/wager-pagination";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
-import { StatusBadge } from "../../features/wagers/components/status-badge";
-import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
-import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
+import { WagerCard } from "../../features/wagers/components/wager-card";
 import { WAGERS_PAGE_SIZE } from "../../features/wagers/wagers-search";
-import { formatMoney } from "../../features/wagers/utils";
 import { useAuth } from "../../lib/auth-context";
 import { Route } from "../../routes/wagers/index";
 
@@ -33,7 +29,6 @@ export function WagersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategorySummary[]>([]);
-  const [openBetMenu, setOpenBetMenu] = useState<{ wagerId: number; outcomeId: number } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const [search, setSearch] = useState("");
@@ -97,7 +92,7 @@ export function WagersPage() {
     void navigate({ to: "/wagers", search: { page: 1 } });
   };
 
-  const wagers: WagerSummary[] = result?.data ?? [];
+  const wagers = result?.data ?? [];
   const pagination = result?.pagination ?? null;
   const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
 
@@ -107,15 +102,6 @@ export function WagersPage() {
 
   const navigateToWager = (wagerId: number) => {
     void navigate({ to: "/wagers/$wagerId", params: { wagerId: String(wagerId) } });
-  };
-
-  const isOutcomeInteraction = (target: EventTarget | null) =>
-    target instanceof HTMLElement && Boolean(target.closest('[data-outcome-interactive="true"]'));
-
-  const toggleOutcomeBetMenu = (wagerId: number, outcomeId: number) => {
-    setOpenBetMenu((cur) =>
-      cur?.wagerId === wagerId && cur.outcomeId === outcomeId ? null : { wagerId, outcomeId },
-    );
   };
 
   const refreshWagers = async () => {
@@ -222,7 +208,7 @@ export function WagersPage() {
         {!isLoading && !error && wagers.length > 0 && (
           <div className="grid gap-4">
             {wagers.map((wager) => (
-              <Card
+              <WagerCard
                 key={wager.id}
                 role="button"
                 tabIndex={0}
