@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
-import { LogOut, Moon, Sun, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { userMutationResponseSchema } from "@pb138/shared/schemas/user";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -350,11 +350,7 @@ export function ProfilePage() {
         <ProfileSettingsRow label="Appearance">
           <div className="flex items-center justify-between gap-3 py-1">
             <p className="text-sm text-slate-400">Theme mode toggle</p>
-            <div className="flex items-center gap-3">
-              <Sun className={cn("h-4 w-4 transition-colors", appearanceEnabled ? "text-slate-500" : "text-amber-300")} />
-              <Switch checked={appearanceEnabled} onChange={setAppearanceEnabled} />
-              <Moon className={cn("h-4 w-4 transition-colors", appearanceEnabled ? "text-cyan-300" : "text-slate-500")} />
-            </div>
+            <ThemeModeToggle />
           </div>
         </ProfileSettingsRow>
 

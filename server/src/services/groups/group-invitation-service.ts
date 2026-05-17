@@ -9,13 +9,17 @@ import * as groupMemberRepository from "../../repositories/group/group-member-re
 import * as groupInvitationRepository from "../../repositories/group/group-invitation-repository";
 import * as userRepository from "../../repositories/user-repository";
 import { mapUserSummary } from "../user/mappers/user-mapper";
+import { mapGroupMemberSummary } from "./mappers/group-mapper";
 import { requireGroupMember } from "./group-permission-service";
 
 async function toSummary(row: groupInvitationRepository.GroupInvitationRow): Promise<GroupInvitationSummary> {
-  const [group, requester, addressee] = await Promise.all([
+  const [group, requester, addressee, memberCount, activeWagerCount, members] = await Promise.all([
     groupRepository.findGroupById(row.groupId),
     userRepository.findUserById(row.requesterId),
     userRepository.findUserById(row.addresseeId),
+    groupMemberRepository.countGroupMembers(row.groupId, ""),
+    groupRepository.countActiveWagersForGroup(row.groupId),
+    groupMemberRepository.listGroupMembers(row.groupId, "", 5, 0),
   ]);
 
   if (!group || !requester || !addressee) {
@@ -32,6 +36,9 @@ async function toSummary(row: groupInvitationRepository.GroupInvitationRow): Pro
       name: group.name,
       description: group.description,
       createdAt: group.createdAt?.toISOString() ?? null,
+      memberCount,
+      activeWagerCount,
+      members: members.map(mapGroupMemberSummary),
     },
     requester: mapUserSummary(requester),
     addressee: mapUserSummary(addressee),

@@ -114,6 +114,9 @@ export const groupInvitationGroupSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   createdAt: z.string().nullable(),
+  memberCount: z.number().int().nonnegative(),
+  activeWagerCount: z.number().int().nonnegative(),
+  members: z.array(groupMemberSummarySchema),
 });
 
 export const groupInvitationSummarySchema = z.object({

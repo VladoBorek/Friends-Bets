@@ -231,3 +231,14 @@ export async function updateGroup(
 export async function deleteGroup(groupId: number): Promise<void> {
   await db.delete(Group).where(eq(Group.id, groupId));
 }
+
+export async function countActiveWagersForGroup(groupId: number): Promise<number> {
+  const [row] = await db
+    .select({
+      count: sql<number>`count(distinct ${Wager.id}) filter (where ${Wager.status} in ('OPEN', 'PENDING'))`.mapWith(Number),
+    })
+    .from(Wager)
+    .where(eq(Wager.group_id, groupId));
+
+  return row.count;
+}
