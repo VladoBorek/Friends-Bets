@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Clock3 } from "lucide-react";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
 import { groupsQueries } from "../../api/groups/groups-query-options";
 import { Button } from "../../components/ui/button";
@@ -10,8 +10,27 @@ import { CreateGroupDialog } from "../../components/ui/groups/create-group-dialo
 import { GroupDetailDialog } from "../../components/ui/groups/group-detail-dialog";
 import { GroupListSection } from "../../components/ui/groups/group-list-section";
 import { Route } from "../../routes/groups";
+import { fetchGroupInvitationCount } from "../../api/groups/group-invitations-api";
+import { PendingGroupInvitationsDialog } from "../../components/ui/groups/pending-group-invitations-dialog";
+import { useAuth } from "../../lib/auth-context";
+
 
 export function GroupsPage() {
+  const { user } = useAuth();
+  const [isPendingDialogOpen, setIsPendingDialogOpen] = useState(false);
+
+  const incomingInvitesQuery = useQuery({
+    queryKey: ["group-invitations-count", user?.id, "incoming"],
+    queryFn: () => fetchGroupInvitationCount("incoming"),
+    enabled: Boolean(user?.id),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
+
+  const incomingInviteCount = incomingInvitesQuery.data ?? 0;
+  const hasIncomingInvites = incomingInviteCount > 0;
+
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -58,10 +77,24 @@ export function GroupsPage() {
           <h1 className="text-2xl font-semibold text-slate-100">Groups</h1>
         </div>
 
-        <Button type="button" onClick={() => setIsCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Group
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={() => setIsPendingDialogOpen(true)}
+            className="relative gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800"
+          >
+            <Clock3 className="h-4 w-4" />
+            Pending
+            {hasIncomingInvites ? (
+              <span className="absolute -right-1.5 -top-1.5 size-3 rounded-full border border-slate-950 bg-rose-500" />
+            ) : null}
+          </Button>
+
+          <Button type="button" onClick={() => setIsCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Group
+          </Button>
+        </div>
       </div>
 
       <GroupListSection
@@ -83,6 +116,10 @@ export function GroupsPage() {
         }}
       />
 
+      <PendingGroupInvitationsDialog
+        open={isPendingDialogOpen}
+        onOpenChange={setIsPendingDialogOpen}
+      />
       <CreateGroupDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
     </div>
   );
