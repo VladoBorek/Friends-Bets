@@ -64,6 +64,13 @@ const steps: Step[] = [
     description: "Generate TypeScript client and React Query hooks from OpenAPI",
   },
   {
+    name: "Router Generation",
+    cmd: "PACKAGE_MANAGER",
+    args: ["run", "routes:generate"],
+    workspace: "@pb138/client",
+    description: "Generate TanStack Router route tree",
+  },
+  {
     name: "Linting",
     cmd: "PACKAGE_MANAGER",
     args: ["run", "lint"],

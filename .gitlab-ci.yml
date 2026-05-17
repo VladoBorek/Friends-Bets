@@ -73,7 +73,7 @@ build:
   stage: build
   script:
     - npm ci
-    - npm run api:generate
+    - npm run generate
     - npm run build
 
 deploy: # TODO

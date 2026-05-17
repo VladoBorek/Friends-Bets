@@ -61,7 +61,7 @@ export function UserTable({ users, isLoading, query, onQueryChange, actions }: U
               <col className="w-[140px]" />
               <col className="w-[72px]" />
             </colgroup>
-            <thead className="border-b border-slate-800 bg-slate-900/80">
+            <thead className="border-b border-slate-800/50 bg-slate-900/80">
               <tr>
                 <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">User ID</th>
                 <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Identity</th>
@@ -71,7 +71,7 @@ export function UserTable({ users, isLoading, query, onQueryChange, actions }: U
                 <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="[&>tr+tr]:border-t [&>tr+tr]:border-slate-800/50">
               {users.map((entry, index) => {
                 const status = getUserStatus(entry);
                 return (

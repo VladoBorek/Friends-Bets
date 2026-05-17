@@ -96,7 +96,7 @@ export function RootLayout() {
   return (
     <div className="isolate min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto flex w-full max-w-[90rem] flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-8">
-        <header className="mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 shadow-xl shadow-cyan-950/20 backdrop-blur md:p-5">
+        <header className="app-glow-surface mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 backdrop-blur md:p-5">
           {feedback && (
             <div
               className={`mb-4 rounded-lg p-3 text-sm ring-1 ${
@@ -149,7 +149,7 @@ export function RootLayout() {
                       className:
                         "rounded-lg border border-cyan-400/35 bg-cyan-500/16 px-3 py-1.5 text-sm font-medium text-cyan-100",
                     }}
-                    activeOptions={{ exact: item.exact }}
+                    activeOptions={{ exact: item.exact, includeSearch: false }}
                   >
                     {item.label}
                   </Link>
@@ -162,7 +162,7 @@ export function RootLayout() {
                       className:
                         "rounded-lg border border-cyan-400/35 bg-cyan-500/16 px-3 py-1.5 text-sm font-medium text-cyan-100",
                     }}
-                    activeOptions={{ exact: true }}
+                    activeOptions={{ exact: true, includeSearch: false }}
                   >
                     Admin
                   </Link>
@@ -179,7 +179,7 @@ export function RootLayout() {
                   activeProps={{
                     className: cn(userSettingsButtonClassName, "border-cyan-400/35 bg-cyan-500/16 text-cyan-100"),
                   }}
-                  activeOptions={{ exact: true }}
+                  activeOptions={{ exact: true, includeSearch: false }}
                 >
                   <User className="h-4 w-4" />
                 </Link>
@@ -216,7 +216,7 @@ export function RootLayout() {
                     onClick={() => setMenuOpen(false)}
                     className="rounded-md border border-transparent bg-slate-900/70 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:text-cyan-100"
                     activeProps={{ className: "border-cyan-400/35 bg-cyan-500/15 text-cyan-100" }}
-                    activeOptions={{ exact: item.exact }}
+                    activeOptions={{ exact: item.exact, includeSearch: false }}
                   >
                     {item.label}
                   </Link>
@@ -227,7 +227,7 @@ export function RootLayout() {
                     onClick={() => setMenuOpen(false)}
                     className="rounded-md border border-transparent bg-slate-900/70 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:text-cyan-100"
                     activeProps={{ className: "border-cyan-400/35 bg-cyan-500/15 text-cyan-100" }}
-                    activeOptions={{ exact: true }}
+                    activeOptions={{ exact: true, includeSearch: false }}
                   >
                     Admin
                   </Link>
@@ -248,7 +248,7 @@ export function RootLayout() {
                         "shrink-0 border-cyan-400/35 bg-cyan-500/16 text-cyan-100",
                       ),
                     }}
-                    activeOptions={{ exact: true }}
+                    activeOptions={{ exact: true, includeSearch: false }}
                   >
                     <User className="h-4 w-4" />
                   </Link>

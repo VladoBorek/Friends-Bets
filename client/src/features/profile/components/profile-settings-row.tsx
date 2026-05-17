@@ -7,6 +7,7 @@ interface ProfileSettingsRowProps {
   value?: string;
   actionLabel?: string;
   onAction?: () => void;
+  rightSlot?: ReactNode;
   children?: ReactNode;
   className?: string;
 }
@@ -16,6 +17,7 @@ export function ProfileSettingsRow({
   value,
   actionLabel = "Change",
   onAction,
+  rightSlot,
   children,
   className,
 }: ProfileSettingsRowProps) {
@@ -30,7 +32,9 @@ export function ProfileSettingsRow({
           <Button type="button" variant="secondary" size="sm" onClick={onAction} className="w-fit">
             {actionLabel}
           </Button>
-        ) : null}
+        ) : (
+          rightSlot ?? null
+        )}
       </div>
       {children}
     </div>

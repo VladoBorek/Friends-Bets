@@ -58,7 +58,7 @@ export function CategoryPanel({
               <col className="w-[120px]" />
               <col className="w-[90px]" />
             </colgroup>
-            <thead className="border-b border-slate-800 bg-slate-900/80">
+            <thead className="border-b border-slate-800/50 bg-slate-900/80">
               <tr>
                 <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Category</th>
                 <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Wagers</th>
@@ -66,7 +66,7 @@ export function CategoryPanel({
                 <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="[&>tr+tr]:border-t [&>tr+tr]:border-slate-800/50">
               {categories.map((category) => {
                 const canDelete = category.betCount === 0 && category.wagerCount === 0;
                 return (

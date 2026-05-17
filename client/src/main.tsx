@@ -4,6 +4,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./app";
 import { AuthProvider } from "./lib/auth-provider";
+import { ThemeProvider, useTheme } from "./lib/theme-provider";
 import "./index.css";
 import { Toaster } from "sonner";
 
@@ -16,8 +17,10 @@ setApiClientConfig({
 
 const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+function AppProviders() {
+  const { theme } = useTheme();
+
+  return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <App />
@@ -25,9 +28,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           position="top-center"
           richColors
           closeButton
-          theme="dark"
+          theme={theme}
         />
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <ThemeProvider>
+      <AppProviders />
+    </ThemeProvider>
   </React.StrictMode>,
 );

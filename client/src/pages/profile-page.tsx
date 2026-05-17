@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, User } from "lucide-react";
+import { User } from "lucide-react";
 import { userMutationResponseSchema } from "@pb138/shared/schemas/user";
 import { Card } from "../components/ui/card";
 import { FormItem } from "../components/ui/form-item";
 import { Input } from "../components/ui/input";
-import { Switch } from "../components/ui/switch";
-import { cn } from "../lib/utils";
 import { useAuth } from "../lib/auth-context";
 import { ProfileFeedbackBanner } from "../features/profile/components/profile-feedback-banner";
 import { ProfilePasswordInput } from "../features/profile/components/profile-password-input";
 import { ProfileSettingsRow } from "../features/profile/components/profile-settings-row";
 import { ProfileSubmitActions } from "../features/profile/components/profile-submit-actions";
+import { ThemeModeToggle } from "../features/profile/components/theme-mode-toggle";
 
 type FeedbackState = {
   type: "success" | "error";
@@ -51,7 +50,6 @@ export function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showNewPasswordRepeat, setShowNewPasswordRepeat] = useState(false);
   const [emailFieldsLocked, setEmailFieldsLocked] = useState(false);
-  const [appearanceEnabled, setAppearanceEnabled] = useState(true);
   const [isNicknameSaving, setIsNicknameSaving] = useState(false);
   const [isEmailSaving, setIsEmailSaving] = useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
@@ -352,16 +350,7 @@ export function ProfilePage() {
           ) : null}
         </ProfileSettingsRow>
 
-        <ProfileSettingsRow label="Appearance" className="pb-0">
-          <div className="flex items-center justify-between gap-3 py-1">
-            <p className="text-sm text-slate-400">Theme mode toggle</p>
-            <div className="flex items-center gap-3">
-              <Sun className={cn("h-4 w-4 transition-colors", appearanceEnabled ? "text-slate-500" : "text-amber-300")} />
-              <Switch checked={appearanceEnabled} onChange={setAppearanceEnabled}/>
-              <Moon className={cn("h-4 w-4 transition-colors", appearanceEnabled ? "text-cyan-300" : "text-slate-500")} />
-            </div>
-          </div>
-        </ProfileSettingsRow>
+        <ProfileSettingsRow label="Appearance" value="Theme mode toggle" rightSlot={<ThemeModeToggle />} />
       </Card>
     </div>
   );
