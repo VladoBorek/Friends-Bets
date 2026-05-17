@@ -1,7 +1,13 @@
 import { Elysia } from "elysia";
 import { z } from "zod";
-import { getMeResponseSchema } from "@pb138/shared/schemas/user";
-import { searchUsersByEmail } from "../../services/user";
+import {
+  getMeResponseSchema,
+  updateEmailRequestSchema,
+  updateNicknameRequestSchema,
+  updatePasswordRequestSchema,
+  userMutationResponseSchema,
+} from "@pb138/shared/schemas/user";
+import { searchUsersByEmail, updateEmail, updateNickname, updatePassword } from "../../services/user";
 import { getOptionalAuthenticatedUser, getAuthenticatedUser, authPlugin, type AuthContextLike } from "../../plugins/auth";
 
 export const profileRoutes = new Elysia()
@@ -22,4 +28,25 @@ export const profileRoutes = new Elysia()
     const emailQuery = z.string().min(1).max(200).parse(context.query.email);
     const data = await searchUsersByEmail(emailQuery, currentUser.id);
     return { data };
+  })
+
+  .patch("/nickname", async (context) => {
+    const currentUser = await getAuthenticatedUser(context as AuthContextLike);
+    const parsedBody = updateNicknameRequestSchema.parse(context.body);
+    const data = await updateNickname(currentUser.id, parsedBody.nickname);
+    return userMutationResponseSchema.parse({ data });
+  })
+
+  .patch("/email", async (context) => {
+    const currentUser = await getAuthenticatedUser(context as AuthContextLike);
+    const parsedBody = updateEmailRequestSchema.parse(context.body);
+    const data = await updateEmail(currentUser.id, parsedBody.newEmail, parsedBody.currentPassword);
+    return userMutationResponseSchema.parse({ data });
+  })
+
+  .patch("/password", async (context) => {
+    const currentUser = await getAuthenticatedUser(context as AuthContextLike);
+    const parsedBody = updatePasswordRequestSchema.parse(context.body);
+    const data = await updatePassword(currentUser.id, parsedBody.oldPassword, parsedBody.newPassword);
+    return userMutationResponseSchema.parse({ data });
   });

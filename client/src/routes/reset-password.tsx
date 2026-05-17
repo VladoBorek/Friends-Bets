@@ -4,6 +4,7 @@ import { ResetPasswordPage } from "../pages/reset-password-page";
 
 const resetPasswordSearchSchema = z.object({
   token: z.string().optional(),
+  email: z.string().optional(),
 });
 
 export const Route = createFileRoute("/reset-password")({

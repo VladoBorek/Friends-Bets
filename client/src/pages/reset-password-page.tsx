@@ -11,7 +11,7 @@ export function ResetPasswordPage() {
   const search = useSearch({ from: "/reset-password" });
   const token = search.token;
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => search.email ?? "");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState("");

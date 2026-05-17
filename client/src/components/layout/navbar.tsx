@@ -1,17 +1,17 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../lib/auth-context";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
   { to: "/wagers", label: "All Wagers", exact: false },
   { to: "/friends", label: "Friends", exact: false },
+  { to: "/groups", label: "Groups", exact: true },
   { to: "/wallet", label: "Wallet", exact: true },
 ] as const;
-
-const placeholderNavItems = [{ label: "Friends & Groups" }] as const;
 
 export function Navbar() {
   const router = useRouter();
@@ -51,6 +51,9 @@ export function Navbar() {
       setIsResendLoading(false);
     }
   };
+
+  const userSettingsButtonClassName =
+    "inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-700 bg-slate-700 text-slate-100 transition-colors hover:bg-slate-600";
 
   return (
     <header className="mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 shadow-xl shadow-cyan-950/20 backdrop-blur md:p-5">
@@ -108,15 +111,6 @@ export function Navbar() {
               {item.label}
             </Link>
           ))}
-          {placeholderNavItems.map((item) => (
-            <span
-              key={item.label}
-              className="cursor-not-allowed rounded-lg border border-transparent px-3 py-1.5 text-sm text-slate-500"
-              title="Under Construction"
-            >
-              {item.label}
-            </span>
-          ))}
           {isAdmin && (
             <Link
               to="/terminal"
@@ -133,6 +127,18 @@ export function Navbar() {
         </nav>
 
         <div className="inline-flex items-center gap-2">
+          <Link
+            to="/profile"
+            aria-label="User Settings"
+            title="User Settings"
+            className={userSettingsButtonClassName}
+            activeProps={{
+              className: cn(userSettingsButtonClassName, "border-cyan-400/35 bg-cyan-500/16 text-cyan-100"),
+            }}
+            activeOptions={{ exact: true }}
+          >
+            <User className="h-4 w-4" />
+          </Link>
           {!isVerified && (
             <Button
               variant="secondary"
@@ -170,14 +176,6 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            {placeholderNavItems.map((item) => (
-              <span
-                key={item.label}
-                className="rounded-md border border-dashed border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-slate-500"
-              >
-                {item.label} (Under Construction)
-              </span>
-            ))}
             {isAdmin && (
               <Link
                 to="/terminal"
@@ -191,6 +189,24 @@ export function Navbar() {
             )}
           </nav>
           <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Link
+                to="/profile"
+                aria-label="User Settings"
+                title="User Settings"
+                onClick={() => setMenuOpen(false)}
+                className={cn(userSettingsButtonClassName, "shrink-0")}
+                activeProps={{
+                  className: cn(
+                    userSettingsButtonClassName,
+                    "shrink-0 border-cyan-400/35 bg-cyan-500/16 text-cyan-100",
+                  ),
+                }}
+                activeOptions={{ exact: true }}
+              >
+                <User className="h-4 w-4" />
+              </Link>
+            </div>
             {!isVerified && (
               <Button
                 variant="secondary"

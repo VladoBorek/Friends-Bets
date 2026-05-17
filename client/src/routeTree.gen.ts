@@ -14,6 +14,7 @@ import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as FriendsRouteImport } from './routes/friends'
@@ -45,6 +46,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/friends': typeof FriendsRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminal': typeof TerminalRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/friends': typeof FriendsRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminal': typeof TerminalRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/friends': typeof FriendsRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terminal': typeof TerminalRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/groups'
     | '/login'
+    | '/profile'
     | '/register'
     | '/reset-password'
     | '/terminal'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/groups'
     | '/login'
+    | '/profile'
     | '/register'
     | '/reset-password'
     | '/terminal'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/friends'
     | '/groups'
     | '/login'
+    | '/profile'
     | '/register'
     | '/reset-password'
     | '/terminal'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   FriendsRoute: typeof FriendsRoute
   GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TerminalRoute: typeof TerminalRoute
@@ -221,6 +234,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   FriendsRoute: FriendsRoute,
   GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TerminalRoute: TerminalRoute,
