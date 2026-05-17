@@ -69,6 +69,27 @@ export const GroupMembership = pgTable(
     index("group_membership_group_idx").on(table.group_id),
   ],
 );
+
+export const GroupInvitation = pgTable(
+  "group_invitation",
+  {
+    id: serial("id").primaryKey(),
+    group_id: integer("group_id").references(() => Group.id, { onDelete: "cascade" }).notNull(),
+    requester_id: integer("requester_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+    addressee_id: integer("addressee_id").references(() => User.id, { onDelete: "cascade" }).notNull(),
+    status: varchar("status").notNull(),
+    created_at: timestamp("created_at").defaultNow(),
+    responded_at: timestamp("responded_at"),
+  },
+  (table) => [
+    check("group_invitation_status_check", sql`${table.status} in ('PENDING', 'ACCEPTED', 'REJECTED')`),
+    check("group_invitation_not_self_check", sql`${table.requester_id} <> ${table.addressee_id}`),
+    uniqueIndex("group_invitation_group_addressee_unique").on(table.group_id, table.addressee_id),
+    index("group_invitation_requester_idx").on(table.requester_id),
+    index("group_invitation_addressee_idx").on(table.addressee_id),
+  ],
+);
+
 export const Category = pgTable("category", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull(),
@@ -186,6 +207,8 @@ export const UserRelations = relations(User, ({ one, many }) => ({
   wager_invites: many(WagerVisibility),
   sent_friend_requests: many(Friendship, { relationName: "friendship_requester" }),
   received_friend_requests: many(Friendship, { relationName: "friendship_addressee" }),
+  sent_group_invitations: many(GroupInvitation, { relationName: "group_invitation_requester" }),
+  received_group_invitations: many(GroupInvitation, { relationName: "group_invitation_addressee" }),
 }));
 
 export const WalletRelations = relations(Wallet, ({ one, many }) => ({
@@ -204,6 +227,21 @@ export const RoleRelations = relations(Role, ({ many }) => ({
 
 export const GroupRelations = relations(Group, ({ many }) => ({
   memberships: many(GroupMembership),
+  invitations: many(GroupInvitation),
+}));
+
+export const GroupInvitationRelations = relations(GroupInvitation, ({ one }) => ({
+  group: one(Group, { fields: [GroupInvitation.group_id], references: [Group.id] }),
+  requester: one(User, {
+    fields: [GroupInvitation.requester_id],
+    references: [User.id],
+    relationName: "group_invitation_requester",
+  }),
+  addressee: one(User, {
+    fields: [GroupInvitation.addressee_id],
+    references: [User.id],
+    relationName: "group_invitation_addressee",
+  }),
 }));
 
 export const GroupMembershipRelations = relations(GroupMembership, ({ one }) => ({
