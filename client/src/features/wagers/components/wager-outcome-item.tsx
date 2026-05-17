@@ -16,6 +16,7 @@ interface WagerOutcomeItemProps {
   currentUserBetOutcomeTitle: string | null;
   onClick: () => void;
   isMenuOpen: boolean;
+  isDisabled?: boolean;
   menu?: ReactNode;
   disabled?: boolean;
   interactionAttribute?: string;
@@ -28,6 +29,7 @@ export function WagerOutcomeItem({
   currentUserBetOutcomeTitle,
   onClick,
   isMenuOpen,
+  isDisabled = false,
   menu,
   disabled = false,
   interactionAttribute = "data-outcome-interactive",
@@ -59,10 +61,17 @@ export function WagerOutcomeItem({
   return (
     <div
       {...interactionProps}
-      className={`rounded-md border p-3 text-sm transition-colors ${containerClass}`}
+      className={`rounded-md border p-3 text-sm transition-colors ${
+        isWinningOutcome
+          ? "border-amber-400/70 bg-amber-500/5 hover:border-amber-300 hover:bg-amber-500/10"
+          : isCurrentUserOutcome
+            ? "border-emerald-400/60 bg-emerald-500/10 hover:border-emerald-400/80 hover:bg-emerald-500/20"
+            : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/30"
+      }`}
     >
       <button
         type="button"
+        disabled={isDisabled}
         {...interactionProps}
         disabled={disabled}
         onClick={(event) => {

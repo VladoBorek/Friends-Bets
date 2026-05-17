@@ -2,7 +2,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { WagerDetail } from "../../../../shared/src/schemas/wager";
+import { Accordion } from "../../components/ui/accordion";
 import { Card, CardTitle } from "../../components/ui/card";
+import { PillTag } from "../../components/ui/pill-tag";
 import { BetsSection } from "../../features/wagers/components/bets-section";
 import { CommentSection } from "../../features/wagers/components/comment-section";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
@@ -47,6 +49,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [betsRefreshKey, setBetsRefreshKey] = useState(0);
+  const [visibilityUsers, setVisibilityUsers] = useState<{ id: number; username: string; email: string }[]>([]);
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
@@ -57,6 +60,14 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       ? "Account must be verified to comment."
       : null;
   const isCreator = detail ? detail.createdById === user?.id : false;
+
+  useEffect(() => {
+    if (!detail || detail.isPublic || detail.createdById !== user?.id) return;
+    fetch(`/api/wagers/${wagerId}/invitations`)
+      .then((r) => r.json() as Promise<{ data: { id: number; username: string; email: string }[] }>)
+      .then((json) => setVisibilityUsers(json.data ?? []))
+      .catch(() => undefined);
+  }, [detail, user?.id, wagerId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -187,9 +198,11 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
       {/* ── Header card ── */}
       <Card className="grid gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold leading-snug text-slate-100">{detail.title}</h1>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
+          <h1 className="flex-1 text-2xl font-semibold leading-snug text-slate-100">{detail.title}</h1>
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            <PillTag variant="category">{detail.categoryName}</PillTag>
+            {!detail.isPublic && <PillTag variant="private">Private</PillTag>}
             <StatusBadge status={detail.status} />
             {isCreator && (
               <WagerActionsMenu
@@ -225,11 +238,21 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
               <p className="text-xs text-slate-500">{detail.currentUserBetOutcomeTitle}</p>
             </div>
           )}
-          <div className="ml-auto flex flex-col justify-end gap-0.5 text-right text-xs text-slate-500">
-            <span>{detail.categoryName}</span>
-            <span>by <span className="text-slate-400">{detail.creatorName}</span></span>
-            {detail.createdAt && <span>{new Date(detail.createdAt).toLocaleDateString()}</span>}
+          <div className="ml-auto flex flex-col items-end gap-2 text-right text-xs text-slate-500">
+          
+          {/* Creator Tag */}
+          <div className="flex items-center gap-1.5">
+            <span>Created by:</span>
+            <PillTag variant="creator">{detail.creatorName}</PillTag>
           </div>
+
+          {/* Date */}
+          {detail.createdAt && (
+            <span className="mt-0.5">
+              {new Date(detail.createdAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
         </div>
 
         {(readOnly) && (
