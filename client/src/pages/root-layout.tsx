@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useRouter } from "@tanstack/react-router";
+import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { AlertCircle, Menu, User, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
@@ -28,8 +28,7 @@ export function RootRouteComponent() {
 }
 
 export function RootLayout() {
-  const router = useRouter();
-  const { user, logout, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const walletOverview = useWalletOverview(user?.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isResendLoading, setIsResendLoading] = useState(false);
@@ -61,12 +60,6 @@ export function RootLayout() {
         <span className="ml-1.5 tabular-nums text-cyan-200">{formatCurrency(walletOverview.data.data.balance)}</span>
       </div>
     );
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    await router.invalidate();
-    await router.navigate({ to: "/login" });
   };
 
   const handleResendVerification = async () => {
@@ -118,10 +111,9 @@ export function RootLayout() {
               </div>
             </div>
           )}
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-lg font-bold tracking-[0.35em] text-cyan-300/80">BetPals</p>
-            </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-lg font-bold tracking-[0.35em] text-cyan-300/80">BetPals</p>
 
             {user && (
               <div className="inline-flex items-center gap-2">
@@ -157,7 +149,7 @@ export function RootLayout() {
           </div>
 
           {user && (
-            <div className="mt-3 hidden items-center justify-between gap-3 md:flex">
+            <div className="mt-8 hidden items-center justify-between gap-3 md:flex">
               <nav className="inline-flex flex-wrap items-center gap-0.5">
                 {routeNavItems.map((item) => (
                   <Link
@@ -190,7 +182,7 @@ export function RootLayout() {
 
               <div className="inline-flex items-center gap-2">
                 {renderWalletBalance()}
-                
+
                 {!isVerified && (
                   <Button
                     variant="secondary"
@@ -202,14 +194,6 @@ export function RootLayout() {
                     {isResendLoading ? "Resending..." : "Resend Verification"}
                   </Button>
                 )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="border-rose-500/30 bg-rose-500/10 text-rose-200 hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
-                >
-                  Sign Out
-                </Button>
               </div>
             </div>
           )}
@@ -241,26 +225,10 @@ export function RootLayout() {
                   </Link>
                 )}
               </nav>
-              <div className="flex flex-col gap-2">
+
+              <div className="flex flex-col items-start gap-2">
                 {renderWalletBalance()}
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/profile"
-                    aria-label="User Settings"
-                    title="User Settings"
-                    onClick={() => setMenuOpen(false)}
-                    className={cn(userSettingsButtonClassName, "shrink-0")}
-                    activeProps={{
-                      className: cn(
-                        userSettingsButtonClassName,
-                        "shrink-0 border-cyan-400/35 bg-cyan-500/16 text-cyan-100",
-                      ),
-                    }}
-                    activeOptions={{ exact: true, includeSearch: false }}
-                  >
-                    <User className="h-4 w-4" />
-                  </Link>
-                </div>
+
                 {!isVerified && (
                   <Button
                     variant="secondary"
@@ -272,14 +240,6 @@ export function RootLayout() {
                     {isResendLoading ? "Resending..." : "Resend Verification"}
                   </Button>
                 )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="w-full border-rose-500/30 bg-rose-500/10 text-rose-200 hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
-                >
-                  Sign Out
-                </Button>
               </div>
             </div>
           )}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { User } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
+import { LogOut, Moon, Sun, User } from "lucide-react";
 import { userMutationResponseSchema } from "@pb138/shared/schemas/user";
+import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { FormItem } from "../components/ui/form-item";
 import { Input } from "../components/ui/input";
@@ -18,9 +20,7 @@ type FeedbackState = {
 
 async function extractErrorMessage(response: Response, fallback: string): Promise<string> {
   const rawBody = (await response.text().catch(() => "")).trim();
-  if (!rawBody) {
-    return fallback;
-  }
+  if (!rawBody) return fallback;
 
   try {
     const parsed = JSON.parse(rawBody) as { message?: string };
@@ -37,7 +37,8 @@ async function extractErrorMessage(response: Response, fallback: string): Promis
 type SettingsSection = "nickname" | "email" | "password" | null;
 
 export function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const router = useRouter();
+  const { user, refreshUser, logout } = useAuth();
   const [activeSection, setActiveSection] = useState<SettingsSection>(null);
   const [nickname, setNickname] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -67,6 +68,18 @@ export function ProfilePage() {
   const canSaveNickname = nickname.trim().length >= 3 && nickname !== user.username && !isNicknameSaving;
   const canSaveEmail =
     newEmail.trim().length > 0 && currentPassword.length > 0 && newEmail !== user.email && !isEmailSaving;
+  const canSavePassword =
+    oldPassword.length > 0 &&
+    newPassword.length >= 4 &&
+    newPasswordRepeat === newPassword &&
+    newPassword !== oldPassword &&
+    !isPasswordSaving;
+
+  const handleLogout = async () => {
+    await logout();
+    await router.invalidate();
+    await router.navigate({ to: "/login" });
+  };
 
   const startNicknameEdit = () => {
     setActiveSection("nickname");
@@ -128,9 +141,7 @@ export function ProfilePage() {
     try {
       const response = await fetch("/api/users/nickname", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nickname: nickname.trim() }),
       });
 
@@ -161,9 +172,7 @@ export function ProfilePage() {
     try {
       const response = await fetch("/api/users/email", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newEmail: newEmail.trim(), currentPassword }),
       });
 
@@ -197,13 +206,8 @@ export function ProfilePage() {
     try {
       const response = await fetch("/api/users/password", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          oldPassword,
-          newPassword,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword }),
       });
 
       if (!response.ok) {
@@ -228,13 +232,6 @@ export function ProfilePage() {
       setIsPasswordSaving(false);
     }
   };
-
-  const canSavePassword =
-    oldPassword.length > 0 &&
-    newPassword.length >= 4 &&
-    newPasswordRepeat === newPassword &&
-    newPassword !== oldPassword &&
-    !isPasswordSaving;
 
   return (
     <div className="mx-auto w-full max-w-4xl">
@@ -350,7 +347,36 @@ export function ProfilePage() {
           ) : null}
         </ProfileSettingsRow>
 
-        <ProfileSettingsRow label="Appearance" value="Theme mode toggle" rightSlot={<ThemeModeToggle />} />
+        <ProfileSettingsRow label="Appearance">
+          <div className="flex items-center justify-between gap-3 py-1">
+            <p className="text-sm text-slate-400">Theme mode toggle</p>
+            <div className="flex items-center gap-3">
+              <Sun className={cn("h-4 w-4 transition-colors", appearanceEnabled ? "text-slate-500" : "text-amber-300")} />
+              <Switch checked={appearanceEnabled} onChange={setAppearanceEnabled} />
+              <Moon className={cn("h-4 w-4 transition-colors", appearanceEnabled ? "text-cyan-300" : "text-slate-500")} />
+            </div>
+          </div>
+        </ProfileSettingsRow>
+
+        <div className="grid gap-4 py-5 pb-0">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-100">Session</p>
+              <p className="text-sm text-slate-400">Sign out of this account</p>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleLogout}
+              className="w-fit gap-2 border border-rose-500/30 bg-rose-500/10 text-rose-200 hover:border-rose-400/60 hover:bg-rose-500/15 hover:text-rose-100"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
   );
