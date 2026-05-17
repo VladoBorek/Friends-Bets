@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-lg border border-slate-700 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/30", className)}
+      className={cn("app-glow-surface rounded-lg border border-slate-700 bg-slate-900/70 p-5", className)}
       {...props}
     />
   );
@@ -22,7 +22,7 @@ export function PremiumCard({ className, ...props }: HTMLAttributes<HTMLDivEleme
   return (
     <Card
       className={cn(
-        "rounded-2xl border-cyan-500/20 bg-gradient-to-br from-slate-900/92 via-slate-900/86 to-cyan-950/24 shadow-lg shadow-slate-950/25 transition-shadow duration-200 hover:shadow-[0_20px_44px_-24px_rgba(8,145,178,0.7)]",
+        "rounded-2xl border-cyan-500/20 bg-gradient-to-br from-slate-900/92 via-slate-900/86 to-cyan-950/24",
         className,
       )}
       {...props}

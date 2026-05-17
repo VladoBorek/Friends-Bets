@@ -10,10 +10,10 @@ type FriendDetailPanelProps = {
 };
 
 const statCardClassName = cn(
-  "rounded-2xl border border-slate-800 bg-slate-950/45 px-4 py-4",
-  "transition-[transform,border-color,background-color,box-shadow] duration-300 ease-out",
+  "app-glow-surface rounded-2xl border border-slate-800 bg-slate-950/45 px-4 py-4",
+  "transition-[transform] duration-300 ease-out",
   "motion-safe:hover:-translate-y-0.5",
-  "hover:border-cyan-500/20 hover:bg-slate-950/60 hover:shadow-lg hover:shadow-cyan-950/10",
+  "hover:bg-slate-950/60",
 );
 
 function formatRecord(friend: FriendSummary) {
@@ -119,7 +119,6 @@ export function FriendDetailPanel({ friend }: FriendDetailPanelProps) {
     <Card
       className={cn(
         "rounded-2xl border border-cyan-500/15 bg-slate-900/80 p-5",
-        "shadow-[0_24px_60px_-28px_rgba(8,145,178,0.22)]",
       )}
     >
       <div className="flex items-center gap-4">

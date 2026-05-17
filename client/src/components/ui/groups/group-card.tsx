@@ -27,11 +27,11 @@ export function GroupCard({ group, isSelected, onClick }: GroupCardProps) {
     <button type="button" onClick={onClick} className="group h-full w-full text-left">
       <article
         className={cn(
-          "flex h-80 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 p-6",
-          "transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out",
+          "app-glow-surface flex h-80 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 p-6",
+          "transition-[transform] duration-200 ease-out",
           "motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:scale-[1.015]",
-          "group-hover:border-cyan-500/35 group-hover:bg-slate-900 group-hover:shadow-[0_24px_70px_-32px_rgba(8,145,178,0.45)]",
-          isSelected && "border-cyan-500/45 bg-cyan-500/10 shadow-[0_24px_70px_-32px_rgba(8,145,178,0.55)]",
+          "group-hover:bg-slate-900",
+          isSelected && "app-glow-surface-active border-cyan-500/45 bg-cyan-500/10",
         )}
       >
         <div className="flex items-start justify-between gap-4">

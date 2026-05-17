@@ -56,7 +56,7 @@ export function Navbar() {
     "inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-700 bg-slate-700 text-slate-100 transition-colors hover:bg-slate-600";
 
   return (
-    <header className="mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 shadow-xl shadow-cyan-950/20 backdrop-blur md:p-5">
+    <header className="app-glow-surface mb-8 rounded-2xl border border-cyan-500/20 bg-slate-900/85 p-4 backdrop-blur md:p-5">
       {feedback && (
         <div
           className={`mb-4 rounded-lg p-3 text-sm ring-1 ${
@@ -106,7 +106,7 @@ export function Navbar() {
                 className:
                   "rounded-lg border border-cyan-400/35 bg-cyan-500/16 px-3 py-1.5 text-sm font-medium text-cyan-100",
               }}
-              activeOptions={{ exact: item.exact }}
+              activeOptions={{ exact: item.exact, includeSearch: false }}
             >
               {item.label}
             </Link>
@@ -119,7 +119,7 @@ export function Navbar() {
                 className:
                   "rounded-lg border border-cyan-400/35 bg-cyan-500/16 px-3 py-1.5 text-sm font-medium text-cyan-100",
               }}
-              activeOptions={{ exact: true }}
+              activeOptions={{ exact: true, includeSearch: false }}
             >
               Admin
             </Link>
@@ -135,7 +135,7 @@ export function Navbar() {
             activeProps={{
               className: cn(userSettingsButtonClassName, "border-cyan-400/35 bg-cyan-500/16 text-cyan-100"),
             }}
-            activeOptions={{ exact: true }}
+            activeOptions={{ exact: true, includeSearch: false }}
           >
             <User className="h-4 w-4" />
           </Link>
@@ -171,7 +171,7 @@ export function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="rounded-md border border-transparent bg-slate-900/70 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:text-cyan-100"
                 activeProps={{ className: "border-cyan-400/35 bg-cyan-500/15 text-cyan-100" }}
-                activeOptions={{ exact: item.exact }}
+                activeOptions={{ exact: item.exact, includeSearch: false }}
               >
                 {item.label}
               </Link>
@@ -182,7 +182,7 @@ export function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="rounded-md border border-transparent bg-slate-900/70 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:text-cyan-100"
                 activeProps={{ className: "border-cyan-400/35 bg-cyan-500/15 text-cyan-100" }}
-                activeOptions={{ exact: true }}
+                activeOptions={{ exact: true, includeSearch: false }}
               >
                 Admin
               </Link>
@@ -202,7 +202,7 @@ export function Navbar() {
                     "shrink-0 border-cyan-400/35 bg-cyan-500/16 text-cyan-100",
                   ),
                 }}
-                activeOptions={{ exact: true }}
+                activeOptions={{ exact: true, includeSearch: false }}
               >
                 <User className="h-4 w-4" />
               </Link>
