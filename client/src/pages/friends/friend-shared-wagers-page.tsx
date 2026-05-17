@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import type { FriendWagerSummary } from "@pb138/shared/schemas/friends";
 import { friendsQueries } from "../../api/friends-query-options";
 import { Card, CardDescription, CardTitle } from "../../components/ui/card";
 import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
-import type { FriendWagerSummary } from "@pb138/shared/schemas/friends";
-import { Route } from "../../routes/friends_.$friendId.wagers"
+import { Route } from "../../routes/friends_.$friendId.wagers";
 import { cn } from "../../lib/utils";
+
 function formatSignedMoney(value: string) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue.toFixed(2) : value;
@@ -68,11 +69,19 @@ export function FriendSharedWagersPage() {
   }
 
   if (detailQuery.error) {
-    return <p className="text-rose-300">{detailQuery.error instanceof Error ? detailQuery.error.message : "Unable to load friend."}</p>;
+    return (
+      <p className="text-rose-300">
+        {detailQuery.error instanceof Error ? detailQuery.error.message : "Unable to load friend."}
+      </p>
+    );
   }
 
   if (historyQuery.error) {
-    return <p className="text-rose-300">{historyQuery.error instanceof Error ? historyQuery.error.message : "Unable to load shared wager history."}</p>;
+    return (
+      <p className="text-rose-300">
+        {historyQuery.error instanceof Error ? historyQuery.error.message : "Unable to load shared wager history."}
+      </p>
+    );
   }
 
   const friend = detailQuery.data?.data.friend ?? historyQuery.data?.friend;
@@ -120,48 +129,52 @@ export function FriendSharedWagersPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {wagers.map((wager) => (
-            <Link
-              key={wager.wagerId}
-              to="/wagers/$wagerId"
-              params={{ wagerId: String(wager.wagerId) }}
-              className="block"
-            >
-              <Card className="cursor-pointer rounded-2xl border-slate-800 transition-colors hover:border-cyan-500/35">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <CardTitle>{wager.title}</CardTitle>
-                    <CardDescription className="mt-2">
-                      You: {wager.currentUserOutcomeTitle ?? "n/a"} · Them: {wager.friendOutcomeTitle ?? "n/a"}
-                    </CardDescription>
+          {wagers.map((wager) => {
+            const resultMeta = getHeadToHeadMeta(wager.headToHeadResult);
+
+            return (
+              <Link
+                key={wager.wagerId}
+                to="/wagers/$wagerId"
+                params={{ wagerId: String(wager.wagerId) }}
+                className="block"
+              >
+                <Card className="cursor-pointer rounded-2xl border-slate-800 transition-colors hover:border-cyan-500/35">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <CardTitle>{wager.title}</CardTitle>
+                      <CardDescription className="mt-2">
+                        You: {wager.currentUserOutcomeTitle ?? "n/a"} · Them: {wager.friendOutcomeTitle ?? "n/a"}
+                      </CardDescription>
+                    </div>
+
+                    <div className={cn("shrink-0 text-lg font-semibold", getMoneyTone(wager.headToHeadNetPnl))}>
+                      {formatSignedMoney(wager.headToHeadNetPnl)}
+                    </div>
                   </div>
 
-                  <div className={`shrink-0 text-lg font-semibold ${getMoneyTone(wager.currentUserNetPnl)}`}>
-                    {formatSignedMoney(wager.currentUserNetPnl)}
+                  <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                    <span className={cn("rounded-full border px-2 py-1", resultMeta.className)}>
+                      {resultMeta.label}
+                    </span>
+
+                    <span className="rounded-full border border-slate-700 px-2 py-1">
+                      Your bet: {formatSignedMoney(wager.currentUserBetAmount)}
+                    </span>
+                    <span className="rounded-full border border-slate-700 px-2 py-1">
+                      Their bet: {formatSignedMoney(wager.friendBetAmount)}
+                    </span>
+                    <span className={cn("rounded-full border border-slate-700 px-2 py-1", getMoneyTone(wager.currentUserNetPnl))}>
+                      Your P/L: {formatSignedMoney(wager.currentUserNetPnl)}
+                    </span>
+                    <span className={cn("rounded-full border border-slate-700 px-2 py-1", getMoneyTone(wager.friendNetPnl))}>
+                      Their P/L: {formatSignedMoney(wager.friendNetPnl)}
+                    </span>
                   </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
-                  {wager.headToHeadResult ? (() => {
-                    const resultMeta = getHeadToHeadMeta(wager.headToHeadResult);
-
-                    return (
-                        <span className={cn("rounded-full border px-2 py-1", resultMeta.className)}>
-                        {resultMeta.label}
-                        </span>
-                    );
-                    })() : null}
-
-                  <span className="rounded-full border border-slate-700 px-2 py-1">
-                    Your bet: {formatSignedMoney(wager.currentUserBetAmount)}
-                  </span>
-                  <span className="rounded-full border border-slate-700 px-2 py-1">
-                    Their bet: {formatSignedMoney(wager.friendBetAmount)}
-                  </span>
-                </div>
-              </Card>
-            </Link>
-          ))}
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
 

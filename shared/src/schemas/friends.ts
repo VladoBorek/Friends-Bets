@@ -92,6 +92,7 @@ export const friendWagerSummarySchema = z.object({
   currentUserNetPnl: z.string(),
   friendNetPnl: z.string(),
   headToHeadResult: friendHeadToHeadResultSchema,
+  headToHeadNetPnl: z.string(),
 });
 
 export const friendWagersListQuerySchema = paginationQuerySchema;
