@@ -350,9 +350,7 @@ export function ProfilePage() {
           ) : null}
         </ProfileSettingsRow>
 
-        <ProfileSettingsRow label="Appearance" className="pb-0">
-          <ThemeModeToggle />
-        </ProfileSettingsRow>
+        <ProfileSettingsRow label="Appearance" value="Theme mode toggle" rightSlot={<ThemeModeToggle />} />
       </Card>
     </div>
   );

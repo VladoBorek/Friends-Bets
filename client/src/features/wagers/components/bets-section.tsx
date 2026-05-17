@@ -53,13 +53,13 @@ export function BetsSection({ wagerId, currentUserId, outcomes, refreshKey }: Be
         <ScrollArea className="mt-4 rounded-lg border border-slate-800">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-800/40">
+              <tr className="border-b border-slate-800/60 bg-slate-800/40">
                 <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Player</th>
                 <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Outcome</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-slate-500">Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="[&>tr+tr]:border-t [&>tr+tr]:border-slate-800/60">
               {bets.map((bet) => {
                 const color = outcomeColorMap[bet.outcomeTitle];
                 const isMe = bet.userId === currentUserId;

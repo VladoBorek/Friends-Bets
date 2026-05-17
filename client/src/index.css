@@ -39,6 +39,20 @@ body {
     color 160ms ease;
 }
 
+html[data-theme="dark"] .premium-glow-card:hover {
+  border-color: rgba(34, 211, 238, 0.35) !important;
+  box-shadow:
+    0 20px 44px -24px rgba(8, 145, 178, 0.55),
+    0 10px 26px -18px rgba(2, 6, 23, 0.85) !important;
+}
+
+html[data-theme="light"] .premium-glow-card:hover {
+  border-color: rgba(14, 116, 144, 0.28) !important;
+  box-shadow:
+    0 16px 34px -22px rgba(14, 116, 144, 0.26),
+    0 8px 22px -16px rgba(15, 23, 42, 0.16) !important;
+}
+
 html[data-theme="light"] body {
   background:
     radial-gradient(circle at 20% -10%, rgba(14, 116, 144, 0.14), transparent 40%),
@@ -153,6 +167,21 @@ html[data-theme="light"] .border-slate-700\/70,
 html[data-theme="light"] .border-slate-800,
 html[data-theme="light"] .border-slate-800\/80 {
   border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+html[data-theme="light"] .border-slate-800\/50,
+html[data-theme="light"] .border-slate-800\/60 {
+  border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+html[data-theme="light"] .divide-slate-800\/50 > :not([hidden]) ~ :not([hidden]),
+html[data-theme="light"] .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(148, 163, 184, 0.34) !important;
+}
+
+html[data-theme="light"] [class*="[&>tr+tr]:border-slate-800/50"] > tr + tr,
+html[data-theme="light"] [class*="[&>tr+tr]:border-slate-800/60"] > tr + tr {
+  border-color: rgba(148, 163, 184, 0.34) !important;
 }
 
 html[data-theme="light"] .border-slate-950 {
