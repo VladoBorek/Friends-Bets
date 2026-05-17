@@ -63,6 +63,20 @@ export async function findUserWithPasswordByEmail(email: string): Promise<FullUs
   return row ?? null;
 }
 
+export async function findUserWithPasswordById(id: number): Promise<FullUserRow | null> {
+  const [row] = await db
+    .select({
+      ...userSelect,
+      passwordHash: User.password_hash,
+    })
+    .from(User)
+    .innerJoin(Role, eq(User.role_id, Role.id))
+    .where(eq(User.id, id))
+    .limit(1);
+
+  return row ?? null;
+}
+
 export async function listAllUsers(): Promise<UserRow[]> {
   return db
     .select(userSelect)
@@ -124,6 +138,14 @@ export async function updateUserVerification(userId: number, isVerified: boolean
 
 export async function updateUserPassword(userId: number, passwordHash: string): Promise<void> {
   await db.update(User).set({ password_hash: passwordHash }).where(eq(User.id, userId));
+}
+
+export async function updateUsername(userId: number, username: string): Promise<void> {
+  await db.update(User).set({ username }).where(eq(User.id, userId));
+}
+
+export async function updateUserEmail(userId: number, email: string): Promise<void> {
+  await db.update(User).set({ email }).where(eq(User.id, userId));
 }
 
 export async function deleteUserById(userId: number): Promise<void> {

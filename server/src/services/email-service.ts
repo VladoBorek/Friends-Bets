@@ -21,6 +21,13 @@ export type SecurityNotificationTemplate = {
   changedAtIso: string;
 };
 
+export type PrimaryEmailChangedTemplate = {
+  email: string;
+  username: string;
+  previousEmail: string;
+  changedAtIso: string;
+};
+
 export type RegistrationTemplate = {
   email: string;
   username: string;
@@ -165,6 +172,15 @@ class EmailClient {
       subject: "PB138 security notification - password changed",
       text: `Hello ${input.username}, your password was changed at ${input.changedAtIso}.`,
       html: `<p>Hello <strong>${input.username}</strong>,</p><p>Your password was changed at <strong>${input.changedAtIso}</strong>.</p><p>If this was not you, contact support immediately.</p>`,
+    });
+  }
+
+  async sendPrimaryEmailChangedEmail(input: PrimaryEmailChangedTemplate): Promise<void> {
+    await this.send({
+      to: input.email,
+      subject: "PB138 security notification - primary email changed",
+      text: `Hello ${input.username}, your account email was changed from ${input.previousEmail} to ${input.email} at ${input.changedAtIso}.`,
+      html: `<p>Hello <strong>${input.username}</strong>,</p><p>Your account email was changed from <strong>${input.previousEmail}</strong> to <strong>${input.email}</strong> at <strong>${input.changedAtIso}</strong>.</p><p>If this was not you, contact support immediately.</p>`,
     });
   }
 

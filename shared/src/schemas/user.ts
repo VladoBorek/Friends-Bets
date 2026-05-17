@@ -52,6 +52,20 @@ export const verifyEmailRequestSchema = z.object({
   token: z.string().min(1),
 });
 
+export const updateNicknameRequestSchema = z.object({
+  nickname: z.string().min(3).max(50),
+});
+
+export const updateEmailRequestSchema = z.object({
+  newEmail: z.string().email(),
+  currentPassword: z.string().min(1),
+});
+
+export const updatePasswordRequestSchema = z.object({
+  oldPassword: z.string().min(1),
+  newPassword: z.string().min(4),
+});
+
 export const userMutationResponseSchema = z.object({
   data: userSummarySchema,
 });
@@ -95,3 +109,6 @@ export type SuspendUserRequest = z.infer<typeof suspendUserRequestSchema>;
 export type VerifyEmailRequest = z.infer<typeof verifyEmailRequestSchema>;
 export type ResendVerificationByEmailRequest = z.infer<typeof resendVerificationByEmailRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
+export type UpdateNicknameRequest = z.infer<typeof updateNicknameRequestSchema>;
+export type UpdateEmailRequest = z.infer<typeof updateEmailRequestSchema>;
+export type UpdatePasswordRequest = z.infer<typeof updatePasswordRequestSchema>;
