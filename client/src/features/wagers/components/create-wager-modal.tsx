@@ -14,6 +14,7 @@ import { Switch } from "../../../components/ui/switch";
 import { Textarea } from "../../../components/ui/textarea";
 import { useAuth } from "../../../lib/auth-context";
 import { toErrorMessage } from "../utils";
+import { GroupSearchSection, type GroupInvitation } from "./group-search-section";
 import { UserSearchSection, type UserSearchResult } from "./user-search-section";
 
 const MAX_OUTCOMES = 8;
@@ -36,6 +37,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
   const [outcomes, setOutcomes] = useState<string[]>(["Yes", "No"]);
   const [isPublic, setIsPublic] = useState(true);
   const [invitedUsers, setInvitedUsers] = useState<UserSearchResult[]>([]);
+  const [groupInvitations, setGroupInvitations] = useState<GroupInvitation[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
@@ -45,7 +47,17 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
   const isUnverified = user?.isVerified === false;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setTitle("");
+      setDescription("");
+      setSelectedCategoryId("");
+      setOutcomes(["Yes", "No"]);
+      setIsPublic(true);
+      setInvitedUsers([]);
+      setGroupInvitations([]);
+      setErrorMessage(null);
+      return;
+    }
     const controller = new AbortController();
     setIsLoadingCategories(true);
     async function loadCategories() {
@@ -75,6 +87,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
     setOutcomes(editingWager.outcomes.map((o) => o.title));
     setIsPublic(editingWager.isPublic);
     setInvitedUsers([]);
+    setGroupInvitations([]);
     setErrorMessage(null);
 
     if (!editingWager.isPublic) {
@@ -100,6 +113,40 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
   function removeInvitedUser(id: number) {
     setInvitedUsers((prev) => prev.filter((u) => u.id !== id));
   }
+  function addGroupInvitation(group: GroupInvitation) {
+    setGroupInvitations((prev) => {
+      if (prev.some((g) => g.groupId === group.groupId)) return prev;
+      const alreadyExcluded = new Set(prev.flatMap((g) => [...g.excludedIds]));
+      const excludedIds = new Set(
+        group.members.filter((m) => alreadyExcluded.has(m.id)).map((m) => m.id),
+      );
+      return [...prev, { ...group, excludedIds }];
+    });
+  }
+  function updateGroupInvitation(groupId: number, newExcludedIds: Set<number>) {
+    setGroupInvitations((prev) => {
+      const target = prev.find((g) => g.groupId === groupId);
+      if (!target) return prev;
+
+      const justExcluded = [...newExcludedIds].filter((id) => !target.excludedIds.has(id));
+      const justIncluded = [...target.excludedIds].filter((id) => !newExcludedIds.has(id));
+
+      return prev.map((g) => {
+        if (g.groupId === groupId) return { ...g, excludedIds: newExcludedIds };
+        const next = new Set(g.excludedIds);
+        for (const id of justExcluded) {
+          if (g.members.some((m) => m.id === id)) next.add(id);
+        }
+        for (const id of justIncluded) {
+          next.delete(id);
+        }
+        return { ...g, excludedIds: next };
+      });
+    });
+  }
+  function removeGroupInvitation(groupId: number) {
+    setGroupInvitations((prev) => prev.filter((g) => g.groupId !== groupId));
+  }
 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,13 +154,20 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
     if (isSuspended) { setErrorMessage("Suspended users cannot create wagers."); return; }
     if (isUnverified) { setErrorMessage("Account must be verified to perform this action."); return; }
 
+    const groupUserIds = groupInvitations.flatMap((gi) =>
+      gi.members.filter((m) => !gi.excludedIds.has(m.id)).map((m) => m.id),
+    );
+    const allInvitedIds = isPublic
+      ? undefined
+      : [...new Set([...invitedUsers.map((u) => u.id), ...groupUserIds])];
+
     const parsed = createWagerRequestSchema.safeParse({
       title,
       description: description || undefined,
       categoryId: Number(selectedCategoryId),
       isPublic,
       outcomes: outcomes.map((o) => ({ title: o })),
-      invitedUserIds: isPublic ? undefined : invitedUsers.map((u) => u.id),
+      invitedUserIds: allInvitedIds,
     });
 
     if (!parsed.success) {
@@ -214,12 +268,24 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
           <Switch
             id="modal-isPublic"
             checked={isPublic}
-            onChange={(checked) => { setIsPublic(checked); if (checked) setInvitedUsers([]); }}
+            onChange={(checked) => {
+              setIsPublic(checked);
+              if (checked) { setInvitedUsers([]); setGroupInvitations([]); }
+            }}
             label={isPublic ? "Public — visible to everyone" : "Private — visible only to you and invited users"}
           />
 
           {!isPublic && (
-            <UserSearchSection invitedUsers={invitedUsers} onAdd={addInvitedUser} onRemove={removeInvitedUser} />
+            <>
+              <UserSearchSection invitedUsers={invitedUsers} onAdd={addInvitedUser} onRemove={removeInvitedUser} />
+              <GroupSearchSection
+                addedGroups={groupInvitations}
+                currentUserId={user?.id}
+                onAddGroup={addGroupInvitation}
+                onUpdateGroup={updateGroupInvitation}
+                onRemoveGroup={removeGroupInvitation}
+              />
+            </>
           )}
 
           {isSuspended && <p className="text-sm text-amber-200">Suspended users cannot create wagers.</p>}
