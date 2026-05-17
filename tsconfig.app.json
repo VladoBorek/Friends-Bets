@@ -23,7 +23,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
     "paths": {
       "@pb138/shared": ["./shared/src/index.ts"],
       "@pb138/shared/*": ["./shared/src/*"]
