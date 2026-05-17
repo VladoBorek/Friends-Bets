@@ -9,15 +9,24 @@ type WagerComment = { id: number; userId: number; username: string; content: str
 interface CommentSectionProps {
   wagerId: number;
   currentUserId: number | undefined;
+  isCommentingRestricted?: boolean;
+  commentRestrictionMessage?: string;
 }
 
-export function CommentSection({ wagerId, currentUserId }: CommentSectionProps) {
+export function CommentSection({
+  wagerId,
+  currentUserId,
+  isCommentingRestricted = false,
+  commentRestrictionMessage,
+}: CommentSectionProps) {
   const [comments, setComments] = useState<WagerComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isAuthenticated = Boolean(currentUserId);
+  const isSubmissionRestricted = isAuthenticated && isCommentingRestricted;
 
   useEffect(() => {
     async function load() {
@@ -34,6 +43,11 @@ export function CommentSection({ wagerId, currentUserId }: CommentSectionProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmissionRestricted) {
+      setSubmitError(commentRestrictionMessage ?? "Commenting is disabled for your account.");
+      return;
+    }
+
     const trimmed = draft.trim();
     if (!trimmed) return;
     setSubmitError(null);
@@ -94,17 +108,27 @@ export function CommentSection({ wagerId, currentUserId }: CommentSectionProps) 
         <ScrollBar />
       </ScrollArea>
 
-      {currentUserId ? (
+      {isAuthenticated ? (
         <form onSubmit={(e) => void handleSubmit(e)} className="mt-4 grid gap-2">
+          {isSubmissionRestricted && (
+            <div className="rounded-md border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              {commentRestrictionMessage ?? "Commenting is disabled for your account."}
+            </div>
+          )}
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Write a comment…"
             rows={3}
+            disabled={isSubmitting || isSubmissionRestricted}
           />
           {submitError && <p className="text-xs text-rose-300">{submitError}</p>}
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting || !draft.trim()} className="w-fit">
+            <Button
+              type="submit"
+              disabled={isSubmitting || isSubmissionRestricted || !draft.trim()}
+              className="w-fit"
+            >
               {isSubmitting ? "Posting…" : "Post Comment"}
             </Button>
           </div>

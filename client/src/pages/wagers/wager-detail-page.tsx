@@ -43,6 +43,12 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
+  const readOnly = isSuspended || isUnverified;
+  const commentRestrictionMessage = isSuspended
+    ? "Suspended users cannot comment"
+    : isUnverified
+      ? "Account must be verified to comment."
+      : null;
   const isCreator = detail ? detail.createdById === user?.id : false;
 
   useEffect(() => {
@@ -217,7 +223,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
           </div>
         </div>
 
-        {(isSuspended || isUnverified) && (
+        {(readOnly) && (
           <div className="flex gap-2">
             {isSuspended && (
               <span className="rounded-full border border-amber-500/35 px-2 py-0.5 text-xs text-amber-200">
@@ -247,7 +253,11 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
               wagerStatus={detail.status}
               currentUserBetAmount={detail.currentUserBetAmount}
               currentUserBetOutcomeTitle={detail.currentUserBetOutcomeTitle}
-              onClick={() => setOpenBetOutcomeId((cur) => (cur === outcome.id ? null : outcome.id))}
+              disabled={readOnly}
+              onClick={() => {
+                if (readOnly) return;
+                setOpenBetOutcomeId((cur) => (cur === outcome.id ? null : outcome.id));
+              }}
               isMenuOpen={openBetOutcomeId === outcome.id}
               menu={(
                 <WagerInlineBetMenu
@@ -266,7 +276,12 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
       <BetsSection wagerId={wagerId} currentUserId={user?.id} outcomes={detail.outcomes} refreshKey={betsRefreshKey} />
 
-      <CommentSection wagerId={wagerId} currentUserId={user?.id} />
+      <CommentSection
+        wagerId={wagerId}
+        currentUserId={user?.id}
+        isCommentingRestricted={Boolean(commentRestrictionMessage)}
+        commentRestrictionMessage={commentRestrictionMessage ?? undefined}
+      />
 
       <EndBettingModal
         open={showEndBettingModal}

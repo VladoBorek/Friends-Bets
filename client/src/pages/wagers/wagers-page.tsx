@@ -37,6 +37,7 @@ export function WagersPage() {
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
+  const readOnly = isSuspended || isUnverified;
 
   const fetchWagers = async (signal?: AbortSignal) => {
     const response = await fetch("/api/wagers", signal ? { signal } : undefined);
@@ -103,7 +104,7 @@ export function WagersPage() {
         <div className="sticky top-6 grid gap-4">
           <Button
             onClick={() => setModalOpen(true)}
-            disabled={isSuspended || isUnverified}
+            disabled={readOnly}
             className="w-full"
           >
             + Create Wager
@@ -242,7 +243,11 @@ export function WagersPage() {
                       wagerStatus={wager.status}
                       currentUserBetAmount={wager.currentUserBetAmount}
                       currentUserBetOutcomeTitle={wager.currentUserBetOutcomeTitle}
-                      onClick={() => toggleOutcomeBetMenu(wager.id, outcome.id)}
+                      disabled={readOnly}
+                      onClick={() => {
+                        if (readOnly) return;
+                        toggleOutcomeBetMenu(wager.id, outcome.id);
+                      }}
                       isMenuOpen={openBetMenu?.wagerId === wager.id && openBetMenu.outcomeId === outcome.id}
                       menu={(
                         <div data-outcome-interactive="true" className="mt-3">
