@@ -29,3 +29,7 @@ export function calculateOdds(totalPool: number, totalBet: number): string | nul
 
   return (totalPool / totalBet).toFixed(2);
 }
+
+export function calculatePayout(totalPool: number, stake: number, winningPool: number): number {
+  return Number(((totalPool * stake) / winningPool).toFixed(2));
+}

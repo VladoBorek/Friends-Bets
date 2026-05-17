@@ -16,7 +16,7 @@ import { createWagerVisibilities } from "../../repositories/wager-visibility-rep
 import { listWinningBets } from "../../repositories/bet-repository";
 import { mapWagerDetail } from "./mappers/wager-mapper";
 import { ensureUserIsVerified, ensureUserIsNotSuspended } from "./wager-validation";
-import { formatMoney, parseMoney } from "./wager-utils";
+import { calculatePayout, formatMoney, parseMoney } from "./wager-utils";
 
 export async function createWager(
   input: CreateWagerRequest,
@@ -148,7 +148,7 @@ export async function resolveWager(
         }
 
         const stake = parseMoney(betRow.amount);
-        const payout = Number(((totalPool * stake) / winningPool).toFixed(2));
+        const payout = calculatePayout(totalPool, stake, winningPool);
         const nextUserBalance = formatMoney(parseMoney(userWallet.balance) + payout);
 
         await db.update(Wallet).set({ balance: nextUserBalance }).where(eq(Wallet.id, userWallet.id));

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { WagerDetail } from "@pb138/shared/schemas/wager";
+import type { WagerDetail } from "../../../../shared/src/schemas/wager";
 import { Card, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { BetsSection } from "../../features/wagers/components/bets-section";
@@ -15,6 +15,7 @@ import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome
 import { formatMoney, toErrorMessage } from "../../features/wagers/utils";
 import { useAuth } from "../../lib/auth-context";
 import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet-query-options";
+import { friendsKeys } from "../../api/friends-query-options";
 
 interface WagerDetailPageProps {
   wagerId: number;
@@ -110,6 +111,8 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         });
         publishWalletBalanceRefresh(user.id);
       }
+
+      void queryClient.invalidateQueries({ queryKey: friendsKeys.all });
     } catch (e) {
       setResolveError(toErrorMessage(e));
     } finally {

@@ -13,6 +13,7 @@
     "build": "npm run build -w @pb138/client && npm run build -w @pb138/server",
     "lint": "npm run lint -w @pb138/client && npm run lint -w @pb138/server && eslint scripts",
     "preview": "npm run preview -w @pb138/client",
+    "test": "npm run test -w @pb138/client && npm run test -w @pb138/server",
     "api:generate": "npm run api:generate -w @pb138/client",
     "db:generate": "npm run db:generate -w @pb138/server",
     "db:migrate": "npm run db:migrate -w @pb138/server",
@@ -30,7 +31,8 @@
     "globals": "^17.4.0",
     "npm-run-all": "^4.1.5",
     "tsx": "^4.20.6",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "esbuild": "^0.25.0"

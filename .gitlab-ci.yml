@@ -43,12 +43,13 @@ lint:
     - npm ci
     - npm run lint
 
-unit-tests: # TODO
+unit-tests:
   stage: test
   cache:
     <<: *cache_pull
   script:
-    - echo "TODO"
+    - npm ci
+    - npm run test
 
 integration-tests: # TODO
   stage: test

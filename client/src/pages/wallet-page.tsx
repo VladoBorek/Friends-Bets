@@ -138,6 +138,7 @@ export function WalletPage() {
       void navigate({
         to: "/wallet",
         search: { page: 1, type: search.type, search: value },
+        resetScroll: false,
       });
     }, 300);
   };
@@ -146,6 +147,7 @@ export function WalletPage() {
     void navigate({
       to: "/wallet",
       search: { page: 1, type: value, search: search.search },
+      resetScroll: false,
     });
   };
 
