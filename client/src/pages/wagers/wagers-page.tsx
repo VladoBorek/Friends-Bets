@@ -196,90 +196,10 @@ export function WagersPage() {
             {wagers.map((wager) => (
               <WagerCard
                 key={wager.id}
-                role="button"
-                tabIndex={0}
-                onClick={(event) => {
-                  if (isOutcomeInteraction(event.target)) return;
-                  navigateToWager(wager.id);
-                }}
-                onKeyDown={(event) => {
-                  if (event.target !== event.currentTarget) return;
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    navigateToWager(wager.id);
-                  }
-                }}
-                className="cursor-pointer transition-colors hover:border-cyan-500/40"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <CardTitle>{wager.title}</CardTitle>
-                  <StatusBadge status={wager.status} className="shrink-0" />
-                </div>
-                {wager.description && (
-                  <CardDescription className="mt-1">{wager.description}</CardDescription>
-                )}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                  <span>{wager.categoryName}</span>
-                  <span className="text-slate-600">·</span>
-                  <span>by {wager.creatorName}</span>
-                  <span className="ml-auto font-semibold text-cyan-200">
-                    Pool: {formatMoney(wager.totalPool)}
-                  </span>
-                </div>
-                {(isSuspended || isUnverified) && (
-                  <div className="mt-2 flex gap-2">
-                    {isSuspended && (
-                      <span className="rounded-full border border-amber-500/35 px-2 py-0.5 text-xs text-amber-200">
-                        Suspended
-                      </span>
-                    )}
-                    {isUnverified && (
-                      <span className="rounded-full border border-amber-500/35 px-2 py-0.5 text-xs text-amber-200">
-                        Unverified
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="mt-3 space-y-2">
-                  {wager.outcomes.map((outcome) => (
-                    <WagerOutcomeItem
-                      key={outcome.id}
-                      outcome={outcome}
-                      wagerStatus={wager.status}
-                      currentUserBetAmount={wager.currentUserBetAmount}
-                      currentUserBetOutcomeTitle={wager.currentUserBetOutcomeTitle}
-                      disabled={readOnly}
-                      onClick={() => {
-                        if (readOnly) return;
-                        toggleOutcomeBetMenu(wager.id, outcome.id);
-                      }}
-                      isMenuOpen={openBetMenu?.wagerId === wager.id && openBetMenu.outcomeId === outcome.id}
-                      menu={(
-                        <div data-outcome-interactive="true" className="mt-3">
-                          <WagerInlineBetMenu
-                            wagerId={wager.id}
-                            outcomeId={outcome.id}
-                            outcomeTitle={outcome.title}
-                            canPlaceBet={wager.status === "OPEN" && !isSuspended && !isUnverified && !wager.currentUserBetAmount}
-                            disabledMessage={
-                              wager.status !== "OPEN"
-                                ? "Betting is closed for this wager."
-                                : wager.currentUserBetAmount
-                                  ? `You already placed a bet of ${formatMoney(wager.currentUserBetAmount)} on ${wager.currentUserBetOutcomeTitle ?? "your selected outcome"}.`
-                                  : isSuspended
-                                    ? "Suspended users cannot place bets."
-                                    : isUnverified
-                                      ? "Account must be verified to perform this action."
-                                      : "Betting is unavailable for this account."
-                            }
-                            onBetPlaced={refreshWagers}
-                          />
-                        </div>
-                      )}
-                    />
-                  ))}
-                </div>
-              </Card>
+                wager={wager}
+                currentUserId={user?.id}
+                onClick={() => navigateToWager(wager.id)}
+              />
             ))}
           </div>
         )}

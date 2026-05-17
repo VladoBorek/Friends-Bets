@@ -285,9 +285,9 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
               wagerStatus={detail.status}
               currentUserBetAmount={detail.currentUserBetAmount}
               currentUserBetOutcomeTitle={detail.currentUserBetOutcomeTitle}
-              disabled={readOnly}
+              disabled={readOnly || hasCurrentUserBet}
               onClick={() => {
-                if (readOnly) return;
+                if (readOnly || hasCurrentUserBet) return;
                 setOpenBetOutcomeId((cur) => (cur === outcome.id ? null : outcome.id));
               }}
               isMenuOpen={openBetOutcomeId === outcome.id}
@@ -307,6 +307,28 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       </Card>
 
       <BetsSection wagerId={wagerId} currentUserId={user?.id} outcomes={detail.outcomes} refreshKey={betsRefreshKey} />
+
+      {!detail.isPublic && visibilityUsers.length > 0 && (
+        <Accordion
+          title={
+            <div className="flex items-center gap-3">
+              <span className="text-xl font-semibold text-slate-100">Wager Members</span>
+              <span className="rounded-full border border-slate-600/50 bg-slate-800/40 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                {visibilityUsers.length} member{visibilityUsers.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          }
+        >
+          <div className="grid gap-1">
+            {visibilityUsers.map((u) => (
+              <div key={u.id} className="flex items-center gap-3 py-1">
+                <span className="text-sm text-slate-200">{u.username}</span>
+                <span className="text-xs text-slate-500">{u.email}</span>
+              </div>
+            ))}
+          </div>
+        </Accordion>
+      )}
 
       <CommentSection
         wagerId={wagerId}
