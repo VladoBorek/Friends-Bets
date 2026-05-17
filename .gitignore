@@ -26,3 +26,4 @@ dist-ssr
 *.env*
 
 **/api/gen/
+client/src/routeTree.gen.ts
