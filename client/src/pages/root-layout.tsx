@@ -120,20 +120,39 @@ export function RootLayout() {
           )}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-lg font-bold uppercase tracking-[0.35em] text-cyan-300/80">Gam(bl)ing With Friends</p>
+              <p className="text-lg font-bold tracking-[0.35em] text-cyan-300/80">BetPals</p>
             </div>
 
             {user && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMenuOpen((open) => !open)}
-                className="md:hidden"
-                aria-label={menuOpen ? "close navigation" : "open navigation"}
-                aria-expanded={menuOpen}
-              >
-                {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-              </Button>
+              <div className="inline-flex items-center gap-2">
+                <span className="max-w-[10rem] truncate text-sm font-semibold text-slate-200 sm:max-w-[14rem]">
+                  {user.username}
+                </span>
+
+                <Link
+                  to="/profile"
+                  aria-label="User Settings"
+                  title="User Settings"
+                  className={userSettingsButtonClassName}
+                  activeProps={{
+                    className: cn(userSettingsButtonClassName, "border-cyan-400/35 bg-cyan-500/16 text-cyan-100"),
+                  }}
+                  activeOptions={{ exact: true }}
+                >
+                  <User className="h-4 w-4" />
+                </Link>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMenuOpen((open) => !open)}
+                  className="md:hidden"
+                  aria-label={menuOpen ? "close navigation" : "open navigation"}
+                  aria-expanded={menuOpen}
+                >
+                  {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -171,18 +190,7 @@ export function RootLayout() {
 
               <div className="inline-flex items-center gap-2">
                 {renderWalletBalance()}
-                <Link
-                  to="/profile"
-                  aria-label="User Settings"
-                  title="User Settings"
-                  className={userSettingsButtonClassName}
-                  activeProps={{
-                    className: cn(userSettingsButtonClassName, "border-cyan-400/35 bg-cyan-500/16 text-cyan-100"),
-                  }}
-                  activeOptions={{ exact: true, includeSearch: false }}
-                >
-                  <User className="h-4 w-4" />
-                </Link>
+                
                 {!isVerified && (
                   <Button
                     variant="secondary"
