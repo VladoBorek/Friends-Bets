@@ -2,6 +2,7 @@ import { HttpError } from "../../errors";
 import {
   findWagerById,
   findWagerByIdWithDetails,
+  countWagersWithFilters,
   listWagersWithDetails,
   listWagerOutcomes,
 } from "../../repositories/wager-repository";
@@ -11,17 +12,34 @@ import {
 } from "../../repositories/wager-visibility-repository";
 import { listAllCategories } from "../../repositories/category-repository";
 import { mapWagerDetail, mapWagerSummary } from "./mappers/wager-mapper";
-import type { CategorySummary, WagerDetail, WagerSummary } from "@pb138/shared/schemas/wager";
+import type { CategorySummary, WagerDetail, WagersListQuery, PaginatedWagersResponse } from "@pb138/shared/schemas/wager";
 
-export async function listWagers(currentUserId?: number): Promise<WagerSummary[]> {
-  const rows = await listWagersWithDetails(currentUserId);
+export async function listWagers(
+  query: WagersListQuery,
+  currentUserId?: number,
+): Promise<PaginatedWagersResponse> {
+  const options = { ...query, currentUserId };
+  const [total, rows] = await Promise.all([
+    countWagersWithFilters(options),
+    listWagersWithDetails(options),
+  ]);
 
-  return Promise.all(
+  const data = await Promise.all(
     rows.map(async (row) => {
       const outcomes = await listWagerOutcomes(row.id);
       return mapWagerSummary(row, outcomes);
     }),
   );
+
+  return {
+    data,
+    pagination: {
+      total,
+      limit: query.limit,
+      offset: query.offset,
+      hasMore: query.offset + data.length < total,
+    },
+  };
 }
 
 export async function getWagerById(id: number, currentUserId?: number): Promise<WagerDetail> {

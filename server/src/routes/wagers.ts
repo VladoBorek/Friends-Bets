@@ -6,11 +6,12 @@ import {
   createWagerResponseSchema,
   getWagerResponseSchema,
   listCategoriesResponseSchema,
-  listWagersResponseSchema,
+  paginatedWagersResponseSchema,
   placeBetRequestSchema,
   placeBetResponseSchema,
   resolveWagerRequestSchema,
   resolveWagerResponseSchema,
+  wagersListQuerySchema,
 } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../errors";
 import {
@@ -81,10 +82,11 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
       }
     },
   }))
-  .get("", async ({ getOptionalCurrentUser }) => {
+  .get("", async ({ query, getOptionalCurrentUser }) => {
     const currentUser = await getOptionalCurrentUser();
-    const data = await listWagers(currentUser?.id);
-    return listWagersResponseSchema.parse({ data });
+    const parsedQuery = wagersListQuerySchema.parse(query);
+    const result = await listWagers(parsedQuery, currentUser?.id);
+    return paginatedWagersResponseSchema.parse(result);
   })
   .get("/categories", async () => {
     const data = await listCategoriesForQuery();

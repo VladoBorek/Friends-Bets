@@ -140,7 +140,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       const response = await fetch(`/api/wagers/${wagerId}`, { method: "DELETE" });
       const json = (await response.json().catch(() => null)) as { message?: string } | null;
       if (!response.ok) throw new Error(json?.message ?? "Failed to delete wager");
-      void navigate({ to: "/wagers" });
+      void navigate({ to: "/wagers", search: { page: 1 } });
     } catch (e) {
       setDeleteError(toErrorMessage(e));
     } finally {
@@ -174,13 +174,13 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       <div className="flex items-center gap-2 text-sm text-slate-400">
         <button
           type="button"
-          onClick={() => void navigate({ to: "/wagers" })}
+          onClick={() => void navigate({ to: "/wagers", search: { page: 1 } })}
           className="flex items-center gap-1 transition-colors hover:text-slate-200"
         >
           ← Back
         </button>
         <span className="text-slate-600">/</span>
-        <Link to="/wagers" className="transition-colors hover:text-slate-200">Wagers</Link>
+        <Link to="/wagers" search={{ page: 1 }} className="transition-colors hover:text-slate-200">Wagers</Link>
         <span className="text-slate-600">/</span>
         <span className="max-w-xs truncate text-slate-300">{detail.title}</span>
       </div>

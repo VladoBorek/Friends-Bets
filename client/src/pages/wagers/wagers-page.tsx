@@ -1,15 +1,18 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import type { WagerSummary } from "@pb138/shared/schemas/wager";
+import { useEffect, useState } from "react";
+import type { CategorySummary, PaginatedWagersResponse, WagerSummary } from "@pb138/shared/schemas/wager";
 import { Card, CardDescription, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
+import { WagerPagination } from "../../components/ui/wagers/wager-pagination";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
 import { StatusBadge } from "../../features/wagers/components/status-badge";
 import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
+import { WAGERS_PAGE_SIZE } from "../../features/wagers/wagers-search";
 import { formatMoney } from "../../features/wagers/utils";
 import { useAuth } from "../../lib/auth-context";
+import { Route } from "../../routes/wagers/index";
 
 type StatusFilter = "ALL" | "OPEN" | "PENDING" | "CLOSED";
 type InvolvementFilter = "ALL" | "MINE" | "MY_BETS";
@@ -22,11 +25,14 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 ];
 
 export function WagersPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { page } = Route.useSearch();
   const { user } = useAuth();
-  const [wagers, setWagers] = useState<WagerSummary[] | null>(null);
+
+  const [result, setResult] = useState<PaginatedWagersResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [openBetMenu, setOpenBetMenu] = useState<{ wagerId: number; outcomeId: number } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -39,18 +45,34 @@ export function WagersPage() {
   const isUnverified = user?.isVerified === false;
   const readOnly = isSuspended || isUnverified;
 
+  const offset = (page - 1) * WAGERS_PAGE_SIZE;
+
+  const buildUrl = () => {
+    const params = new URLSearchParams({
+      limit: String(WAGERS_PAGE_SIZE),
+      offset: String(offset),
+      q: search,
+      status: statusFilter,
+      category: categoryFilter,
+      involvement: involvementFilter,
+    });
+    return `/api/wagers?${params.toString()}`;
+  };
+
   const fetchWagers = async (signal?: AbortSignal) => {
-    const response = await fetch("/api/wagers", signal ? { signal } : undefined);
-    const json = (await response.json().catch(() => null)) as { data?: WagerSummary[]; message?: string } | null;
+    const response = await fetch(buildUrl(), signal ? { signal } : undefined);
+    const json = (await response.json().catch(() => null)) as PaginatedWagersResponse & { message?: string } | null;
     if (!response.ok) throw new Error(json?.message ?? "Unable to load wagers");
-    return json?.data ?? [];
+    if (!json) throw new Error("Unable to load wagers");
+    return json;
   };
 
   useEffect(() => {
     const controller = new AbortController();
+    setIsLoading(true);
     async function load() {
       try {
-        setWagers(await fetchWagers(controller.signal));
+        setResult(await fetchWagers(controller.signal));
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setError(e instanceof Error ? e.message : "Unable to load wagers");
@@ -60,25 +82,28 @@ export function WagersPage() {
     }
     void load();
     return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, statusFilter, categoryFilter, involvementFilter]);
+
+  useEffect(() => {
+    fetch("/api/wagers/categories")
+      .then((r) => r.json() as Promise<{ data: CategorySummary[] }>)
+      .then((json) => setCategories(json.data ?? []))
+      .catch(() => undefined);
   }, []);
 
-  const categories = useMemo(() => {
-    if (!wagers) return [];
-    return [...new Set(wagers.map((w) => w.categoryName))].sort();
-  }, [wagers]);
+  const handleFilterChange = <T,>(setter: (v: T) => void) => (value: T) => {
+    setter(value);
+    void navigate({ to: "/wagers", search: { page: 1 } });
+  };
 
-  const filtered = useMemo(() => {
-    if (!wagers) return [];
-    const q = search.toLowerCase().trim();
-    return wagers.filter((w) => {
-      if (q && !w.title.toLowerCase().includes(q) && !(w.description ?? "").toLowerCase().includes(q)) return false;
-      if (statusFilter !== "ALL" && w.status !== statusFilter) return false;
-      if (categoryFilter !== "ALL" && w.categoryName !== categoryFilter) return false;
-      if (involvementFilter === "MINE" && w.createdById !== user?.id) return false;
-      if (involvementFilter === "MY_BETS" && !w.currentUserBetAmount) return false;
-      return true;
-    });
-  }, [wagers, search, statusFilter, categoryFilter, involvementFilter, user?.id]);
+  const wagers: WagerSummary[] = result?.data ?? [];
+  const pagination = result?.pagination ?? null;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
+
+  const handlePageChange = (newPage: number) => {
+    void navigate({ to: "/wagers", search: { page: newPage } });
+  };
 
   const navigateToWager = (wagerId: number) => {
     void navigate({ to: "/wagers/$wagerId", params: { wagerId: String(wagerId) } });
@@ -94,7 +119,8 @@ export function WagersPage() {
   };
 
   const refreshWagers = async () => {
-    setWagers(await fetchWagers());
+    const fresh = await fetchWagers();
+    setResult(fresh);
   };
 
   return (
@@ -114,7 +140,7 @@ export function WagersPage() {
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Search</label>
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleFilterChange(setSearch)(e.target.value)}
               placeholder="Title or description…"
             />
           </div>
@@ -126,7 +152,7 @@ export function WagersPage() {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setStatusFilter(value)}
+                  onClick={() => handleFilterChange(setStatusFilter)(value)}
                   className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
                     statusFilter === value
                       ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
@@ -144,11 +170,11 @@ export function WagersPage() {
               <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Category</label>
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => handleFilterChange(setCategoryFilter)(e.target.value)}
                 className="rounded border border-slate-700 bg-slate-900 p-2 text-sm text-white"
               >
                 <option value="ALL">All categories</option>
-                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
           )}
@@ -162,7 +188,7 @@ export function WagersPage() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setInvolvementFilter(value)}
+                      onClick={() => handleFilterChange(setInvolvementFilter)(value)}
                       className={`rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
                         involvementFilter === value
                           ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
@@ -181,14 +207,21 @@ export function WagersPage() {
 
       {/* ── List ── */}
       <div className="min-w-0 flex-1">
+        {pagination && (
+          <div className="mb-4 flex items-center justify-between text-sm text-slate-400">
+            <span>{pagination.total} wager{pagination.total !== 1 ? "s" : ""}</span>
+            <span>Page {page} / {totalPages}</span>
+          </div>
+        )}
+
         {isLoading && <p className="text-slate-300">Loading wagers…</p>}
         {error && <p className="text-rose-300">{error}</p>}
-        {!isLoading && !error && filtered.length === 0 && (
+        {!isLoading && !error && wagers.length === 0 && (
           <p className="text-slate-400">No wagers match the current filters.</p>
         )}
-        {!isLoading && !error && filtered.length > 0 && (
+        {!isLoading && !error && wagers.length > 0 && (
           <div className="grid gap-4">
-            {filtered.map((wager) => (
+            {wagers.map((wager) => (
               <Card
                 key={wager.id}
                 role="button"
@@ -276,6 +309,16 @@ export function WagersPage() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="mt-6">
+            <WagerPagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>
