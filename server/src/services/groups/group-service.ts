@@ -1,4 +1,3 @@
-// server/src/services/groups/group-command-service.ts
 import crypto from "node:crypto";
 import type {
   GroupsListQuery,
@@ -10,7 +9,7 @@ import { HttpError } from "../../errors";
 import * as groupRepository from "../../repositories/group/group-repository";
 import * as groupMemberRepository from "../../repositories/group/group-member-repository";
 import { mapGroupSummary } from "./mappers/group-mapper";
-import { requireGroupOwner } from "./group-permission-service";
+import { requireGroupOwner, requireGroupOwnerOrAdmin } from "./group-permission-service";
 
 function buildInviteCode(): string {
   return crypto.randomBytes(12).toString("base64url");
@@ -72,12 +71,13 @@ export async function createGroup(currentUserId: number, input: CreateGroupReque
 
   return mapGroupSummary(createdGroup);
 }
+
 export async function updateGroup(
-  currentUserId: number,
+  currentUser: { id: number; roleName: string | null },
   groupId: number,
   input: UpdateGroupRequest,
 ) {
-  await requireGroupOwner(groupId, currentUserId);
+  await requireGroupOwnerOrAdmin(groupId, currentUser);
 
   const updated = await groupRepository.updateGroup(groupId, {
     name: input.name,
@@ -88,7 +88,7 @@ export async function updateGroup(
     throw new HttpError(404, "Group not found");
   }
 
-  const group = await groupRepository.findGroupForUser(groupId, currentUserId);
+  const group = await groupRepository.findGroupForUser(groupId, currentUser.id);
 
   if (!group) {
     throw new HttpError(404, "Group not found");
