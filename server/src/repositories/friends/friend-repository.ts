@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import type { FriendRequestDirection } from "@pb138/shared/schemas/friends";
-import { db } from "../db/db";
-import { Friendship, Role, User } from "../db/schema";
+import { db } from "../../db/db";
+import { Friendship, Role, User } from "../../db/schema";
 
 export type FriendUserRow = {
   id: number;

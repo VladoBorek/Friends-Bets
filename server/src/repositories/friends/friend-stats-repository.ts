@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { db } from "../db/db";
-import { Bet, Outcome, Transaction, Wallet, Wager } from "../db/schema";
+import { db } from "../../db/db";
+import { Bet, Outcome, Transaction, Wallet, Wager } from "../../db/schema";
 
 export type FriendStatsAggregateRow = {
   friendId: number;

@@ -8,9 +8,9 @@ import {
   listUsersByIds,
   listDiscoverableUsers,
   listFriendshipsBetweenUserAndCandidates
-} from "../../repositories/friend-repository";
+} from "../../repositories/friends/friend-repository";
 import { buildUserSummaryMap, mapFriendRequestSummary, mapRelationshipState, mapUserSummary, mapFriendSummary } from "./mappers/friend-mapper"
-import { listFriendStatsPreviewRows } from "../../repositories/friend-stats-repository";
+import { listFriendStatsPreviewRows } from "../../repositories/friends/friend-stats-repository";
 
 
 export async function listFriends(currentUserId: number, query: FriendsListQuery) {
