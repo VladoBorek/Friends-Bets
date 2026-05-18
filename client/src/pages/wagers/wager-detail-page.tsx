@@ -16,7 +16,7 @@ import { StatusBadge } from "../../features/wagers/components/status-badge";
 import { WagerActionsMenu } from "../../features/wagers/components/wager-actions-menu";
 import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
-import { formatMoney, toErrorMessage } from "../../features/wagers/utils";
+import { formatMoney, toErrorMessage } from "../../features/wagers/utils/utils";
 import { useAuth } from "../../lib/auth-context";
 import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet/wallet-query-options";
 import { friendsKeys } from "../../api/friends/friends-query-options";

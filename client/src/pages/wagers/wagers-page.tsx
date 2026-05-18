@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import type { CategorySummary, PaginatedWagersResponse } from "@pb138/shared/schemas/wager";
 import { Button } from "../../components/ui/utils/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/utils/dialog";
-import { WagerPagination } from "../../components/ui/wagers/wager-pagination";
+import { WagerPagination } from "../../features/wagers/components/wager-pagination";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
 import { WagerCard } from "../../features/wagers/components/wager-card";
 import { WagersFilterPanel, type StatusFilter, type InvolvementFilter } from "../../features/wagers/components/wagers-filter-panel";
-import { WAGERS_PAGE_SIZE } from "../../features/wagers/wagers-search";
+import { WAGERS_PAGE_SIZE } from "../../features/wagers/utils/wagers-search";
 import { useAuth } from "../../lib/auth-context";
 import { Route } from "../../routes/wagers/index";
 

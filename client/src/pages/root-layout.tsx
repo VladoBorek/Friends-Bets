@@ -3,7 +3,7 @@ import { AlertCircle, Menu, User, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Button } from "../components/ui/utils/button";
-import { formatCurrency } from "../features/wagers/utils";
+import { formatCurrency } from "../features/wagers/utils/utils";
 import { useWalletOverview } from "../api/wallet/wallet-query-options";
 import { cn } from "../lib/utils";
 

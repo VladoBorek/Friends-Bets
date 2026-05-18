@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { wagersSearchSchema } from "../../features/wagers/wagers-search";
+import { wagersSearchSchema } from "../../features/wagers/utils/wagers-search";
 import { WagersPage } from "../../pages/wagers/wagers-page";
 
 export const Route = createFileRoute("/wagers/")({

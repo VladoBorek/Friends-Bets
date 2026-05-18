@@ -13,7 +13,7 @@ import { Input } from "../../../components/ui/utils/input";
 import { Switch } from "../../../components/ui/utils/switch";
 import { Textarea } from "../../../components/ui/utils/textarea";
 import { useAuth } from "../../../lib/auth-context";
-import { toErrorMessage } from "../utils";
+import { toErrorMessage } from "../utils/utils";
 import { GroupSearchSection, type GroupInvitation } from "./group-search-section";
 import { UserSearchSection, type UserSearchResult } from "./user-search-section";
 

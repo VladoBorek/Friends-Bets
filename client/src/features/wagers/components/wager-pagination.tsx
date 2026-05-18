@@ -7,8 +7,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "../utils/pagination";
-
+} from "../../../components/ui/utils/pagination";
 type WagerPaginationProps = {
   currentPage: number;
   totalPages: number;

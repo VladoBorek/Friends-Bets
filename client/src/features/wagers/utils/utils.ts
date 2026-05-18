@@ -1,5 +1,5 @@
-import { BET_AMOUNT_ERROR_MESSAGE, placeBetRequestSchema } from "../../../../shared/src/schemas/wager";
-import { WALLET_AMOUNT_ERROR_MESSAGE, walletBalanceMutationRequestSchema } from "../../../../shared/src/schemas/wallet";
+import { BET_AMOUNT_ERROR_MESSAGE, placeBetRequestSchema } from "@pb138/shared/schemas/wager";
+import { WALLET_AMOUNT_ERROR_MESSAGE, walletBalanceMutationRequestSchema } from "@pb138/shared/schemas/wallet";
 
 export const STATUS_LABELS: Record<string, string> = {
   OPEN: "Open",

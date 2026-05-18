@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/utils/button";
 import { Input } from "../../../components/ui/utils/input";
 import { useAuth } from "../../../lib/auth-context";
-import { toErrorMessage, validateBetInput } from "../utils";
+import { toErrorMessage, validateBetInput } from "../utils/utils";
 import {
   applyWalletBalanceDelta,
   publishWalletBalanceDelta,

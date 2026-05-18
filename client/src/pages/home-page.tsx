@@ -9,8 +9,8 @@ import { groupsQueries } from "../api/groups/groups-query-options";
 import { useAuth } from "../lib/auth-context";
 import { useWalletOverview } from "../api/wallet/wallet-query-options";
 import type { PaginatedWagersResponse, WagerSummary } from "@pb138/shared/schemas/wager";
-import { formatCurrency, formatMoney } from "../features/wagers/utils";
-import { WAGERS_PAGE_SIZE } from "../features/wagers/wagers-search";
+import { formatCurrency, formatMoney } from "../features/wagers/utils/utils";
+import { WAGERS_PAGE_SIZE } from "../features/wagers/utils/wagers-search";
 
 function StatsCard({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatMoney } from "../utils";
+import { formatMoney } from "../utils/utils";
 
 type WagerStatus = "OPEN" | "PENDING" | "CLOSED";
 

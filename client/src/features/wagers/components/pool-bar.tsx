@@ -1,5 +1,5 @@
 import type { WagerDetail } from "../../../../../shared/src/schemas/wager";
-import { OUTCOME_COLORS } from "../utils";
+import { OUTCOME_COLORS } from "../utils/utils";
 
 type PoolBarProps = { outcomes: WagerDetail["outcomes"] };
 
