@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { db } from "../db/db";
-import { Outcome, Transaction, Wallet, Wager } from "../db/schema";
+import { db } from "../../db/db";
+import { Outcome, Transaction, Wallet, Wager } from "../../db/schema";
 
 export type WalletRow = {
   id: number;

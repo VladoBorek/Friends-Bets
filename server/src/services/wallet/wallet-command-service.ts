@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "../../db/db";
 import { HttpError } from "../../errors";
 import { Wallet, Transaction } from "../../db/schema";
-import { findWalletByUserId } from "../../repositories/wallet-repository";
+import { findWalletByUserId } from "../../repositories/wallet/wallet-repository";
 import { mapTransactionToHistoryItem, formatMoney, normalizePositiveAmount } from "./wallet-utils";
 import type { WalletHistoryItem } from "@pb138/shared/schemas/wallet";
 
