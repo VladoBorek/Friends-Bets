@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { asc, count, desc, eq } from "drizzle-orm";
 import { db, closeConnection } from "../src/db/db";
 import { Bet, Category, Outcome, Transaction, User, Wallet, Wager } from "../src/db/schema";
