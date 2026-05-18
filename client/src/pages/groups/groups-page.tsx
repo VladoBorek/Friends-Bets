@@ -114,6 +114,7 @@ export function GroupsPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedGroup(null);
         }}
+        onGroupUpdated={setSelectedGroup}
       />
 
       <PendingGroupInvitationsDialog

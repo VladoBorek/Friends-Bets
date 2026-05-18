@@ -125,12 +125,12 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
     return groupResponseSchema.parse({ data });
   })
 
-  // Updates group metadata. The service enforces owner-only access.
+  // Updates group metadata. The service enforces owner/admin-only access.
   .patch("/:groupId", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const params = groupIdParamsSchema.parse(context.params);
     const body = updateGroupRequestSchema.parse(context.body);
-    const data = await updateGroup(actor.id, params.groupId, body);
+    const data = await updateGroup(actor, params.groupId, body);
 
     return groupResponseSchema.parse({ data });
   })
@@ -187,4 +187,3 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupActionResponseSchema.parse({ message: "Group member removed successfully" });
   });
-  

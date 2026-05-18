@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, UserPlus } from "lucide-react";
+import { ChevronDown, Pencil, UserPlus } from "lucide-react";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
 import { deleteGroup, leaveGroup } from "../../../api/groups/groups-api";
 import { removeGroupMember } from "../../../api/groups/group-members-api";
@@ -14,6 +14,7 @@ import { Card } from "../card";
 import { Dialog } from "../dialog";
 import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
 import { FriendsPagination } from "../friends/friends-pagination";
+import { EditGroupDialog } from "./edit-group-dialog";
 import { GroupMemberRow } from "./group-member-row";
 import { InviteGroupMemberDialog } from "./invite-group-member-dialog";
 
@@ -21,6 +22,7 @@ type GroupDetailDialogProps = {
   group: GroupSummary | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onGroupUpdated?: (group: GroupSummary) => void;
 };
 
 function getMoneyTone(value: string) {
@@ -32,12 +34,18 @@ function getMoneyTone(value: string) {
   return "text-slate-100";
 }
 
-export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDialogProps) {
+export function GroupDetailDialog({
+  group,
+  open,
+  onOpenChange,
+  onGroupUpdated,
+}: GroupDetailDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const [memberPage, setMemberPage] = useState(1);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<number | null>(null);
 
@@ -103,6 +111,21 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
           title={group.name}
           contentClassName="w-[calc(100vw-1rem)] max-h-[calc(100dvh-2rem)] sm:max-w-5xl"
           bodyClassName="max-h-[calc(100dvh-8rem)] overflow-y-auto xl:overflow-hidden"
+          headerActions={
+            canManage ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-slate-400 hover:text-slate-100"
+                onClick={() => setIsEditOpen(true)}
+                aria-label="Edit group"
+                title="Edit group"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            ) : null
+          }
         >
           <div className="flex flex-col gap-4 xl:h-[calc(100dvh-12rem)] xl:min-h-0 xl:flex-row">
             <Card className="flex shrink-0 flex-col rounded-2xl border-slate-800 bg-slate-950/45 p-4 xl:w-72">
@@ -219,6 +242,12 @@ export function GroupDetailDialog({ group, open, onOpenChange }: GroupDetailDial
       </Dialog>
 
       <InviteGroupMemberDialog groupId={group.id} open={isInviteOpen} onOpenChange={setIsInviteOpen} />
+      <EditGroupDialog
+        group={group}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        onGroupUpdated={onGroupUpdated}
+      />
     </>
   );
 }

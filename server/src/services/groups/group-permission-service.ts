@@ -1,3 +1,4 @@
+import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../errors";
 import * as groupMemberRepository from "../../repositories/group/group-member-repository";
 
@@ -16,6 +17,19 @@ export async function requireGroupOwner(groupId: number, userId: number) {
 
   if (membership.role !== "OWNER") {
     throw new HttpError(403, "Only group owners can perform this action");
+  }
+
+  return membership;
+}
+
+export async function requireGroupOwnerOrAdmin(
+  groupId: number,
+  user: Pick<UserSummary, "id" | "roleName">,
+) {
+  const membership = await requireGroupMember(groupId, user.id);
+
+  if (membership.role !== "OWNER" && user.roleName !== "ADMIN") {
+    throw new HttpError(403, "Only group owners or admins can perform this action");
   }
 
   return membership;
