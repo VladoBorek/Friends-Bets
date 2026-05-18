@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { FRIENDS_PAGE_SIZE } from "../../features/friends/friends-search";
+import { FRIENDS_PAGE_SIZE } from "../../features/friends/utils/friends-search";
 import { fetchFriends } from "./friends-api";
 import { fetchFriendStats, fetchFriendWagersPage } from "./friend-stats-api";
 

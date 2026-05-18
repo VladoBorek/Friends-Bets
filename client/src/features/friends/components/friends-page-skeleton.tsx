@@ -1,4 +1,3 @@
-// client/src/features/friends/components/friends-page-skeleton.tsx
 export function FriendsPageSkeleton() {
   return (
     <div className="flex flex-col gap-6">

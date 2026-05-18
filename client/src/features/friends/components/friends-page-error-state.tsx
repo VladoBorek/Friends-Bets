@@ -1,6 +1,5 @@
-// client/src/features/friends/components/friends-page-error-state.tsx
-import { Button } from "../utils/button";
-import { Card } from "../utils/card";
+import { Button } from "../../../components/ui/utils/button";
+import { Card } from "../../../components/ui/utils/card";
 
 type FriendsPageErrorStateProps = {
   message: string;

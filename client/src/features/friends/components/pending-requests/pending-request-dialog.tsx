@@ -10,7 +10,7 @@ import {
 import { friendsKeys } from "../../../../api/friends/friends-query-options";
 import { useAuth } from "../../../../lib/auth-context";
 import { cn } from "../../../../lib/utils";
-import { Dialog } from "../../utils/dialog";
+import { Dialog } from "../../../../components/ui/utils/dialog";
 import { FriendsDialogShell } from "../dialog/friends-dialog-shell";
 import { PendingRequestList } from "./pending-request-list";
 

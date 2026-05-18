@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../../components/ui/utils/button";
 import { Card, CardDescription, CardTitle } from "../../components/ui/utils/card";
-import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
+import { FriendsPagination } from  "../../features/friends/components/friends-pagination";
 import { WalletBalanceActionDialog } from "../../features/wallet/components/wallet-balance-action-dialog";
 import { WalletTransactionFilters } from "../../features/wallet/components/wallet-transaction-filters";
 import { WalletHistoryItemCard } from "../../features/wallet/components/wallet-history-item";

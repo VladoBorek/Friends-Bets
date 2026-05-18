@@ -1,4 +1,3 @@
-// client/src/components/ui/groups/group-detail-dialog.tsx
 import { useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,11 +8,11 @@ import { removeGroupMember } from "../../../api/groups/group-members-api";
 import { groupsKeys, groupsQueries } from "../../../api/groups/groups-query-options";
 import { useAuth } from "../../../lib/auth-context";
 import { cn } from "../../../lib/utils";
-import { Button } from "../utils/button";
-import { Card } from "../utils/card";
-import { Dialog } from "../utils/dialog";
-import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
-import { FriendsPagination } from "../friends/friends-pagination";
+import { Button } from "../../../components/ui/utils/button";
+import { Card } from "../../../components/ui/utils/card";
+import { Dialog } from "../../../components/ui/utils/dialog";
+import { FriendsDialogShell } from "../../friends/components/dialog/friends-dialog-shell";
+import { FriendsPagination } from "../../friends/components/friends-pagination";
 import { EditGroupDialog } from "./edit-group-dialog";
 import { GroupMemberRow } from "./group-member-row";
 import { InviteGroupMemberDialog } from "./invite-group-member-dialog";

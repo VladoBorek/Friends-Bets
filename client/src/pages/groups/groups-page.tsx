@@ -6,12 +6,12 @@ import type { GroupSummary } from "@pb138/shared/schemas/groups";
 import { groupsQueries } from "../../api/groups/groups-query-options";
 import { Button } from "../../components/ui/utils/button";
 import { Card } from "../../components/ui/utils/card";
-import { CreateGroupDialog } from "../../components/ui/groups/create-group-dialog";
-import { GroupDetailDialog } from "../../components/ui/groups/group-detail-dialog";
-import { GroupListSection } from "../../components/ui/groups/group-list-section";
+import { CreateGroupDialog } from "../../features/groups/components/create-group-dialog";
+import { GroupDetailDialog } from "../../features/groups/components/group-detail-dialog";
+import { GroupListSection } from "../../features/groups/components/group-list-section";
+import { PendingGroupInvitationsDialog } from "../../features/groups/components/pending-group-invitations-dialog";
 import { Route } from "../../routes/groups";
 import { fetchGroupInvitationCount } from "../../api/groups/group-invitations-api";
-import { PendingGroupInvitationsDialog } from "../../components/ui/groups/pending-group-invitations-dialog";
 import { useAuth } from "../../lib/auth-context";
 
 

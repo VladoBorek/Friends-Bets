@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
 import type { GroupMemberSummary } from "@pb138/shared/schemas/groups";
 import { cn } from "../../../lib/utils";
-import { Button } from "../utils/button";
+import { Button } from "../../../components/ui/utils/button";
 
 type GroupMemberRowProps = {
   member: GroupMemberSummary;

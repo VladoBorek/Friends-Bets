@@ -11,12 +11,11 @@ import {
 import { groupsKeys } from "../../../api/groups/groups-query-options";
 import { useAuth } from "../../../lib/auth-context";
 import { cn } from "../../../lib/utils";
-import { Button } from "../utils/button";
-import { Dialog } from "../utils/dialog";
-import { FriendsAsyncState } from "../friends/friends-async-state";
-import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
-import { FriendPersonCell } from "../friends/dialog/friends-person-cell";
-
+import { Button } from "../../../components/ui/utils/button";
+import { Dialog } from "../../../components/ui/utils/dialog";
+import { FriendsAsyncState } from "../../friends/components/friends-async-state";
+import { FriendsDialogShell } from "../../friends/components/dialog/friends-dialog-shell";
+import { FriendPersonCell } from "../../friends/components/dialog/friends-person-cell";
 type PendingTab = "incoming" | "outgoing";
 
 type Props = {

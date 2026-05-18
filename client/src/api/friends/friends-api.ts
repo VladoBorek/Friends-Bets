@@ -1,4 +1,3 @@
-// client/src/features/friends/api/friends-api.ts
 import { paginatedFriendsResponseSchema } from "@pb138/shared/schemas/friends";
 
 export async function fetchFriends(input: { page: number; limit: number }) {

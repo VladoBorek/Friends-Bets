@@ -1,15 +1,13 @@
-import {  useState } from "react";
-import type { SubmitEventHandler } from "react";
+import { useState, type SubmitEventHandler } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createGroup } from "../../../api/groups/groups-api";
 import { groupsKeys } from "../../../api/groups/groups-query-options";
-import { Button } from "../utils/button";
-import { Dialog } from "../utils/dialog";
-import { Input } from "../utils/input";
-import { Textarea } from "../utils/textarea";
-import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
-
+import { Button } from "../../../components/ui/utils/button";
+import { Dialog } from "../../../components/ui/utils/dialog";
+import { Input } from "../../../components/ui/utils/input";
+import { Textarea } from "../../../components/ui/utils/textarea";
+import { FriendsDialogShell } from "../../friends/components/dialog/friends-dialog-shell";
 type CreateGroupDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;

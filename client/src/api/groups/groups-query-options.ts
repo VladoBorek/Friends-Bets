@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { GROUP_MEMBERS_PAGE_SIZE, GROUPS_PAGE_SIZE } from "../../features/groups/groups-search";
+import { GROUP_MEMBERS_PAGE_SIZE, GROUPS_PAGE_SIZE } from "../../features/groups/utils/groups-search";
 import { fetchGroups } from "./groups-api";
 import { fetchGroupMembers } from "./group-members-api";
 

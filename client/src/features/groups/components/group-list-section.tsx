@@ -1,6 +1,6 @@
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
-import { Card } from "../utils/card";
-import { FriendsPagination } from "../friends/friends-pagination";
+import { Card } from "../../../components/ui/utils/card";
+import { FriendsPagination } from "../../friends/components/friends-pagination";
 import { GroupCard } from "./group-card";
 
 type GroupListSectionProps = {
