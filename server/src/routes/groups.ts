@@ -12,6 +12,10 @@ import {
   paginatedGroupMembersResponseSchema,
   paginatedGroupsResponseSchema,
   updateGroupRequestSchema,
+  groupInvitationResponseSchema,
+  groupInvitationsListQuerySchema,
+  paginatedGroupInvitationsResponseSchema,
+  sendGroupInvitationRequestSchema,
 } from "@pb138/shared/schemas/groups";
 import { authPlugin, getAuthenticatedUser } from "../plugins/auth";
 import {
@@ -25,6 +29,10 @@ import {
   listGroups,
   removeGroupMember,
   updateGroup,
+  acceptGroupInvitation,
+  listGroupInvitations,
+  rejectGroupInvitation,
+  sendGroupInvitation,
 } from "../services/groups";
 
 const groupIdParamsSchema = z.object({
@@ -35,6 +43,12 @@ const groupMemberParamsSchema = z.object({
   groupId: z.coerce.number().int().positive(),
   userId: z.coerce.number().int().positive(),
 });
+
+const invitationIdParamsSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+
 
 // All group routes require an authenticated user.
 // Services decide whether the user is just a member or must be an owner.
@@ -67,6 +81,39 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
     const data = await joinGroupByInvite(actor.id, body);
 
     return groupResponseSchema.parse({ data });
+  })
+
+  .get("/invitations", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const query = groupInvitationsListQuerySchema.parse(context.query);
+    const result = await listGroupInvitations(actor.id, query);
+
+    return paginatedGroupInvitationsResponseSchema.parse(result);
+  })
+
+  .post("/invitations/:id/accept", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const params = invitationIdParamsSchema.parse(context.params);
+    const data = await acceptGroupInvitation(actor.id, params.id);
+
+    return groupInvitationResponseSchema.parse({ data });
+  })
+
+  .post("/invitations/:id/reject", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const params = invitationIdParamsSchema.parse(context.params);
+    const data = await rejectGroupInvitation(actor.id, params.id);
+
+    return groupInvitationResponseSchema.parse({ data });
+  })
+
+  .post("/:groupId/invitations", async (context) => {
+    const actor = await getAuthenticatedUser(context);
+    const params = groupIdParamsSchema.parse(context.params);
+    const body = sendGroupInvitationRequestSchema.parse(context.body);
+    const data = await sendGroupInvitation(actor.id, params.groupId, body);
+
+    return groupInvitationResponseSchema.parse({ data });
   })
 
   // Returns group details, but only if the current user belongs to it.
@@ -140,3 +187,4 @@ export const groupRoutes = new Elysia({ prefix: "/groups" })
 
     return groupActionResponseSchema.parse({ message: "Group member removed successfully" });
   });
+  

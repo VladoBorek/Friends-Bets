@@ -22,6 +22,7 @@ export type SharedFriendWagerRow = {
   friendBetAmount: string;
   currentUserNetPnl: string;
   friendNetPnl: string;
+  headToHeadNetPnl: string;
   currentUserDidWin: boolean;
   friendDidWin: boolean;
 };
@@ -139,6 +140,11 @@ function buildSharedWagerRows(
         continue;
       }
 
+      const currentUserNetPnl = parseMoney(currentUserRow.payoutAmount) - parseMoney(currentUserRow.betAmount);
+      const friendNetPnl = parseMoney(friendRow.payoutAmount) - parseMoney(friendRow.betAmount);
+      const headToHeadNetPnl = currentUserNetPnl - friendNetPnl;
+
+
       sharedRows.push({
         friendId,
         wagerId: currentUserRow.wagerId,
@@ -148,12 +154,9 @@ function buildSharedWagerRows(
         friendOutcomeTitle: friendRow.outcomeTitle,
         currentUserBetAmount: formatMoney(parseMoney(currentUserRow.betAmount)),
         friendBetAmount: formatMoney(parseMoney(friendRow.betAmount)),
-        currentUserNetPnl: formatMoney(
-          parseMoney(currentUserRow.payoutAmount) - parseMoney(currentUserRow.betAmount),
-        ),
-        friendNetPnl: formatMoney(
-          parseMoney(friendRow.payoutAmount) - parseMoney(friendRow.betAmount),
-        ),
+        currentUserNetPnl: formatMoney(currentUserNetPnl),
+        friendNetPnl: formatMoney(friendNetPnl),
+        headToHeadNetPnl: formatMoney(headToHeadNetPnl),
         currentUserDidWin: Boolean(currentUserRow.didWin),
         friendDidWin: Boolean(friendRow.didWin),
       });
@@ -198,7 +201,7 @@ export async function listFriendStatsPreviewRows(
     };
 
     existing.totalWagers += 1;
-    existing.netPnl += parseMoney(row.currentUserNetPnl);
+    existing.netPnl += parseMoney(row.headToHeadNetPnl);
 
     if (row.currentUserDidWin && !row.friendDidWin) {
       existing.wins += 1;

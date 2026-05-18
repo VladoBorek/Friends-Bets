@@ -38,7 +38,7 @@ export function GroupListSection({
           No groups found.
         </Card>
       ) : (
-        <div className="grid auto-rows-fr gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
           {groups.map((group) => (
             <GroupCard
               key={group.id}

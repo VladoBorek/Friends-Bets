@@ -98,6 +98,48 @@ export const groupActionResponseSchema = z.object({
   message: z.string(),
 });
 
+export const groupInvitationStatusSchema = z.enum(["PENDING", "ACCEPTED", "REJECTED"]);
+export const groupInvitationDirectionSchema = z.enum(["incoming", "outgoing"]);
+
+export const groupInvitationsListQuerySchema = paginationQuerySchema.extend({
+  direction: groupInvitationDirectionSchema.default("incoming"),
+});
+
+export const sendGroupInvitationRequestSchema = z.object({
+  addresseeId: z.coerce.number().int().positive(),
+});
+
+export const groupInvitationGroupSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  description: z.string().nullable(),
+  createdAt: z.string().nullable(),
+  memberCount: z.number().int().nonnegative(),
+  activeWagerCount: z.number().int().nonnegative(),
+  members: z.array(groupMemberSummarySchema),
+});
+
+export const groupInvitationSummarySchema = z.object({
+  id: z.number().int(),
+  status: groupInvitationStatusSchema,
+  createdAt: z.string().nullable(),
+  respondedAt: z.string().nullable(),
+  group: groupInvitationGroupSchema,
+  requester: userSummarySchema,
+  addressee: userSummarySchema,
+});
+
+export const paginatedGroupInvitationsResponseSchema = z.object({
+  data: z.array(groupInvitationSummarySchema),
+  pagination: paginationMetaSchema,
+});
+
+export const groupInvitationResponseSchema = z.object({
+  data: groupInvitationSummarySchema,
+});
+
+
+
 export type GroupRole = z.infer<typeof groupRoleSchema>;
 export type UpdateGroupMemberRoleRequest = z.infer<typeof updateGroupMemberRoleRequestSchema>;
 export type GroupsListQuery = z.infer<typeof groupsListQuerySchema>;
@@ -109,3 +151,8 @@ export type JoinGroupByInviteRequest = z.infer<typeof joinGroupByInviteRequestSc
 export type GroupSummary = z.infer<typeof groupSummarySchema>;
 export type GroupMemberSummary = z.infer<typeof groupMemberSummarySchema>;
 export type GroupPreviewMember = z.infer<typeof groupPreviewMemberSchema>;
+
+export type GroupInvitationDirection = z.infer<typeof groupInvitationDirectionSchema>;
+export type GroupInvitationsListQuery = z.infer<typeof groupInvitationsListQuerySchema>;
+export type SendGroupInvitationRequest = z.infer<typeof sendGroupInvitationRequestSchema>;
+export type GroupInvitationSummary = z.infer<typeof groupInvitationSummarySchema>;

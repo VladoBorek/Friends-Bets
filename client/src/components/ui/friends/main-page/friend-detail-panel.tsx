@@ -84,8 +84,8 @@ function SharedWagerRow({ wager }: { wager: FriendWagerSummary }) {
           })() : null}
         </div>
 
-        <p className={cn("shrink-0 text-lg font-semibold", getMoneyTone(wager.currentUserNetPnl))}>
-          {formatMoney(wager.currentUserNetPnl)}
+        <p className={cn("shrink-0 text-lg font-semibold", getMoneyTone(wager.headToHeadNetPnl))}>
+          {formatMoney(wager.headToHeadNetPnl)}
         </p>
       </div>
     </Link>

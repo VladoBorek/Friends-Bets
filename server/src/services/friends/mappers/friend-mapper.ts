@@ -116,6 +116,7 @@ export function mapFriendWagerSummary(row: SharedFriendWagerRow): FriendWagerSum
     friendBetAmount: formatMoney(row.friendBetAmount),
     currentUserNetPnl: formatMoney(row.currentUserNetPnl),
     friendNetPnl: formatMoney(row.friendNetPnl),
+    headToHeadNetPnl: formatMoney(row.headToHeadNetPnl),
     headToHeadResult,
   };
 }

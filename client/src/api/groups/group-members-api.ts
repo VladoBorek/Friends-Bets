@@ -51,3 +51,26 @@ export async function removeGroupMember(groupId: number, userId: number) {
     await readJsonOrThrow(response, "Unable to remove group member"),
   );
 }
+
+export async function fetchAllGroupMembers(groupId: number) {
+  const members = [];
+  let page = 1;
+
+  while (true) {
+    const result = await fetchGroupMembers({
+      groupId,
+      page,
+      limit: 50,
+    });
+
+    members.push(...result.data);
+
+    if (!result.pagination.hasMore) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return members;
+}
