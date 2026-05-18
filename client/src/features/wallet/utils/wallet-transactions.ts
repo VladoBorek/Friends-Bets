@@ -1,4 +1,4 @@
-import type { WalletHistoryItem } from "../../../../shared/src/schemas/wallet";
+import type { WalletHistoryItem } from "../../../../../shared/src/schemas/wallet"
 
 export const WALLET_TRANSACTION_PAGE_SIZE = 10;
 

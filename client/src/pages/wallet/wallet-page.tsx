@@ -7,7 +7,7 @@ import { FriendsPagination } from  "../../features/friends/components/friends-pa
 import { WalletBalanceActionDialog } from "../../features/wallet/components/wallet-balance-action-dialog";
 import { WalletTransactionFilters } from "../../features/wallet/components/wallet-transaction-filters";
 import { WalletHistoryItemCard } from "../../features/wallet/components/wallet-history-item";
-import { WALLET_TRANSACTION_PAGE_SIZE, type WalletTransactionTypeFilter } from "../../features/wallet/wallet-transactions";
+import { WALLET_TRANSACTION_PAGE_SIZE, type WalletTransactionTypeFilter } from "../../features/wallet/utils/wallet-transactions";
 import { formatCurrency, validateWalletCreditInput } from "../../features/wagers/utils/utils";
 import { useAuth } from "../../lib/auth-context";
 import {

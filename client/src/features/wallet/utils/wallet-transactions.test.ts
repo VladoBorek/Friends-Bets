@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { filterWalletTransactions } from "./wallet-transactions";
-import type { WalletHistoryItem } from "../../../../shared/src/schemas/wallet";
+import type { WalletHistoryItem } from "../../../../../shared/src/schemas/wallet"
 
 function makeTransaction(overrides: Partial<WalletHistoryItem> = {}): WalletHistoryItem {
   return {
