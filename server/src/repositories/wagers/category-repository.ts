@@ -1,6 +1,6 @@
 import { asc, eq, sql } from "drizzle-orm";
-import { db } from "../db/db";
-import { Bet, Category, Outcome, Wager } from "../db/schema";
+import { db } from "../../db/db";
+import { Bet, Category, Outcome, Wager } from "../../db/schema";
 
 export type CategoryRow = {
   id: number;

@@ -1,6 +1,6 @@
 import type { CategorySummary } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../../errors";
-import * as categoryRepository from "../../repositories/category-repository";
+import * as categoryRepository from "../../repositories/wagers/category-repository";
 
 export async function createCategory(name: string): Promise<CategorySummary> {
   const normalizedName = name.trim();

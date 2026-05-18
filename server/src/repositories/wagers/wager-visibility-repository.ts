@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "../db/db";
-import { User, WagerVisibility } from "../db/schema";
+import { db } from "../../db/db";
+import { User, WagerVisibility } from "../../db/schema";
 
 export async function findWagerVisibility(
   wagerId: number,

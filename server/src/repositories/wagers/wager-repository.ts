@@ -1,7 +1,7 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
-import { db } from "../db/db";
-import { Bet, Category, Outcome, User, Wager } from "../db/schema";
+import { db } from "../../db/db";
+import { Bet, Category, Outcome, User, Wager } from "../../db/schema";
 
 export type WagerRow = {
   id: number;

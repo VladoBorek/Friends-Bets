@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
-import { db } from "../db/db";
-import { Comment, User } from "../db/schema";
+import { db } from "../../db/db";
+import { Comment, User } from "../../db/schema";
 
 export type CommentRow = {
   id: number;

@@ -5,12 +5,12 @@ import {
   countWagersWithFilters,
   listWagersWithDetails,
   listWagerOutcomes,
-} from "../../repositories/wager-repository";
+} from "../../repositories/wagers/wager-repository";
 import {
   findWagerVisibility,
   listWagerVisibilityUsers,
-} from "../../repositories/wager-visibility-repository";
-import { listAllCategories } from "../../repositories/category-repository";
+} from "../../repositories/wagers/wager-visibility-repository";
+import { listAllCategories } from "../../repositories/wagers/category-repository";
 import { mapWagerDetail, mapWagerSummary } from "./mappers/wager-mapper";
 import type { CategorySummary, WagerDetail, WagersListQuery, PaginatedWagersResponse } from "@pb138/shared/schemas/wager";
 

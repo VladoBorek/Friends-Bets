@@ -1,6 +1,6 @@
 import { desc, eq, and } from "drizzle-orm";
-import { db } from "../db/db";
-import { Bet, Outcome, User } from "../db/schema";
+import { db } from "../../db/db";
+import { Bet, Outcome, User } from "../../db/schema";
 
 export type BetRow = {
   id: number;

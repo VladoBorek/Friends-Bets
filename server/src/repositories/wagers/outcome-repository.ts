@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
-import { db } from "../db/db";
-import { Outcome } from "../db/schema";
+import { db } from "../../db/db";
+import { Outcome } from "../../db/schema";
 
 export type OutcomeRow = {
   id: number;

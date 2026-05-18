@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import {
   listCommentsByWager,
   createComment as repoCreateComment,
-} from "../../repositories/comment-repository";
+} from "../../repositories/wagers/comment-repository";
 import { HttpError } from "../../errors";
 import { mapWagerComment, type WagerComment } from "./mappers/comment-mapper";
 import { getWagerById } from "./wager-query-service";
