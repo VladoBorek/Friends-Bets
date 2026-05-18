@@ -28,7 +28,7 @@ export function Navbar() {
   const handleLogout = async () => {
     await logout();
     await router.invalidate();
-    await router.navigate({ to: "/login" });
+    await router.navigate({ to: "/auth/login" });
   };
 
   const handleResendVerification = async () => {

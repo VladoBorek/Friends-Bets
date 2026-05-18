@@ -1,30 +1,30 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../components/ui/utils/button";
-import { Card, CardDescription, CardTitle } from "../components/ui/utils/card";
-import { FriendsPagination } from "../components/ui/friends/friends-pagination";
-import { WalletBalanceActionDialog } from "../features/wallet/components/wallet-balance-action-dialog";
-import { WalletTransactionFilters } from "../features/wallet/components/wallet-transaction-filters";
-import { WalletHistoryItemCard } from "../features/wallet/components/wallet-history-item";
-import { WALLET_TRANSACTION_PAGE_SIZE, type WalletTransactionTypeFilter } from "../features/wallet/wallet-transactions";
-import { formatCurrency, validateWalletCreditInput } from "../features/wagers/utils";
-import { useAuth } from "../lib/auth-context";
+import { Button } from "../../components/ui/utils/button";
+import { Card, CardDescription, CardTitle } from "../../components/ui/utils/card";
+import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
+import { WalletBalanceActionDialog } from "../../features/wallet/components/wallet-balance-action-dialog";
+import { WalletTransactionFilters } from "../../features/wallet/components/wallet-transaction-filters";
+import { WalletHistoryItemCard } from "../../features/wallet/components/wallet-history-item";
+import { WALLET_TRANSACTION_PAGE_SIZE, type WalletTransactionTypeFilter } from "../../features/wallet/wallet-transactions";
+import { formatCurrency, validateWalletCreditInput } from "../../features/wagers/utils";
+import { useAuth } from "../../lib/auth-context";
 import {
   publishWalletBalanceRefresh,
   useWalletOverview,
   walletKeys,
-} from "../api/wallet/wallet-query-options";
-import { fetchWalletTransactions } from "../api/wallet/wallet-api";
-import { Route } from "../routes/wallet";
+} from "../../api/wallet/wallet-query-options";
+import { fetchWalletTransactions } from "../../api/wallet/wallet-api";
+import { Route } from "../../routes/wallet";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import type {
   WalletHistoryItem,
   WalletOverview,
   WalletTransactionsQuery,
-} from "../../../shared/src/schemas/wallet";
-import { walletBalanceMutationResponseSchema } from "../../../shared/src/schemas/wallet";
+} from "@pb138/shared/schemas/wallet";
+import { walletBalanceMutationResponseSchema } from "@pb138/shared/schemas/wallet";
 
 type WalletBalanceMutationResponse = z.infer<typeof walletBalanceMutationResponseSchema>;
 

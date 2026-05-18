@@ -17,7 +17,12 @@ const routeNavItems = [
 
 export function RootRouteComponent() {
   const location = useLocation();
-  const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
+  const publicPaths = new Set([
+    "/auth/login",
+    "/auth/register",
+    "/auth/verify-email",
+    "/auth/reset-password",
+  ]);
   const isPublic = publicPaths.has(location.pathname);
 
   if (isPublic) {

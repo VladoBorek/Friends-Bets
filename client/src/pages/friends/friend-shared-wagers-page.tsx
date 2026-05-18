@@ -5,7 +5,7 @@ import type { FriendWagerSummary } from "@pb138/shared/schemas/friends";
 import { friendsQueries } from "../../api/friends/friends-query-options";
 import { Card, CardDescription, CardTitle } from "../../components/ui/utils/card";
 import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
-import { Route } from "../../routes/friends_.$friendId.wagers";
+import { Route } from "../../routes/friends/$friendId.wagers";
 import { cn } from "../../lib/utils";
 
 function formatSignedMoney(value: string) {
