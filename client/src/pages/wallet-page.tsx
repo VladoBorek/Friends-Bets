@@ -14,8 +14,8 @@ import {
   publishWalletBalanceRefresh,
   useWalletOverview,
   walletKeys,
-} from "../api/wallet-query-options";
-import { fetchWalletTransactions } from "../api/wallet-api";
+} from "../api/wallet/wallet-query-options";
+import { fetchWalletTransactions } from "../api/wallet/wallet-api";
 import { Route } from "../routes/wallet";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";

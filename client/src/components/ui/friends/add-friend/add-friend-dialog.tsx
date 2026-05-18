@@ -2,11 +2,11 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { friendsKeys } from "../../../../api/friends-query-options";
+import { friendsKeys } from "../../../../api/friends/friends-query-options";
 import {
   fetchDiscoveredUsers,
   sendFriendRequest,
-} from "../../../../api/friends-discovery-api";
+} from "../../../../api/friends/friends-discovery-api";
 import { useAuth } from "../../../../lib/auth-context";
 import { Dialog } from "../../dialog";
 import { Input } from "../../input";

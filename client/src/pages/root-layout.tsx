@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Button } from "../components/ui/button";
 import { formatCurrency } from "../features/wagers/utils";
-import { useWalletOverview } from "../api/wallet-query-options";
+import { useWalletOverview } from "../api/wallet/wallet-query-options";
 import { cn } from "../lib/utils";
 
 const routeNavItems = [

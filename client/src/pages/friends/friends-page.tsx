@@ -5,7 +5,7 @@ import { Card } from "../../components/ui/card";
 import { FriendDetailPanel } from "../../components/ui/friends/main-page/friend-detail-panel";
 import { FriendsPageErrorState } from "../../components/ui/friends/friends-page-error-state";
 import { FriendsPageSkeleton } from "../../components/ui/friends/friends-page-skeleton";
-import { friendsQueries } from "../../api/friends-query-options";
+import { friendsQueries } from "../../api/friends/friends-query-options";
 import { Route } from "../../routes/friends";
 import { FriendsListSection } from "../../components/ui/friends/main-page/friend-list-section";
 import { useMediaQuery } from "../../features/friends/use-media-query";
@@ -13,7 +13,7 @@ import { Button } from "../../components/ui/button";
 import { UserPlus, Clock3 } from "lucide-react";
 import { AddFriendDialog } from "../../components/ui/friends/add-friend/add-friend-dialog";
 import { PendingRequestsDialog } from "../../components/ui/friends/pending-requests/pending-request-dialog";
-import { fetchFriendRequestCount } from "../../api/friends-discovery-api";
+import { fetchFriendRequestCount } from "../../api/friends/friends-discovery-api";
 import { useAuth } from "../../lib/auth-context";
 
 export function FriendsPage() {

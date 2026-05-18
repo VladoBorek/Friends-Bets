@@ -10,7 +10,7 @@ import {
   publishWalletBalanceDelta,
   publishWalletBalanceRefresh,
   refreshWalletOverview,
-} from "../../../api/wallet-query-options";
+} from "../../../api/wallet/wallet-query-options";
 
 interface WagerInlineBetMenuProps {
   wagerId: number;

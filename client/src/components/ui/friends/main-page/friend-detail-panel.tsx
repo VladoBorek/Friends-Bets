@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { FriendSummary, FriendWagerSummary } from "@pb138/shared/schemas/friends";
-import { friendsQueries } from "../../../../api/friends-query-options";
+import { friendsQueries } from "../../../../api/friends/friends-query-options";
 import { cn } from "../../../../lib/utils";
 import { Card } from "../../card";
 

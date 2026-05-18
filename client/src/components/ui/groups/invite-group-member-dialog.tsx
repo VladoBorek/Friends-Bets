@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { fetchFriends } from "../../../api/friends-api";
+import { fetchFriends } from "../../../api/friends/friends-api";
 import { fetchAllGroupInvitations, sendGroupInvitation } from "../../../api/groups/group-invitations-api";
 import { fetchAllGroupMembers } from "../../../api/groups/group-members-api";
 import { groupsKeys } from "../../../api/groups/groups-query-options";

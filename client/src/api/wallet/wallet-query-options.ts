@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { queryOptions, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { WalletOverview, WalletTransactionsQuery } from "@pb138/shared/schemas/wallet";
-import { WALLET_TRANSACTION_PAGE_SIZE } from "../features/wallet/wallet-transactions";
+import { WALLET_TRANSACTION_PAGE_SIZE } from "../../features/wallet/wallet-transactions";
 import { fetchWalletOverview, fetchWalletTransactions } from "./wallet-api";
 
 export const WALLET_TRANSACTION_PAGE_SIZE_CONST = 10;

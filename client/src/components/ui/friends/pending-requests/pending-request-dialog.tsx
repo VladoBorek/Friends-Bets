@@ -6,8 +6,8 @@ import {
   acceptFriendRequest,
   fetchAllFriendRequests,
   rejectFriendRequest,
-} from "../../../../api/friends-discovery-api";
-import { friendsKeys } from "../../../../api/friends-query-options";
+} from "../../../../api/friends/friends-discovery-api";
+import { friendsKeys } from "../../../../api/friends/friends-query-options";
 import { useAuth } from "../../../../lib/auth-context";
 import { cn } from "../../../../lib/utils";
 import { Dialog } from "../../dialog";

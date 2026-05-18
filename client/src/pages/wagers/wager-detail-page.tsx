@@ -18,8 +18,8 @@ import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inlin
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
 import { formatMoney, toErrorMessage } from "../../features/wagers/utils";
 import { useAuth } from "../../lib/auth-context";
-import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet-query-options";
-import { friendsKeys } from "../../api/friends-query-options";
+import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet/wallet-query-options";
+import { friendsKeys } from "../../api/friends/friends-query-options";
 
 interface WagerDetailPageProps {
   wagerId: number;
