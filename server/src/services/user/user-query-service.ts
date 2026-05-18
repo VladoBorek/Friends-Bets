@@ -1,7 +1,7 @@
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../errors";
 import { mapUserSummary } from "./mappers/user-mapper";
-import * as userRepository from "../../repositories/user-repository";
+import * as userRepository from "../../repositories/user/user-repository";
 
 export async function getUserById(id: number): Promise<UserSummary> {
   const user = await userRepository.findUserById(id);

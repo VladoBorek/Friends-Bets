@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, inArray, ne } from "drizzle-orm";
-import { db } from "../db/db";
-import { Role, User, Wallet } from "../db/schema";
+import { db } from "../../db/db";
+import { Role, User, Wallet } from "../../db/schema";
 import type { CreateUserRequest } from "@pb138/shared/schemas/user";
 
 export type UserRow = {

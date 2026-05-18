@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../errors";
-import * as userRepository from "../../repositories/user-repository";
+import * as userRepository from "../../repositories/user/user-repository";
 import { emailClient } from "../email-service";
 import { getUserById } from "./user-query-service";
 

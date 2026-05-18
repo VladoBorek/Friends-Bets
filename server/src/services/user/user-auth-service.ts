@@ -11,7 +11,7 @@ import {
   buildPasswordResetToken,
   buildPasswordResetUrl
 } from "./user-token-service";
-import * as userRepository from "../../repositories/user-repository";
+import * as userRepository from "../../repositories/user/user-repository";
 import { getUserById, getUserByEmail } from "./user-query-service";
 
 export async function createUser(input: CreateUserRequest): Promise<UserSummary> {

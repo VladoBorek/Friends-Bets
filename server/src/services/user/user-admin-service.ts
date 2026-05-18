@@ -2,7 +2,7 @@ import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../errors";
 import { emailClient } from "../email-service";
 import { getUserById } from "./user-query-service";
-import * as userRepository from "../../repositories/user-repository";
+import * as userRepository from "../../repositories/user/user-repository";
 
 export async function updateUserRole(userId: number, roleName: "ADMIN" | "PLAYER" | "USER"): Promise<UserSummary> {
   const roleId = await userRepository.findRoleIdByName(roleName);

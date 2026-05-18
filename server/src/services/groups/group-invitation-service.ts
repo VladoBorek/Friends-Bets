@@ -7,7 +7,7 @@ import { HttpError } from "../../errors";
 import * as groupRepository from "../../repositories/group/group-repository";
 import * as groupMemberRepository from "../../repositories/group/group-member-repository";
 import * as groupInvitationRepository from "../../repositories/group/group-invitation-repository";
-import * as userRepository from "../../repositories/user-repository";
+import * as userRepository from "../../repositories/user/user-repository";
 import { mapUserSummary } from "../user/mappers/user-mapper";
 import { mapGroupMemberSummary } from "./mappers/group-mapper";
 import { requireGroupMember } from "./group-permission-service";
