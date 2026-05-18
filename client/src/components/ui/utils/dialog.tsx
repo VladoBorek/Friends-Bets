@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 
 export function Dialog(props: React.ComponentProps<typeof BaseDialog.Root>) {
   return <BaseDialog.Root {...props} />;

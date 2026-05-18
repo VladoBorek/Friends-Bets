@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import { createWagerRequestSchema, type CategorySummary, type WagerDetail } from "../../../../../shared/src/schemas/wager";
-import { Button } from "../../../components/ui/button";
+import { Button } from "../../../components/ui/utils/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../../components/ui/dialog";
-import { FormItem } from "../../../components/ui/form-item";
-import { Input } from "../../../components/ui/input";
-import { Switch } from "../../../components/ui/switch";
-import { Textarea } from "../../../components/ui/textarea";
+} from "../../../components/ui/utils/dialog";
+import { FormItem } from "../../../components/ui/utils/form-item";
+import { Input } from "../../../components/ui/utils/input";
+import { Switch } from "../../../components/ui/utils/switch";
+import { Textarea } from "../../../components/ui/utils/textarea";
 import { useAuth } from "../../../lib/auth-context";
 import { toErrorMessage } from "../utils";
 import { GroupSearchSection, type GroupInvitation } from "./group-search-section";

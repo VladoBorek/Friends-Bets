@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
-import { Input } from "../../../components/ui/input";
+import { Input } from "../../../components/ui/utils/input";
 import type { UserSearchResult } from "./user-search-section";
 
 export type GroupInvitation = {

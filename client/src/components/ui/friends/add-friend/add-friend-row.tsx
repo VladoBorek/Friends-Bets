@@ -1,6 +1,6 @@
 import { UserPlus } from "lucide-react";
 import { cn } from "../../../../lib/utils";
-import { Button } from "../../button";
+import { Button } from "../../utils/button";
 import { FriendPersonCell } from "../dialog/friends-person-cell";
 import {buildButtonLabel,} from "./add-friend-dialog-utils";
 import type { DiscoveredUser } from "@pb138/shared/schemas/friends";

@@ -8,8 +8,8 @@ import {
   sendFriendRequest,
 } from "../../../../api/friends/friends-discovery-api";
 import { useAuth } from "../../../../lib/auth-context";
-import { Dialog } from "../../dialog";
-import { Input } from "../../input";
+import { Dialog } from "../../utils/dialog";
+import { Input } from "../../utils/input";
 import { FriendsDialogShell } from "../dialog/friends-dialog-shell";
 import { FriendsPagination } from "../friends-pagination";
 import { AddFriendList } from "./add-friend-list";

@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { FriendSummary, FriendWagerSummary } from "@pb138/shared/schemas/friends";
 import { friendsQueries } from "../../../../api/friends/friends-query-options";
 import { cn } from "../../../../lib/utils";
-import { Card } from "../../card";
+import { Card } from "../../utils/card";
 
 type FriendDetailPanelProps = {
   friend: FriendSummary | null;

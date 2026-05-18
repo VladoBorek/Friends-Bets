@@ -1,5 +1,5 @@
 import type { FriendSummary } from "@pb138/shared/schemas/friends";
-import { Card } from "../../card";
+import { Card } from "../../utils/card";
 import { FriendDetailPanel } from "./friend-detail-panel";
 import { FriendsPagination } from "../friends-pagination";
 import { PersonRowCard } from "./person-row-card";

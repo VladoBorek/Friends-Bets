@@ -5,11 +5,11 @@ import { toast } from "sonner";
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
 import { updateGroup } from "../../../api/groups/groups-api";
 import { groupsKeys } from "../../../api/groups/groups-query-options";
-import { Button } from "../button";
-import { Dialog } from "../dialog";
+import { Button } from "../utils/button";
+import { Dialog } from "../utils/dialog";
 import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
-import { Input } from "../input";
-import { Textarea } from "../textarea";
+import { Input } from "../utils/input";
+import { Textarea } from "../utils/textarea";
 
 type EditGroupDialogProps = {
   group: GroupSummary | null;

@@ -4,10 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createGroup } from "../../../api/groups/groups-api";
 import { groupsKeys } from "../../../api/groups/groups-query-options";
-import { Button } from "../button";
-import { Dialog } from "../dialog";
-import { Input } from "../input";
-import { Textarea } from "../textarea";
+import { Button } from "../utils/button";
+import { Dialog } from "../utils/dialog";
+import { Input } from "../utils/input";
+import { Textarea } from "../utils/textarea";
 import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
 
 type CreateGroupDialogProps = {

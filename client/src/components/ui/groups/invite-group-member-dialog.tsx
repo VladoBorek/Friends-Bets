@@ -6,8 +6,8 @@ import { fetchAllGroupInvitations, sendGroupInvitation } from "../../../api/grou
 import { fetchAllGroupMembers } from "../../../api/groups/group-members-api";
 import { groupsKeys } from "../../../api/groups/groups-query-options";
 import { useAuth } from "../../../lib/auth-context";
-import { Button } from "../button";
-import { Dialog } from "../dialog";
+import { Button } from "../utils/button";
+import { Dialog } from "../utils/dialog";
 import { FriendsDialogShell } from "../friends/dialog/friends-dialog-shell";
 import { FriendsPagination } from "../friends/friends-pagination";
 

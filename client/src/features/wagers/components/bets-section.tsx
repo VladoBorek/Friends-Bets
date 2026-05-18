@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { WagerDetail } from "../../../../../shared/src/schemas/wager";
-import { Card, CardTitle } from "../../../components/ui/card";
-import { ScrollArea, ScrollBar } from "../../../components/ui/scroll-area";
+import { Card, CardTitle } from "../../../components/ui/utils/card";
+import { ScrollArea, ScrollBar } from "../../../components/ui/utils/scroll-area";
 import { OUTCOME_COLORS, formatMoney } from "../utils";
 
 type WagerBet = { id: number; userId: number; username: string; outcomeTitle: string; amount: string };

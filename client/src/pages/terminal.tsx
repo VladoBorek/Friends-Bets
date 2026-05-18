@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ShieldAlert } from "lucide-react";
-import { Card, PremiumCard } from "../components/ui/card";
+import { Card, PremiumCard } from "../components/ui/utils/card";
 import { CategoryPanel } from "../features/admin/components/category-panel";
 import { TerminalHeader, type TerminalTab } from "../features/admin/components/terminal-header";
 import { TerminalStats } from "../features/admin/components/terminal-stats";

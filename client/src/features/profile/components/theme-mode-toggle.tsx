@@ -1,5 +1,5 @@
 import { Moon, Sun } from "lucide-react";
-import { Switch } from "../../../components/ui/switch";
+import { Switch } from "../../../components/ui/utils/switch";
 import { cn } from "../../../lib/utils";
 import { useTheme } from "../../../lib/theme-provider";
 

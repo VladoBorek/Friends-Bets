@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { AlertCircle, Menu, User, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
-import { Button } from "../components/ui/button";
+import { Button } from "../components/ui/utils/button";
 import { formatCurrency } from "../features/wagers/utils";
 import { useWalletOverview } from "../api/wallet/wallet-query-options";
 import { cn } from "../lib/utils";

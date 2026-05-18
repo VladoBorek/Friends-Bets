@@ -3,7 +3,7 @@ import { Menu, User, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../lib/auth-context";
 import { cn } from "../../lib/utils";
-import { Button } from "../ui/button";
+import { Button } from "../ui/utils/button";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },

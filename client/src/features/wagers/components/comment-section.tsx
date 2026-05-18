@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "../../../components/ui/button";
-import { Card, CardTitle } from "../../../components/ui/card";
-import { ScrollArea, ScrollBar } from "../../../components/ui/scroll-area";
-import { Textarea } from "../../../components/ui/textarea";
+import { Button } from "../../../components/ui/utils/button";
+import { Card, CardTitle } from "../../../components/ui/utils/card";
+import { ScrollArea, ScrollBar } from "../../../components/ui/utils/scroll-area";
+import { Textarea } from "../../../components/ui/utils/textarea";
 
 type WagerComment = { id: number; userId: number; username: string; content: string; createdAt: string };
 

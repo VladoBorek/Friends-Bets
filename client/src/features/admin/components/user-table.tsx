@@ -1,4 +1,4 @@
-import { Input } from "../../../components/ui/input";
+import { Input } from "../../../components/ui/utils/input";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { UserActionMenu } from "./user-action-menu";
 import type { UserActions } from "../hooks/use-users";

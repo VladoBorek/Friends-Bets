@@ -1,5 +1,5 @@
 import type { GroupSummary } from "@pb138/shared/schemas/groups";
-import { Card } from "../card";
+import { Card } from "../utils/card";
 import { FriendsPagination } from "../friends/friends-pagination";
 import { GroupCard } from "./group-card";
 

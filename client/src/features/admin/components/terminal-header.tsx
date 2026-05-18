@@ -1,5 +1,5 @@
 import { LayoutDashboard, UserRound, Users, Tags } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import { Button } from "../../../components/ui/utils/button";
 
 export type TerminalTab = "users" | "categories";
 

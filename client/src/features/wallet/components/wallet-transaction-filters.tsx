@@ -1,5 +1,5 @@
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/utils/button";
+import { Input } from "../../../components/ui/utils/input";
 import { WALLET_TRANSACTION_TYPE_FILTERS, type WalletTransactionTypeFilter } from "../wallet-transactions";
 
 interface WalletTransactionFiltersProps {

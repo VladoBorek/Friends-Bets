@@ -1,5 +1,5 @@
 import type { CategorySummary } from "@pb138/shared/schemas/wager";
-import { Input } from "../../../components/ui/input";
+import { Input } from "../../../components/ui/utils/input";
 
 export type StatusFilter = "ALL" | "OPEN" | "PENDING" | "CLOSED";
 export type InvolvementFilter = "ALL" | "MINE" | "MY_BETS";

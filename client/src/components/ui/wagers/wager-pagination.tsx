@@ -7,7 +7,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "../pagination";
+} from "../utils/pagination";
 
 type WagerPaginationProps = {
   currentPage: number;
