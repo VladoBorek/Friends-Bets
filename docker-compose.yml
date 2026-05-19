@@ -1,0 +1,98 @@
+x-node-service: &node-service
+  image: pb138-project-dev
+  pull_policy: never
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  volumes:
+    - .:/app
+    - node-modules:/app/node_modules
+    - npm-cache:/root/.npm
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pb138}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pb138-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    <<: *node-service
+    environment:
+      IS_DOCKER: "true"
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@db:5432/pb138}
+      VITE_API_TARGET: ${VITE_API_TARGET:-http://server:3000}
+    profiles:
+      - tools
+
+  migrate:
+    <<: *node-service
+    restart: "no"
+    environment:
+      IS_DOCKER: "true"
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@db:5432/pb138}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run db:migrate -w @pb138/server
+
+  server:
+    <<: *node-service
+    environment:
+      IS_DOCKER: "true"
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@db:5432/pb138}
+      PORT: ${PORT:-3000}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-log}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: npm run start -w @pb138/server
+
+  client:
+    <<: *node-service
+    environment:
+      IS_DOCKER: "true"
+      VITE_API_TARGET: ${VITE_API_TARGET:-http://server:3000}
+    ports:
+      - "${CLIENT_PORT:-5173}:5173"
+    depends_on:
+      - server
+    command: npm run dev -w @pb138/client -- --host 0.0.0.0
+
+  setup:
+    <<: *node-service
+    profiles:
+      - setup
+    environment:
+      IS_DOCKER: "true"
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@db:5432/pb138}
+      VITE_API_TARGET: ${VITE_API_TARGET:-http://server:3000}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: >
+      sh -c "
+      npm run db:seed -w @pb138/server &&
+      npm run api:generate -w @pb138/client &&
+      npm run routes:generate -w @pb138/client &&
+      npm run lint:local
+      "
+
+volumes:
+  pb138-postgres-data:
+  node-modules:
+  npm-cache:
