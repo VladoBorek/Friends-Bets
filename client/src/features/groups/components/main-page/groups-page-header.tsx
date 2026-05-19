@@ -20,7 +20,7 @@ export function GroupsPageHeader({ hasIncomingInvites, onPendingClick, onCreateC
         >
           <Clock3 className="h-4 w-4" />
           Pending
-          {hasIncomingInvites ? <span className="absolute -right-1.5 -top-1.5 size-3 rounded-full border border-slate-950 bg-rose-500" /> : null}
+          {hasIncomingInvites ? <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full border border-slate-950 bg-rose-500" /> : null}
         </Button>
 
         <Button type="button" onClick={onCreateClick} className="gap-2">

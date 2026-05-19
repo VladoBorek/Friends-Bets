@@ -29,7 +29,7 @@ export function FriendsPageHeader({
 
           {hasIncomingRequests ? (
             <>
-              <span className="absolute -right-1.5 -top-1.5 size-3 rounded-full border border-slate-950 bg-rose-500" />
+              <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full border border-slate-950 bg-rose-500" />
               <span className="sr-only">
                 {incomingRequestCount} pending incoming friend request
                 {incomingRequestCount === 1 ? "" : "s"}
