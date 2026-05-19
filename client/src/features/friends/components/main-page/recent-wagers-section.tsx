@@ -11,9 +11,9 @@ type RecentWagersSectionProps = {
 
 export function RecentWagersSection({ friend, recentWagers, isLoading, error }: RecentWagersSectionProps) {
   return (
-    <div className="mt-7 min-w-0">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-        <h3 className="text-lg font-semibold text-slate-100">Recent Wagers</h3>
+    <div className="mt-4 min-w-0">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <h3 className="text-base font-semibold text-slate-100">Recent Wagers</h3>
 
         {friend.stats.totalWagers > 0 ? (
           <Link
@@ -28,17 +28,17 @@ export function RecentWagersSection({ friend, recentWagers, isLoading, error }: 
       </div>
 
       {isLoading ? (
-        <p className="mt-4 text-sm text-slate-400">Loading recent wagers...</p>
+        <p className="mt-3 text-sm text-slate-400">Loading recent wagers...</p>
       ) : error ? (
-        <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/5 px-4 py-3 text-sm text-rose-200">
+        <div className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-3 text-sm text-rose-200">
           {error instanceof Error ? error.message : "Unable to load friend statistics."}
         </div>
       ) : recentWagers.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-slate-800 px-4 py-5 text-sm text-slate-400">
+        <div className="mt-3 rounded-xl border border-dashed border-slate-800 px-4 py-4 text-sm text-slate-400">
           No resolved wagers together yet.
         </div>
       ) : (
-        <div className="mt-4 flex min-w-0 flex-col gap-3">
+        <div className="mt-3 flex min-w-0 flex-col gap-2.5">
           {recentWagers.map((wager) => (
             <SharedWagerRow key={wager.wagerId} wager={wager} />
           ))}

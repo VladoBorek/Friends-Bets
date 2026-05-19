@@ -41,7 +41,7 @@ export function FriendsPage() {
         onAddFriendClick={() => page.setIsAddFriendDialogOpen(true)}
       />
 
-      <div className="grid min-w-0 max-w-full gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+      <div className="grid min-w-0 w-full items-start gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
         <FriendsListSection
           friends={page.friends}
           totalFriends={page.pagination.total}
