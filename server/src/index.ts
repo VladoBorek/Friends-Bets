@@ -6,7 +6,11 @@ import { emailClient } from "./services/email-service";
 const { port } = readServerConfig();
 const app = createApp();
 
-app.listen(port);
+app.listen({
+  port,
+  hostname: "0.0.0.0",
+});
+
 void emailClient.verify().catch((error) => {
   console.error("Email client verification failed:", error);
 });
