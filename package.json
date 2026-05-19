@@ -9,21 +9,45 @@
     "shared"
   ],
   "scripts": {
-    "client": "npm run dev -w @pb138/client",
-    "build": "npm run build -w @pb138/client && npm run build -w @pb138/server",
-    "lint": "npm run lint -w @pb138/client && npm run lint -w @pb138/server && eslint scripts",
-    "preview": "npm run preview -w @pb138/client",
-    "test": "npm run test -w @pb138/client && npm run test -w @pb138/server",
-    "generate": "npm run api:generate && npm run routes:generate",
-    "api:generate": "npm run api:generate -w @pb138/client",
-    "routes:generate": "npm run routes:generate -w @pb138/client",
-    "db:generate": "npm run db:generate -w @pb138/server",
-    "db:migrate": "npm run db:migrate -w @pb138/server",
-    "db:seed": "npm run db:seed -w @pb138/server",
-    "cli:query": "npm run cli:query -w @pb138/server",
-    "setup": "npm exec --yes tsx scripts/setup.ts",
-    "server": "npm run start -w @pb138/server",
-    "dev": "run-p client server"
+    "dev": "docker compose up --build client server",
+    "setup": "docker compose --profile setup run --rm setup",
+
+    "client": "docker compose up --build client",
+    "server": "docker compose up --build server",
+
+    "build": "docker compose --profile tools run --rm app npm run build:local",
+    "lint": "docker compose --profile tools run --rm app npm run lint:local",
+    "test": "docker compose --profile tools run --rm app npm run test:local",
+
+    "generate": "docker compose --profile tools run --rm app npm run generate:local",
+    "api:generate": "docker compose --profile tools run --rm app npm run api:generate:local",
+    "routes:generate": "docker compose --profile tools run --rm app npm run routes:generate:local",
+
+    "db:generate": "docker compose --profile tools run --rm app npm run db:generate:local",
+    "db:migrate": "docker compose run --rm migrate",
+    "db:seed": "docker compose --profile tools run --rm app npm run db:seed:local",
+    "cli:query": "docker compose --profile tools run --rm app npm run cli:query:local",
+
+    "dev:local": "run-p client:local server:local",
+    "client:local": "npm run dev -w @pb138/client",
+    "server:local": "npm run start -w @pb138/server",
+    "setup:legacy": "npm exec --yes tsx scripts/setup.ts",
+
+    "build:local": "npm run build -w @pb138/client && npm run build -w @pb138/server",
+    "lint:local": "npm run lint -w @pb138/client && npm run lint -w @pb138/server && eslint scripts",
+    "test:local": "npm run test -w @pb138/client && npm run test -w @pb138/server",
+
+    "generate:local": "npm run api:generate:local && npm run routes:generate:local",
+    "api:generate:local": "npm run api:generate -w @pb138/client",
+    "routes:generate:local": "npm run routes:generate -w @pb138/client",
+
+    "db:generate:local": "npm run db:generate -w @pb138/server",
+    "db:migrate:local": "npm run db:migrate -w @pb138/server",
+    "db:seed:local": "npm run db:seed -w @pb138/server",
+    "cli:query:local": "npm run cli:query -w @pb138/server",
+
+    "docker:down": "docker compose down",
+    "docker:reset": "docker compose down -v"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
