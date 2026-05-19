@@ -1,12 +1,11 @@
 import type { FriendRequestSummary } from "@pb138/shared/schemas/friends";
 import { Button } from "../../../../components/ui/button";
 import { FriendPersonCell } from "../dialog/friends-person-cell";
-
-type PendingTab = "incoming" | "outgoing";
+import { getRequestPerson, type PendingFriendRequestTab } from "../../utils/friend-requests";
 
 type PendingRequestRowProps = {
   request: FriendRequestSummary;
-  type: PendingTab;
+  type: PendingFriendRequestTab;
   isAccepting: boolean;
   isRejecting: boolean;
   onAccept: () => void;
@@ -21,7 +20,7 @@ export function PendingRequestRow({
   onAccept,
   onReject,
 }: PendingRequestRowProps) {
-  const person = type === "incoming" ? request.requester : request.addressee;
+  const person = getRequestPerson(request, type);
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-4">

@@ -1,16 +1,9 @@
+import { getInitials } from "../../utils/friend-display";
+
 type FriendPersonCellProps = {
   username: string;
   email: string;
 };
-
-function getInitials(username: string) {
-  return username
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 export function FriendPersonCell({ username, email }: FriendPersonCellProps) {
   return (

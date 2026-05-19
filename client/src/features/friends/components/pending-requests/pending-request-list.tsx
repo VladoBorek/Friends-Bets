@@ -1,11 +1,10 @@
 import type { FriendRequestSummary } from "@pb138/shared/schemas/friends";
-import { PendingRequestRow } from "./pending-request-row";
 import { FriendsAsyncState } from "../friends-async-state";
-
-type PendingTab = "incoming" | "outgoing";
+import type { PendingFriendRequestTab } from "../../utils/friend-requests";
+import { PendingRequestRow } from "./pending-request-row";
 
 type PendingRequestListProps = {
-  type: PendingTab;
+  type: PendingFriendRequestTab;
   requests: FriendRequestSummary[] | undefined | null;
   isLoading: boolean;
   error: unknown;
@@ -32,11 +31,7 @@ export function PendingRequestList({
       isLoading={isLoading}
       error={error}
       isEmpty={safeRequests.length === 0}
-      emptyMessage={
-        type === "incoming"
-          ? "No incoming friend requests."
-          : "No outgoing friend requests."
-      }
+      emptyMessage={type === "incoming" ? "No incoming friend requests." : "No outgoing friend requests."}
       skeletonCount={4}
       errorMessage="Unable to load pending requests."
     >

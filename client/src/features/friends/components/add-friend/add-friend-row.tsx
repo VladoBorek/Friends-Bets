@@ -1,9 +1,9 @@
 import { UserPlus } from "lucide-react";
-import { cn } from "../../../../lib/utils";
-import { Button } from "../../../../components/ui/button";
-import { FriendPersonCell } from "../dialog/friends-person-cell";
-import {buildButtonLabel,} from "./add-friend-dialog-utils";
 import type { DiscoveredUser } from "@pb138/shared/schemas/friends";
+import { Button } from "../../../../components/ui/button";
+import { cn } from "../../../../lib/utils";
+import { buildButtonLabel } from "../../utils/friend-discovery";
+import { FriendPersonCell } from "../dialog/friends-person-cell";
 
 type AddFriendRowProps = {
   candidate: DiscoveredUser;
@@ -11,11 +11,7 @@ type AddFriendRowProps = {
   onSendRequest: (candidateId: number) => void;
 };
 
-export function AddFriendRow({
-  candidate,
-  isSending,
-  onSendRequest,
-}: AddFriendRowProps) {
+export function AddFriendRow({ candidate, isSending, onSendRequest }: AddFriendRowProps) {
   const state = candidate.relationshipState;
   const isDisabled = state !== "AVAILABLE" || isSending;
 
