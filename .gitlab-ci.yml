@@ -19,16 +19,17 @@ variables:
   before_script:
     - docker version
     - docker compose version
+    - export DEV_IMAGE="${CI_REGISTRY_IMAGE:-$CI_REGISTRY/$CI_PROJECT_PATH}/dev:cache"
     - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
-    - docker pull "$CI_REGISTRY_IMAGE/dev:cache" || true
+    - docker pull "$DEV_IMAGE" || true
     - >
       docker build
-      --cache-from "$CI_REGISTRY_IMAGE/dev:cache"
+      --cache-from "$DEV_IMAGE"
       --build-arg BUILDKIT_INLINE_CACHE=1
       -t pb138-project-dev
-      -t "$CI_REGISTRY_IMAGE/dev:cache"
+      -t "$DEV_IMAGE"
       -f Dockerfile.dev .
-    - docker push "$CI_REGISTRY_IMAGE/dev:cache"
+    - docker push "$DEV_IMAGE"
 
 stages:
   - test
