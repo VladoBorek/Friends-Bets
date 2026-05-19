@@ -6,30 +6,28 @@ workflow:
     - if: '$CI_COMMIT_BRANCH'
 
 variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_BUILDKIT: "1"
-    COMPOSE_DOCKER_CLI_BUILD: "1"
-    DOCKER_DRIVER: overlay2
+  DOCKER_HOST: unix:///runner/services/docker/docker.sock
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1"
 
-default:
+.docker-job:
   image: docker:27-cli
   services:
-    - name: docker:27-dind
-      alias: docker
+    - name: docker:27-dind-rootless
   tags:
     - shared-fi
   before_script:
     - docker version
     - docker compose version
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
     - docker pull "$CI_REGISTRY_IMAGE/dev:cache" || true
-    - docker build
-        --cache-from "$CI_REGISTRY_IMAGE/dev:cache"
-        --build-arg BUILDKIT_INLINE_CACHE=1
-        -t pb138-project-dev
-        -t "$CI_REGISTRY_IMAGE/dev:cache"
-        -f Dockerfile.dev .
+    - >
+      docker build
+      --cache-from "$CI_REGISTRY_IMAGE/dev:cache"
+      --build-arg BUILDKIT_INLINE_CACHE=1
+      -t pb138-project-dev
+      -t "$CI_REGISTRY_IMAGE/dev:cache"
+      -f Dockerfile.dev .
     - docker push "$CI_REGISTRY_IMAGE/dev:cache"
 
 stages:
@@ -38,14 +36,16 @@ stages:
   - deploy
 
 verify:
+  extends: .docker-job
   stage: test
   script:
     - docker compose --profile tools run --rm app npm run lint:local
     - docker compose --profile tools run --rm app npm run test:local
   after_script:
-    - docker compose down --remove-orphans
+    - docker compose down --remove-orphans || true
 
 build:
+  extends: .docker-job
   stage: build
   script:
     - docker compose --profile tools run --rm app npm run generate:local
@@ -55,26 +55,32 @@ build:
       - dist/
       - client/src/api/gen/
       - client/src/routeTree.gen.ts
-    expire_in: 1 week
+    expire_in: 10 minutes
   after_script:
-    - docker compose down --remove-orphans
+    - docker compose down --remove-orphans || true
 
-integration-tests: # TODO
+integration-tests:
   stage: test
+  tags:
+    - shared-fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - echo "TODO"
 
-e2e-tests: # TODO
+e2e-tests:
   stage: test
+  tags:
+    - shared-fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - echo "TODO"
 
-deploy: # TODO
+deploy:
   stage: deploy
+  tags:
+    - shared-fi
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
