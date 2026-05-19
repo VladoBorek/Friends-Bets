@@ -1,4 +1,4 @@
-import type { CommentRow } from "../../../repositories/comment-repository";
+import type { CommentRow } from "../../../repositories/wagers/comment-repository";
 
 export type WagerComment = {
   id: number;

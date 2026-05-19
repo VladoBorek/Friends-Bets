@@ -4,13 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { useAuth } from "../../../lib/auth-context";
-import { toErrorMessage, validateBetInput } from "../utils";
+import { toErrorMessage, validateBetInput } from "../utils/utils";
 import {
   applyWalletBalanceDelta,
   publishWalletBalanceDelta,
   publishWalletBalanceRefresh,
   refreshWalletOverview,
-} from "../../../api/wallet-query-options";
+} from "../../../api/wallet/wallet-query-options";
 
 interface WagerInlineBetMenuProps {
   wagerId: number;

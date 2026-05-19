@@ -4,7 +4,7 @@ import {
   listTransactionsByWalletId,
   listTransactionsByWalletIdPaginated,
   countTransactionsByWalletId,
-} from "../../repositories/wallet-repository";
+} from "../../repositories/wallet/wallet-repository";
 import { mapTransactionToHistoryItem } from "./wallet-utils";
 import type { WalletHistoryItem, WalletOverview, WalletTransactionsQuery } from "@pb138/shared/schemas/wallet";
 

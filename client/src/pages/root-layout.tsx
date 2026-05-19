@@ -3,8 +3,8 @@ import { AlertCircle, Menu, User, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
 import { Button } from "../components/ui/button";
-import { formatCurrency } from "../features/wagers/utils";
-import { useWalletOverview } from "../api/wallet-query-options";
+import { formatCurrency } from "../features/wagers/utils/utils";
+import { useWalletOverview } from "../api/wallet/wallet-query-options";
 import { cn } from "../lib/utils";
 
 const routeNavItems = [
@@ -17,7 +17,12 @@ const routeNavItems = [
 
 export function RootRouteComponent() {
   const location = useLocation();
-  const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
+  const publicPaths = new Set([
+    "/auth/login",
+    "/auth/register",
+    "/auth/verify-email",
+    "/auth/reset-password",
+  ]);
   const isPublic = publicPaths.has(location.pathname);
 
   if (isPublic) {
@@ -245,7 +250,7 @@ export function RootLayout() {
           )}
         </header>
 
-        <main>
+        <main className="min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
       </div>

@@ -46,7 +46,7 @@ export function buildVerificationToken(userId: number): { token: string; expires
 
 export function buildVerificationUrl(token: string): string {
   const appOrigin = process.env.APP_ORIGIN ?? "http://localhost:5173";
-  return `${appOrigin}/verify-email?token=${encodeURIComponent(token)}`;
+  return `${appOrigin}/auth/verify-email?token=${encodeURIComponent(token)}`;
 }
 
 export function buildPasswordResetToken(userId: number): { token: string; expiresAtMs: number } {
@@ -56,5 +56,5 @@ export function buildPasswordResetToken(userId: number): { token: string; expire
 
 export function buildPasswordResetUrl(token: string): string {
   const appOrigin = process.env.APP_ORIGIN ?? "http://localhost:5173";
-  return `${appOrigin}/reset-password?token=${encodeURIComponent(token)}`;
+  return `${appOrigin}/auth/reset-password?token=${encodeURIComponent(token)}`;
 }

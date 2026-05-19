@@ -7,9 +7,9 @@ import {
   findBetByUserAndWager,
   createBet as repoCreateBet,
   listBetsByWager,
-} from "../../repositories/bet-repository";
-import { findWagerByIdWithDetails } from "../../repositories/wager-repository";
-import { findOutcomeByIdAndWager } from "../../repositories/outcome-repository";
+} from "../../repositories/wagers/bet-repository";
+import { findWagerByIdWithDetails } from "../../repositories/wagers/wager-repository";
+import { findOutcomeByIdAndWager } from "../../repositories/wagers/outcome-repository";
 import { mapBet, mapWagerBetSummary, type WagerBet } from "./mappers/bet-mapper";
 import { ensureUserIsVerified, ensureUserIsNotSuspended } from "./wager-validation";
 import { formatMoney, parseMoney } from "./wager-utils";

@@ -1,5 +1,5 @@
 import { RouterProvider } from "@tanstack/react-router";
-import { useWalletOverviewRealtimeSync } from "./api/wallet-query-options";
+import { useWalletOverviewRealtimeSync } from "./api/wallet/wallet-query-options";
 import { useAuth } from "./lib/auth-context";
 import { router } from "./router";
 

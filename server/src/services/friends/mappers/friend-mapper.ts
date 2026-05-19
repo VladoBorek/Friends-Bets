@@ -6,11 +6,11 @@ import type {
 } from "@pb138/shared/schemas/friends";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../../errors";
-import type { FriendUserRow, FriendshipRow } from "../../../repositories/friend-repository";
+import type { FriendUserRow, FriendshipRow } from "../../../repositories/friends/friend-repository";
 import type {
   FriendStatsAggregateRow,
   SharedFriendWagerRow,
-} from "../../../repositories/friend-stats-repository";
+} from "../../../repositories/friends/friend-stats-repository";
 
 function normalizeRoleName(roleName: unknown): string {
   if (typeof roleName !== "string" || roleName.trim().length === 0) {

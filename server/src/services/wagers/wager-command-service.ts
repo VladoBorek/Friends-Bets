@@ -11,11 +11,11 @@ import {
   updateWagerStatus,
   listWagerOutcomes,
   updateOutcomeWinner,
-} from "../../repositories/wager-repository";
-import { findCategoryById } from "../../repositories/category-repository";
-import { createOutcomes, deleteOutcomesByWager } from "../../repositories/outcome-repository";
-import { createWagerVisibilities, deleteWagerVisibilities } from "../../repositories/wager-visibility-repository";
-import { listWinningBets, wagerHasBets } from "../../repositories/bet-repository";
+} from "../../repositories/wagers/wager-repository";
+import { findCategoryById } from "../../repositories/wagers/category-repository";
+import { createOutcomes, deleteOutcomesByWager } from "../../repositories/wagers/outcome-repository";
+import { createWagerVisibilities, deleteWagerVisibilities } from "../../repositories/wagers/wager-visibility-repository";
+import { listWinningBets, wagerHasBets } from "../../repositories/wagers/bet-repository";
 import { mapWagerDetail } from "./mappers/wager-mapper";
 import { ensureUserIsVerified, ensureUserIsNotSuspended } from "./wager-validation";
 import { calculatePayout, formatMoney, parseMoney } from "./wager-utils";

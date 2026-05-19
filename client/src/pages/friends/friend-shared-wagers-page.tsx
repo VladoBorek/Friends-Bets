@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { FriendWagerSummary } from "@pb138/shared/schemas/friends";
-import { friendsQueries } from "../../api/friends-query-options";
+import { friendsQueries } from "../../api/friends/friends-query-options";
 import { Card, CardDescription, CardTitle } from "../../components/ui/card";
-import { FriendsPagination } from "../../components/ui/friends/friends-pagination";
-import { Route } from "../../routes/friends_.$friendId.wagers";
+import { FriendsPagination } from "../../features/friends/components/friends-pagination";
+import { Route } from "../../routes/friends/$friendId.wagers";
 import { cn } from "../../lib/utils";
 
 function formatSignedMoney(value: string) {

@@ -14,7 +14,12 @@ export interface RouterContext {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootRouteComponent,
   beforeLoad: async ({ context, location }) => {
-    const publicPaths = new Set(["/login", "/register", "/verify-email", "/reset-password"]);
+    const publicPaths = new Set([
+      "/auth/login",
+      "/auth/register",
+      "/auth/verify-email",
+      "/auth/reset-password",
+    ]);
     const isPublic = publicPaths.has(location.pathname);
     
     let user = context.auth.user;
@@ -26,14 +31,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
     if (!user && !isPublic) {
       throw redirect({
-        to: "/login",
+        to: "/auth/login",
         search: {
           redirect: location.href,
         },
       });
     }
 
-    if (user && (location.pathname === "/login" || location.pathname === "/register")) {
+    if (user && (location.pathname === "/auth/login" || location.pathname === "/auth/register")) {
       throw redirect({ to: "/" });
     }
 

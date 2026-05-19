@@ -1,7 +1,7 @@
 import type { WagerSummary } from "@pb138/shared/schemas/wager";
 import { Card, CardTitle } from "../../../components/ui/card";
 import { PillTag, type PillTagVariant } from "../../../components/ui/pill-tag";
-import { formatMoney } from "../utils";
+import { formatMoney } from "../utils/utils";
 
 interface WagerCardProps {
   wager: WagerSummary;

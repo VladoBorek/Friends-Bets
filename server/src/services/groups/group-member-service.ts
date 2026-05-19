@@ -2,7 +2,7 @@ import type { GroupMembersListQuery } from "@pb138/shared/schemas/groups";
 import type { AddGroupMemberRequest, GroupRole } from "@pb138/shared/schemas/groups";
 
 import * as groupMemberRepository from "../../repositories/group/group-member-repository";
-import * as userRepository from "../../repositories/user-repository";
+import * as userRepository from "../../repositories/user/user-repository";
 
 import { mapGroupMemberSummary } from "./mappers/group-mapper";
 import { requireGroupMember, requireGroupOwner } from "./group-permission-service";

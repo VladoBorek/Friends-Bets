@@ -1,12 +1,12 @@
 import type { FriendWagersListQuery } from "@pb138/shared/schemas/friends";
 import { HttpError } from "../../errors";
-import { findFriendshipBetweenUsers, listUsersByIds } from "../../repositories/friend-repository";
+import { findFriendshipBetweenUsers, listUsersByIds } from "../../repositories/friends/friend-repository";
 import {
   countSharedWagers,
   listFriendStatsPreviewRows,
   listRecentSharedWagers,
   listSharedWagersPage,
-} from "../../repositories/friend-stats-repository";
+} from "../../repositories/friends/friend-stats-repository";
 import { mapFriendSummary, mapFriendWagerSummary, mapUserSummary } from "./mappers/friend-mapper";
 
 const RECENT_WAGERS_LIMIT = 3;

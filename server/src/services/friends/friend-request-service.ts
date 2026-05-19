@@ -1,5 +1,5 @@
 import type { FriendRequestSummary, SendFriendRequestRequest } from "@pb138/shared/schemas/friends";
-import type { FriendshipRow } from "../../repositories/friend-repository";
+import type { FriendshipRow } from "../../repositories/friends/friend-repository";
 import { HttpError } from "../../errors";
 import {
   createFriendRequest,
@@ -9,7 +9,7 @@ import {
   listUsersByIds,
   reopenRejectedFriendRequest,
   updateFriendshipStatus,
-} from "../../repositories/friend-repository";
+} from "../../repositories/friends/friend-repository";
 import { buildUserSummaryMap, mapFriendRequestSummary } from "./mappers/friend-mapper";
 
 async function toFriendRequestSummary(row: FriendshipRow): Promise<FriendRequestSummary> {
