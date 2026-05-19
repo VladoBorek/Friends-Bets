@@ -15,14 +15,14 @@ export function FriendsPageHeader({
   onAddFriendClick,
 }: FriendsPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <h1 className="text-2xl font-semibold text-slate-100">Friends</h1>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:flex sm:flex-wrap sm:items-center">
         <Button
           variant="secondary"
           onClick={onPendingClick}
-          className="relative gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800"
+          className="relative w-full justify-center gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800 sm:w-auto"
         >
           <Clock3 className="h-4 w-4" />
           Pending
@@ -38,7 +38,7 @@ export function FriendsPageHeader({
           ) : null}
         </Button>
 
-        <Button onClick={onAddFriendClick} className="gap-2">
+        <Button onClick={onAddFriendClick} className="w-full justify-center gap-2 sm:w-auto">
           <UserPlus className="h-4 w-4" />
           Add Friend
         </Button>

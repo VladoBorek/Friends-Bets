@@ -33,7 +33,7 @@ export function FriendsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 max-w-full flex-col gap-6 overflow-x-hidden">
       <FriendsPageHeader
         hasIncomingRequests={page.hasIncomingRequests}
         incomingRequestCount={page.incomingRequestCount}
@@ -41,7 +41,7 @@ export function FriendsPage() {
         onAddFriendClick={() => page.setIsAddFriendDialogOpen(true)}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <div className="grid min-w-0 max-w-full gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <FriendsListSection
           friends={page.friends}
           totalFriends={page.pagination.total}
@@ -53,20 +53,13 @@ export function FriendsPage() {
           onPageChange={page.handlePageChange}
         />
 
-        <section className="hidden lg:block">
+        <section className="hidden min-w-0 lg:block">
           <FriendDetailPanel friend={page.selectedFriend} />
         </section>
       </div>
 
-      <AddFriendDialog
-        open={page.isAddFriendDialogOpen}
-        onOpenChange={page.setIsAddFriendDialogOpen}
-      />
-
-      <PendingRequestsDialog
-        open={page.isPendingDialogOpen}
-        onOpenChange={page.setIsPendingDialogOpen}
-      />
+      <AddFriendDialog open={page.isAddFriendDialogOpen} onOpenChange={page.setIsAddFriendDialogOpen} />
+      <PendingRequestsDialog open={page.isPendingDialogOpen} onOpenChange={page.setIsPendingDialogOpen} />
     </div>
   );
 }

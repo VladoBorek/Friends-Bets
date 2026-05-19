@@ -10,10 +10,10 @@ type PersonRowCardProps = {
 
 export function PersonRowCard({ friend, isActive, onClick }: PersonRowCardProps) {
   return (
-    <button type="button" onClick={onClick} className="w-full text-left">
+    <button type="button" onClick={onClick} className="w-full min-w-0 text-left">
       <div
         className={cn(
-          "app-glow-surface flex items-center gap-3 rounded-2xl border px-4 py-3",
+          "app-glow-surface flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-3",
           "border-slate-800 bg-slate-900/70",
           "transition-[transform] duration-200 ease-out",
           "motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.01]",
@@ -31,8 +31,8 @@ export function PersonRowCard({ friend, isActive, onClick }: PersonRowCardProps)
           <p className="truncate text-xs text-slate-400">{formatRecord(friend)}</p>
         </div>
 
-        <div className="shrink-0 text-right">
-          <p className={cn("text-sm font-semibold", getMoneyTone(friend.stats.netPnl))}>
+        <div className="min-w-0 shrink text-right">
+          <p className={cn("truncate text-sm font-semibold", getMoneyTone(friend.stats.netPnl))}>
             {formatSignedMoney(friend.stats.netPnl)}
           </p>
         </div>

@@ -26,8 +26,8 @@ export function FriendsListSection({
   onPageChange,
 }: FriendsListSectionProps) {
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between text-sm text-slate-400">
+    <section className="flex min-w-0 max-w-full flex-col gap-4">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-sm text-slate-400">
         <span>{totalFriends} friends</span>
         <span>
           Page {currentPage} / {totalPages}
@@ -39,12 +39,12 @@ export function FriendsListSection({
           No friends found.
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-3">
           {friends.map((friend) => {
             const isSelected = friend.id === selectedFriend?.id;
 
             return (
-              <div key={friend.id} className="flex flex-col gap-3">
+              <div key={friend.id} className="flex min-w-0 flex-col gap-3">
                 <PersonRowCard
                   friend={friend}
                   isActive={isSelected}
@@ -52,7 +52,7 @@ export function FriendsListSection({
                 />
 
                 {isSelected ? (
-                  <div className="lg:hidden">
+                  <div className="min-w-0 lg:hidden">
                     <FriendDetailPanel friend={selectedFriend} />
                   </div>
                 ) : null}
@@ -62,16 +62,12 @@ export function FriendsListSection({
         </div>
       )}
 
-      <div className="flex flex-col gap-2 pt-2">
-        <div className="text-center text-xs text-slate-500">
-          {isRefreshing ? "Refreshing..." : " "}
-        </div>
+      <div className="flex min-w-0 flex-col gap-2 pt-2">
+        <div className="text-center text-xs text-slate-500">{isRefreshing ? "Refreshing..." : " "}</div>
 
-        <FriendsPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
+        <div className="max-w-full overflow-x-auto">
+          <FriendsPagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
+        </div>
       </div>
     </section>
   );

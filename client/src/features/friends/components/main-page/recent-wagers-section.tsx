@@ -11,8 +11,8 @@ type RecentWagersSectionProps = {
 
 export function RecentWagersSection({ friend, recentWagers, isLoading, error }: RecentWagersSectionProps) {
   return (
-    <div className="mt-7">
-      <div className="flex items-center justify-between gap-4">
+    <div className="mt-7 min-w-0">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-semibold text-slate-100">Recent Wagers</h3>
 
         {friend.stats.totalWagers > 0 ? (
@@ -38,7 +38,7 @@ export function RecentWagersSection({ friend, recentWagers, isLoading, error }: 
           No resolved wagers together yet.
         </div>
       ) : (
-        <div className="mt-4 flex flex-col gap-3">
+        <div className="mt-4 flex min-w-0 flex-col gap-3">
           {recentWagers.map((wager) => (
             <SharedWagerRow key={wager.wagerId} wager={wager} />
           ))}
@@ -46,4 +46,4 @@ export function RecentWagersSection({ friend, recentWagers, isLoading, error }: 
       )}
     </div>
   );
-  }
+}

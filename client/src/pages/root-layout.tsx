@@ -250,7 +250,7 @@ export function RootLayout() {
           )}
         </header>
 
-        <main>
+        <main className="min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
       </div>
