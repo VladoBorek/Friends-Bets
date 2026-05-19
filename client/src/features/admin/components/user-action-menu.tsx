@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Ellipsis, KeyRound, ShieldAlert, Trash2, UserRound, Users } from "lucide-react";
-import { Button } from "../../../components/ui/utils/button";
+import { Button } from "../../../components/ui/button";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { useAuth } from "../../../lib/auth-context";
 import type { UserActions, SuspensionUnit } from "../hooks/use-users";

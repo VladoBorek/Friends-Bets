@@ -1,4 +1,4 @@
-import { PremiumCard, PremiumCardLabel, PremiumCardValue } from "../../../components/ui/utils/card";
+import { PremiumCard, PremiumCardLabel, PremiumCardValue } from "../../../components/ui/card";
 
 interface TerminalStatsProps {
   total: number;

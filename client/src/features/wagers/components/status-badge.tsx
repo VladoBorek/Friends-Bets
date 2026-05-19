@@ -1,4 +1,4 @@
-import { PillTag, type PillTagVariant } from "../../../components/ui/utils/pill-tag";
+import { PillTag, type PillTagVariant } from "../../../components/ui/pill-tag";
 
 type StatusBadgeProps = { status: string; className?: string };
 

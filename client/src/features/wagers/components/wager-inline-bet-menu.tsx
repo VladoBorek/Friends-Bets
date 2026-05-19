@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "../../../components/ui/utils/button";
-import { Input } from "../../../components/ui/utils/input";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
 import { useAuth } from "../../../lib/auth-context";
 import { toErrorMessage, validateBetInput } from "../utils/utils";
 import {

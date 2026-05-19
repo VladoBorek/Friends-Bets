@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Eye, EyeOff, KeyRound, Mail } from "lucide-react";
-import { Button } from "../../components/ui/utils/button";
-import { Input } from "../../components/ui/utils/input";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import { AuthLayout } from "../../components/layout/auth-layout";
-import { FormItem } from "../../components/ui/utils/form-item";
+import { FormItem } from "../../components/ui/form-item";
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();

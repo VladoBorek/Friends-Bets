@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Card, CardDescription, CardTitle } from "../ui/utils/card";
+import { Card, CardDescription, CardTitle } from "../ui/card";
 import type { LucideIcon } from "lucide-react";
 
 interface AuthLayoutProps {

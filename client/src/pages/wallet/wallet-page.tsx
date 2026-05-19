@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../../components/ui/utils/button";
-import { Card, CardDescription, CardTitle } from "../../components/ui/utils/card";
+import { Button } from "../../components/ui/button";
+import { Card, CardDescription, CardTitle } from "../../components/ui/card";
 import { FriendsPagination } from  "../../features/friends/components/friends-pagination";
 import { WalletBalanceActionDialog } from "../../features/wallet/components/wallet-balance-action-dialog";
 import { WalletTransactionFilters } from "../../features/wallet/components/wallet-transaction-filters";

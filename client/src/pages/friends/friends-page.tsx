@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Card } from "../../components/ui/utils/card";
+import { Card } from "../../components/ui/card";
 import { FriendDetailPanel } from "../../features/friends/components/main-page/friend-detail-panel";
 import { FriendsPageErrorState } from "../../features/friends/components/friends-page-error-state";
 import { FriendsPageSkeleton } from "../../features/friends/components/friends-page-skeleton";
@@ -9,7 +9,7 @@ import { friendsQueries } from "../../api/friends/friends-query-options";
 import { Route } from "../../routes/friends";
 import { FriendsListSection } from "../../features/friends/components/main-page/friend-list-section";
 import { useMediaQuery } from "../../features/friends/hooks/use-media-query";
-import { Button } from "../../components/ui/utils/button";
+import { Button } from "../../components/ui/button";
 import { UserPlus, Clock3 } from "lucide-react";
 import { AddFriendDialog } from "../../features/friends/components/add-friend/add-friend-dialog";
 import { PendingRequestsDialog } from "../../features/friends/components/pending-requests/pending-request-dialog";

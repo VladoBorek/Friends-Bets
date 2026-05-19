@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
-import { Button } from "../../components/ui/utils/button";
-import { Input } from "../../components/ui/utils/input";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import { AuthLayout } from "../../components/layout/auth-layout";
-import { FormItem } from "../../components/ui/utils/form-item";
+import { FormItem } from "../../components/ui/form-item";
 
 export function LoginPage() {
   const navigate = useNavigate();

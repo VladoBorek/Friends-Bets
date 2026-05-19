@@ -1,12 +1,12 @@
-import { Button } from "../../../components/ui/utils/button";
+import { Button } from "../../../components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../../../components/ui/utils/dialog";
-import { Input } from "../../../components/ui/utils/input";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
 
 interface WalletBalanceActionDialogProps {
   open: boolean;

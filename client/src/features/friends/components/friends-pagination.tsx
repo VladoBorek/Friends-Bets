@@ -7,7 +7,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "../../../components/ui/utils/pagination";
+} from "../../../components/ui/pagination";
 
 type FriendsPaginationProps = {
   currentPage: number;

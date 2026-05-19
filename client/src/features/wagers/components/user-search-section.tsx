@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Input } from "../../../components/ui/utils/input";
+import { Input } from "../../../components/ui/input";
 
 export type UserSearchResult = { id: number; username: string; email: string };
 

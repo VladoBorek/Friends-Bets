@@ -1,14 +1,14 @@
 import { useState } from "react";
 import type { WagerDetail } from "../../../../../shared/src/schemas/wager";
-import { Button } from "../../../components/ui/utils/button";
+import { Button } from "../../../components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../../../components/ui/utils/dialog";
-import { FormItem } from "../../../components/ui/utils/form-item";
+} from "../../../components/ui/dialog";
+import { FormItem } from "../../../components/ui/form-item";
 
 interface ResolveWagerModalProps {
   open: boolean;

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuth } from "../../lib/auth-context";
 import { AuthLayout } from "../../components/layout/auth-layout";
-import { Button } from "../../components/ui/utils/button";
+import { Button } from "../../components/ui/button";
 
 type VerifyState = "loading" | "success" | "error";
 

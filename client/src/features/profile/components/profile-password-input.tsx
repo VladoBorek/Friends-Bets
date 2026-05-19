@@ -1,6 +1,6 @@
 import type { ChangeEventHandler } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Input } from "../../../components/ui/utils/input";
+import { Input } from "../../../components/ui/input";
 
 interface ProfilePasswordInputProps {
   id: string;

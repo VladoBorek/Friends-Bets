@@ -1,5 +1,5 @@
-import { Button } from "../../../components/ui/utils/button";
-import { Card } from "../../../components/ui/utils/card";
+import { Button } from "../../../components/ui/button";
+import { Card } from "../../../components/ui/card";
 
 type FriendsPageErrorStateProps = {
   message: string;

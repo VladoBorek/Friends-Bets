@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { FriendWagerSummary } from "@pb138/shared/schemas/friends";
 import { friendsQueries } from "../../api/friends/friends-query-options";
-import { Card, CardDescription, CardTitle } from "../../components/ui/utils/card";
+import { Card, CardDescription, CardTitle } from "../../components/ui/card";
 import { FriendsPagination } from "../../features/friends/components/friends-pagination";
 import { Route } from "../../routes/friends/$friendId.wagers";
 import { cn } from "../../lib/utils";

@@ -4,7 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../../../components/ui/utils/dialog";
+} from "../../../../components/ui/dialog";
 
 type FriendsDialogShellProps = {
   title: string;
