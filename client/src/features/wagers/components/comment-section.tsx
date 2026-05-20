@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   paginatedWagerCommentsResponseSchema,
-  wagerCommentSchema,
+  wagerCommentResponseSchema,
 } from "@pb138/shared/schemas/wager";
 import { readJsonOrThrow } from "../../../api/http";
 import { Button } from "../../../components/ui/button";
 import { Card, CardTitle } from "../../../components/ui/card";
-import { ScrollArea, ScrollBar } from "../../../components/ui/scroll-area";
 import { Textarea } from "../../../components/ui/textarea";
 
+const COMMENTS_BATCH_SIZE = 10;
+const LOAD_MORE_THRESHOLD_PX = 160;
+
 type WagerComment = { id: number; userId: number; username: string; content: string; createdAt: string };
+type PaginationState = { total: number; limit: number; offset: number; hasMore: boolean };
 
 interface CommentSectionProps {
   wagerId: number;
@@ -25,37 +28,82 @@ export function CommentSection({
   commentRestrictionMessage,
 }: CommentSectionProps) {
   const [comments, setComments] = useState<WagerComment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationState | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const shouldScrollAfterLoadRef = useRef(false);
+
   const isAuthenticated = Boolean(currentUserId);
   const isSubmissionRestricted = isAuthenticated && isCommentingRestricted;
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setIsLoading(true);
+  const loadComments = useCallback(async (offset: number, mode: "replace" | "append") => {
+    if (mode === "append") setIsLoadingMore(true);
+    else setIsInitialLoading(true);
 
-        const response = await fetch(`/api/wagers/${wagerId}/comments?limit=50&offset=0`, {
-          credentials: "same-origin",
-        });
+    try {
+      setLoadError(null);
 
-        const json = paginatedWagerCommentsResponseSchema.parse(
-          await readJsonOrThrow(response, "Unable to load comments"),
-        );
+      const params = new URLSearchParams({
+        limit: String(COMMENTS_BATCH_SIZE),
+        offset: String(offset),
+      });
 
-        setComments(json.data);
-      } catch {
-        setComments([]);
-      } finally {
-        setIsLoading(false);
+      const response = await fetch(`/api/wagers/${wagerId}/comments?${params.toString()}`, {
+        credentials: "same-origin",
+      });
+
+      const json = paginatedWagerCommentsResponseSchema.parse(
+        await readJsonOrThrow(response, "Unable to load comments"),
+      );
+
+      setComments((current) => {
+        if (mode === "replace") return json.data;
+
+        const seen = new Set(current.map((comment) => comment.id));
+        return [...current, ...json.data.filter((comment) => !seen.has(comment.id))];
+      });
+      setPagination(json.pagination);
+
+      if (shouldScrollAfterLoadRef.current) {
+        shouldScrollAfterLoadRef.current = false;
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       }
-    }
+    } catch (error) {
+      if (mode === "replace") {
+        setComments([]);
+        setPagination(null);
+      }
 
-    void load();
+      setLoadError(error instanceof Error ? error.message : "Unable to load comments");
+    } finally {
+      setIsInitialLoading(false);
+      setIsLoadingMore(false);
+    }
   }, [wagerId]);
+
+  useEffect(() => {
+    void loadComments(0, "replace");
+  }, [loadComments, reloadKey]);
+
+  const hasMore = pagination?.hasMore ?? false;
+  const totalComments = pagination?.total ?? comments.length;
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    if (!hasMore || isInitialLoading || isLoadingMore) return;
+
+    const element = event.currentTarget;
+    const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+
+    if (distanceFromBottom <= LOAD_MORE_THRESHOLD_PX) {
+      void loadComments(comments.length, "append");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,15 +127,15 @@ export function CommentSection({
         body: JSON.stringify({ content: trimmed }),
       });
 
-      const json = wagerCommentSchema.parse(
-        (await readJsonOrThrow(response, "Failed to post comment") as { data: unknown }).data,
+      wagerCommentResponseSchema.parse(
+        await readJsonOrThrow(response, "Failed to post comment"),
       );
 
-      setComments((prev) => [...prev, json]);
       setDraft("");
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-    } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "Failed to post comment");
+      shouldScrollAfterLoadRef.current = true;
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Failed to post comment");
     } finally {
       setIsSubmitting(false);
     }
@@ -97,25 +145,29 @@ export function CommentSection({
     <Card>
       <div className="flex items-baseline gap-2">
         <CardTitle>Comments</CardTitle>
-        {!isLoading && comments.length > 0 && (
-          <span className="text-sm text-slate-500">{comments.length}</span>
+        {!isInitialLoading && totalComments > 0 && (
+          <span className="text-sm text-slate-500">{totalComments}</span>
         )}
       </div>
 
-      <ScrollArea className="mt-4 max-h-96">
+      <div
+        onScroll={handleScroll}
+        className="mt-4 max-h-96 overflow-y-auto pr-2"
+      >
         <div className="grid gap-2">
-          {isLoading && <p className="text-sm text-slate-500">Loading comments...</p>}
-          {!isLoading && comments.length === 0 && (
+          {isInitialLoading && <p className="text-sm text-slate-500">Loading comments...</p>}
+          {loadError && <p className="text-sm text-rose-300">{loadError}</p>}
+          {!isInitialLoading && !loadError && comments.length === 0 && (
             <p className="text-sm text-slate-500">No comments yet. Be the first!</p>
           )}
-          {comments.map((c) => (
-            <div key={c.id} className="rounded-lg border border-slate-800 bg-slate-800/30 px-4 py-3">
+          {!isInitialLoading && !loadError && comments.map((comment) => (
+            <div key={comment.id} className="rounded-lg border border-slate-800 bg-slate-800/30 px-4 py-3">
               <div className="flex items-baseline gap-2">
-                <span className={`text-sm font-medium ${c.userId === currentUserId ? "text-cyan-300" : "text-slate-200"}`}>
-                  {c.username}
+                <span className={`text-sm font-medium ${comment.userId === currentUserId ? "text-cyan-300" : "text-slate-200"}`}>
+                  {comment.username}
                 </span>
                 <span className="text-xs text-slate-600">
-                  {new Date(c.createdAt).toLocaleDateString(undefined, {
+                  {new Date(comment.createdAt).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                     hour: "2-digit",
@@ -123,13 +175,15 @@ export function CommentSection({
                   })}
                 </span>
               </div>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">{c.content}</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300">{comment.content}</p>
             </div>
           ))}
+          {isLoadingMore && (
+            <p className="py-2 text-center text-xs text-slate-500">Loading more comments...</p>
+          )}
           <div ref={bottomRef} />
         </div>
-        <ScrollBar />
-      </ScrollArea>
+      </div>
 
       {isAuthenticated ? (
         <form onSubmit={(e) => void handleSubmit(e)} className="mt-4 grid gap-2">
