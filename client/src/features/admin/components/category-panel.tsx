@@ -1,13 +1,25 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
+import { FriendsPagination } from "../../friends/components/friends-pagination";
 import type { AdminCategorySummary } from "../hooks/use-categories";
+
+type PaginationState = {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+};
 
 interface CategoryPanelProps {
   categories: AdminCategorySummary[];
   isLoading: boolean;
   isSubmitting: boolean;
   newCategoryName: string;
+  pagination: PaginationState | null;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
   onCategoryNameChange: (value: string) => void;
   onAddCategory: () => Promise<void>;
   onDeleteCategory: (category: AdminCategorySummary) => Promise<void>;
@@ -18,10 +30,21 @@ export function CategoryPanel({
   isLoading,
   isSubmitting,
   newCategoryName,
+  pagination,
+  currentPage,
+  totalPages,
+  onPageChange,
   onCategoryNameChange,
   onAddCategory,
   onDeleteCategory,
 }: CategoryPanelProps) {
+  const firstVisible = pagination && pagination.total > 0
+    ? Math.min(pagination.offset + 1, pagination.total)
+    : 0;
+  const lastVisible = pagination
+    ? Math.min(pagination.offset + categories.length, pagination.total)
+    : categories.length;
+
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
@@ -44,6 +67,12 @@ export function CategoryPanel({
           </Button>
         </div>
       </div>
+
+      {pagination && pagination.total > 0 && (
+        <p className="text-xs text-slate-500">
+          Showing {firstVisible}-{lastVisible} of {pagination.total} categories
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/50">
         {isLoading ? (
@@ -69,6 +98,7 @@ export function CategoryPanel({
             <tbody className="[&>tr+tr]:border-t [&>tr+tr]:border-slate-800/50">
               {categories.map((category) => {
                 const canDelete = category.betCount === 0 && category.wagerCount === 0;
+
                 return (
                   <tr key={category.id} className="hover:bg-slate-800/40">
                     <td className="px-5 py-4 text-slate-200">{category.name}</td>
@@ -92,6 +122,14 @@ export function CategoryPanel({
           </table>
         )}
       </div>
+
+      {!isLoading && pagination && pagination.total > 0 && (
+        <FriendsPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 }

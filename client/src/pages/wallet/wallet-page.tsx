@@ -1,9 +1,17 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import type {
+  WalletHistoryItem,
+  WalletOverview,
+  WalletTransactionsQuery,
+} from "@pb138/shared/schemas/wallet";
+import { walletBalanceMutationResponseSchema } from "@pb138/shared/schemas/wallet";
+import { readJsonOrThrow } from "../../api/http";
 import { Button } from "../../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../../components/ui/card";
-import { FriendsPagination } from  "../../features/friends/components/friends-pagination";
+import { FriendsPagination } from "../../features/friends/components/friends-pagination";
 import { WalletBalanceActionDialog } from "../../features/wallet/components/wallet-balance-action-dialog";
 import { WalletTransactionFilters } from "../../features/wallet/components/wallet-transaction-filters";
 import { WalletHistoryItemCard } from "../../features/wallet/components/wallet-history-item";
@@ -17,16 +25,6 @@ import {
 } from "../../api/wallet/wallet-query-options";
 import { fetchWalletTransactions } from "../../api/wallet/wallet-api";
 import { Route } from "../../routes/wallet";
-import { Loader2 } from "lucide-react";
-import { z } from "zod";
-import type {
-  WalletHistoryItem,
-  WalletOverview,
-  WalletTransactionsQuery,
-} from "@pb138/shared/schemas/wallet";
-import { walletBalanceMutationResponseSchema } from "@pb138/shared/schemas/wallet";
-
-type WalletBalanceMutationResponse = z.infer<typeof walletBalanceMutationResponseSchema>;
 
 function formatTimestamp(value: string): string {
   const date = new Date(value);
@@ -42,24 +40,6 @@ function formatTimestamp(value: string): string {
     minute: "2-digit",
     hour12: false,
   }).format(date);
-}
-
-async function extractErrorMessage(response: Response, fallback: string): Promise<string> {
-  const rawBody = (await response.text().catch(() => "")).trim();
-  if (!rawBody) {
-    return fallback;
-  }
-
-  try {
-    const parsed = JSON.parse(rawBody) as { message?: string };
-    if (typeof parsed.message === "string" && parsed.message.trim().length > 0) {
-      return parsed.message;
-    }
-  } catch {
-    return rawBody;
-  }
-
-  return rawBody;
 }
 
 export function WalletPage() {
@@ -79,7 +59,6 @@ export function WalletPage() {
   const isUnverified = user?.isVerified === false;
   const walletActionsDisabled = isSuspended || isUnverified;
 
-  // Fetch paginated transactions
   const [searchInput, setSearchInput] = useState(() => (typeof search.search === "string" ? search.search : ""));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -89,23 +68,21 @@ export function WalletPage() {
       fetchWalletTransactions({
         page: search.page,
         limit: WALLET_TRANSACTION_PAGE_SIZE,
-        type: (search.type as unknown) as WalletTransactionsQuery["type"],
+        type: search.type as unknown as WalletTransactionsQuery["type"],
         search: typeof search.search === "string" ? search.search : undefined,
       }),
     staleTime: 30_000,
   });
 
   const lastTransactionsRef = useRef<WalletHistoryItem[] | null>(null);
-  const lastPaginationRef = useRef<{ total: number; limit: number; offset: number; hasMore: boolean } | null>(
-    null,
-  );
+  const lastPaginationRef = useRef<{ total: number; limit: number; offset: number; hasMore: boolean } | null>(null);
 
   if (transactionsQuery.data) {
     lastTransactionsRef.current = transactionsQuery.data.data;
     lastPaginationRef.current = transactionsQuery.data.pagination;
   }
 
-  const visibleTransactions = (transactionsQuery.data?.data ?? lastTransactionsRef.current ?? []) as WalletHistoryItem[];
+  const visibleTransactions = transactionsQuery.data?.data ?? lastTransactionsRef.current ?? [];
   const visiblePagination = transactionsQuery.data?.pagination ?? lastPaginationRef.current;
 
   const totalPages = visiblePagination ? Math.ceil(visiblePagination.total / visiblePagination.limit) : 1;
@@ -188,19 +165,19 @@ export function WalletPage() {
     try {
       const response = await fetch(`/api/wallet/${activeModal}`, {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({ amount }),
       });
 
-      if (!response.ok) {
-        throw new Error(await extractErrorMessage(response, "Unable to update wallet balance"));
-      }
+      const json = walletBalanceMutationResponseSchema.parse(
+        await readJsonOrThrow(response, "Unable to update wallet balance"),
+      );
 
-      const json = (await response.json().catch(() => null)) as WalletBalanceMutationResponse | null;
-      const nextBalance = json?.data?.balance;
-      const nextTransaction = json?.data?.transaction;
+      const nextBalance = json.data.balance;
+      const nextTransaction = json.data.transaction;
 
       if (user?.id && nextBalance) {
         queryClient.setQueryData(walletKeys.overview(user.id), (current: { data: WalletOverview } | undefined) => {
@@ -251,9 +228,6 @@ export function WalletPage() {
   if (!wallet) {
     return <p className="text-slate-300">Wallet not found.</p>;
   }
-
-  // Do not block rendering the entire page while transactions load.
-  // Transactions-specific loading/error states are handled inside the History card below.
 
   return (
     <div className="grid gap-4">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { readJsonOrThrow } from "../../api/http";
 import { useAuth } from "../../lib/auth-context";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -24,26 +25,27 @@ export function RegisterPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
     if (password !== repeatPassword) {
       setError("Passwords do not match.");
       return;
     }
+
     setIsLoading(true);
 
     try {
       const res = await fetch("/api/users", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
       });
 
-      const data = (await res.json().catch(() => null)) as { message?: string } | null;
-      if (!res.ok) {
-        throw new Error(data?.message ?? "Registration failed.");
-      }
+      await readJsonOrThrow(res, "Registration failed.");
 
       await refreshUser();
       setSuccess("Account created. You are now signed in. Please verify your email.");
+
       window.setTimeout(() => {
         void navigate({ to: "/" });
       }, 1000);
@@ -139,11 +141,7 @@ export function RegisterPage() {
           </div>
         </FormItem>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? "Creating..." : "Register"}
         </Button>
       </form>

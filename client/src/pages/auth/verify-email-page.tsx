@@ -1,6 +1,7 @@
 import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { readJsonOrThrow } from "../../api/http";
 import { useAuth } from "../../lib/auth-context";
 import { AuthLayout } from "../../components/layout/auth-layout";
 import { Button } from "../../components/ui/button";
@@ -17,6 +18,7 @@ export function VerifyEmailPage() {
   useEffect(() => {
     const run = async () => {
       const token = search.token;
+
       if (!token || typeof token !== "string") {
         setState("error");
         setMessage("Missing verification token.");
@@ -26,26 +28,23 @@ export function VerifyEmailPage() {
       try {
         const res = await fetch("/api/users/verify-email", {
           method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
 
-        const json = (await res.json().catch(() => null)) as { message?: string } | null;
-        if (!res.ok) {
-          setState("error");
-          setMessage(json?.message ?? "Verification failed.");
-          return;
-        }
+        await readJsonOrThrow(res, "Verification failed.");
 
         await refreshUser();
         setState("success");
         setMessage("Your email has been verified.");
+
         window.setTimeout(() => {
           void navigate({ to: "/", search: { verified: "1" } });
         }, 1600);
-      } catch {
+      } catch (error) {
         setState("error");
-        setMessage("Verification failed.");
+        setMessage(error instanceof Error ? error.message : "Verification failed.");
       }
     };
 
@@ -63,10 +62,8 @@ export function VerifyEmailPage() {
       success={state === "success" ? message : null}
     >
       <div className="flex flex-col items-center gap-4">
-        {state === "loading" && (
-           <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-        )}
-        
+        {state === "loading" && <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />}
+
         {state === "success" && (
           <p className="text-center text-sm text-slate-400">Redirecting you to Dashboard...</p>
         )}
@@ -75,7 +72,7 @@ export function VerifyEmailPage() {
           <Button
             variant="secondary"
             onClick={() => void navigate({ to: "/auth/login" })}
-            className="w-full mt-4"
+            className="mt-4 w-full"
           >
             Go to Login
           </Button>

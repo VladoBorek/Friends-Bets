@@ -26,7 +26,7 @@ export async function getAuthenticatedUser(context: AuthContextLike) {
   const token = context.cookie.auth_session?.value;
 
   if (!token) {
-    throw new HttpError(401, "Unauthorized");
+    throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const profile = await context.jwt.verify(token);
@@ -37,7 +37,7 @@ export async function getAuthenticatedUser(context: AuthContextLike) {
     !("id" in profile) ||
     typeof profile.id !== "number"
   ) {
-    throw new HttpError(401, "Unauthorized");
+    throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   return getUserById(profile.id);

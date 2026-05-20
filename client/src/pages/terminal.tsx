@@ -10,14 +10,18 @@ import { useUsers } from "../features/admin/hooks/use-users";
 
 export function TerminalPage() {
   const [activeTab, setActiveTab] = useState<TerminalTab>("users");
-  const { 
-    users, 
-    isLoading, 
-    query, 
-    setQuery, 
-    feedback, 
-    stats, 
-    actions 
+  const {
+    users,
+    isLoading,
+    query,
+    setQuery,
+    feedback,
+    stats,
+    pagination,
+    page,
+    totalPages,
+    setPage,
+    actions,
   } = useUsers();
   const {
     categories,
@@ -25,6 +29,10 @@ export function TerminalPage() {
     isLoading: isLoadingCategories,
     isSubmitting: isSubmittingCategories,
     newCategoryName,
+    pagination: categoriesPagination,
+    page: categoriesPage,
+    totalPages: categoriesTotalPages,
+    setPage: setCategoriesPage,
     setNewCategoryName,
     actions: categoryActions,
   } = useCategories(activeTab === "categories");
@@ -62,11 +70,15 @@ export function TerminalPage() {
             )}
 
             {activeTab === "users" ? (
-              <UserTable 
-                users={users} 
-                isLoading={isLoading} 
-                query={query} 
-                onQueryChange={setQuery} 
+              <UserTable
+                users={users}
+                isLoading={isLoading}
+                query={query}
+                pagination={pagination}
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                onQueryChange={setQuery}
                 actions={actions}
               />
             ) : (
@@ -75,6 +87,10 @@ export function TerminalPage() {
                 isLoading={isLoadingCategories}
                 isSubmitting={isSubmittingCategories}
                 newCategoryName={newCategoryName}
+                pagination={categoriesPagination}
+                currentPage={categoriesPage}
+                totalPages={categoriesTotalPages}
+                onPageChange={setCategoriesPage}
                 onCategoryNameChange={setNewCategoryName}
                 onAddCategory={categoryActions.addCategory}
                 onDeleteCategory={categoryActions.removeCategory}

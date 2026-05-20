@@ -6,6 +6,8 @@ import {
   requestPasswordResetRequestSchema,
   resetPasswordRequestSchema,
   resendVerificationByEmailRequestSchema,
+  userActionResponseSchema,
+  userMutationResponseSchema,
   verifyEmailRequestSchema,
   verifyEmailResponseSchema,
 } from "@pb138/shared/schemas/user";
@@ -20,64 +22,66 @@ import {
 } from "../../services/user";
 import { authPlugin } from "../../plugins/auth";
 
+const SESSION_MAX_AGE_SECONDS = 7 * 86400;
+
 export const authRoutes = new Elysia()
   .use(authPlugin)
-  
-  // Public Login
+
   .post("/login", async ({ body, jwt, cookie: { auth_session } }) => {
     const parsedBody = loginRequestSchema.parse(body);
     const user = await getUserByCredentials(parsedBody);
-    
-    // Sign JWT
-    const token = await jwt.sign({
-      id: user.id,
-      role: user.roleName,
-      exp: Math.floor(Date.now() / 1000) + (7 * 86400) // 7 days expiration
-    });
-    
-    // Set HttpOnly cookie
-    auth_session.set({
-      value: token,
-      httpOnly: true,
-      path: "/",
-      maxAge: 7 * 86400,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict"
-    });
-    
-    return loginResponseSchema.parse({ message: "Logged in successfully" });
-  })
-  
-  // Register
-  .post("", async ({ body, jwt, cookie: { auth_session } }) => {
-    const parsedBody = createUserRequestSchema.parse(body);
-    const user = await createUser(parsedBody);
 
     const token = await jwt.sign({
       id: user.id,
       role: user.roleName,
-      exp: Math.floor(Date.now() / 1000) + (7 * 86400),
+      exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,
     });
 
     auth_session.set({
       value: token,
       httpOnly: true,
       path: "/",
-      maxAge: 7 * 86400,
+      maxAge: SESSION_MAX_AGE_SECONDS,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
 
-    return { data: user };
-  })
-  
-  // Public Logout
-  .post("/logout", ({ cookie: { auth_session } }) => {
-    auth_session.remove();
-    return { message: "Logged out" };
+    return loginResponseSchema.parse({
+      data: {
+        message: "Logged in successfully",
+      },
+    });
   })
 
-  // Public Email Verification
+  .post("", async ({ body, jwt, cookie: { auth_session }, set }) => {
+    const parsedBody = createUserRequestSchema.parse(body);
+    const data = await createUser(parsedBody);
+
+    const token = await jwt.sign({
+      id: data.id,
+      role: data.roleName,
+      exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,
+    });
+
+    auth_session.set({
+      value: token,
+      httpOnly: true,
+      path: "/",
+      maxAge: SESSION_MAX_AGE_SECONDS,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    set.status = 201;
+    return userMutationResponseSchema.parse({ data });
+  })
+
+  .post("/logout", ({ cookie: { auth_session }, set }) => {
+    auth_session.remove();
+    set.status = 204;
+    return null;
+  })
+
   .post("/verify-email", async ({ body, jwt, cookie: { auth_session } }) => {
     const parsedBody = verifyEmailRequestSchema.parse(body);
     const data = await verifyEmailToken(parsedBody.token);
@@ -85,43 +89,60 @@ export const authRoutes = new Elysia()
     const token = await jwt.sign({
       id: data.id,
       role: data.roleName,
-      exp: Math.floor(Date.now() / 1000) + (7 * 86400),
+      exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,
     });
 
     auth_session.set({
       value: token,
       httpOnly: true,
       path: "/",
-      maxAge: 7 * 86400,
+      maxAge: SESSION_MAX_AGE_SECONDS,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
 
-    return verifyEmailResponseSchema.parse({ message: "Email verified successfully", data });
+    return verifyEmailResponseSchema.parse({ data });
   })
 
-  // Public: resend verification by email
   .post("/resend-verification", async ({ body }) => {
     const parsedBody = resendVerificationByEmailRequestSchema.parse(body);
     const targetUser = await getUserByEmail(parsedBody.email);
+
     if (targetUser.isVerified) {
-      return { message: "Account is already verified." };
+      return userActionResponseSchema.parse({
+        data: {
+          message: "Account is already verified.",
+        },
+      });
     }
 
     await resendVerificationEmailByAddress(parsedBody.email);
-    return { message: "Verification email resent." };
+
+    return userActionResponseSchema.parse({
+      data: {
+        message: "Verification email resent.",
+      },
+    });
   })
 
-  // Public: reset password by token
   .post("/reset-password", async ({ body }) => {
     const parsedBody = resetPasswordRequestSchema.parse(body);
     await resetPasswordByToken(parsedBody.token, parsedBody.password);
-    return { message: "Password reset successful." };
+
+    return userActionResponseSchema.parse({
+      data: {
+        message: "Password reset successful.",
+      },
+    });
   })
 
-  // Public: request password reset email
   .post("/request-password-reset", async ({ body }) => {
     const parsedBody = requestPasswordResetRequestSchema.parse(body);
     await requestPasswordReset(parsedBody.email);
-    return { message: "If an account exists for this email, a reset link has been sent." };
+
+    return userActionResponseSchema.parse({
+      data: {
+        message: "If an account exists for this email, a reset link has been sent.",
+      },
+    });
   });

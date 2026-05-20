@@ -1,7 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { WagerDetail } from "../../../../shared/src/schemas/wager";
+import {
+  getWagerResponseSchema,
+  paginatedWagerInvitationsResponseSchema,
+  resolveWagerResponseSchema,
+  type WagerDetail,
+} from "@pb138/shared/schemas/wager";
 import { Accordion } from "../../components/ui/accordion";
 import { Card, CardTitle } from "../../components/ui/card";
 import { PillTag } from "../../components/ui/pill-tag";
@@ -20,6 +25,7 @@ import { formatMoney, toErrorMessage } from "../../features/wagers/utils/utils";
 import { useAuth } from "../../lib/auth-context";
 import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet/wallet-query-options";
 import { friendsKeys } from "../../api/friends/friends-query-options";
+import { readJsonOrThrow } from "../../api/http";
 
 interface WagerDetailPageProps {
   wagerId: number;
@@ -63,20 +69,43 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
   useEffect(() => {
     if (!detail || detail.isPublic || detail.createdById !== user?.id) return;
-    fetch(`/api/wagers/${wagerId}/invitations`)
-      .then((r) => r.json() as Promise<{ data: { id: number; username: string; email: string }[] }>)
-      .then((json) => setVisibilityUsers(json.data ?? []))
-      .catch(() => undefined);
+
+    async function loadVisibilityUsers() {
+      try {
+        const response = await fetch(`/api/wagers/${wagerId}/invitations?limit=50&offset=0`, {
+          credentials: "same-origin",
+        });
+
+        const json = paginatedWagerInvitationsResponseSchema.parse(
+          await readJsonOrThrow(response, "Unable to load wager members"),
+        );
+
+        setVisibilityUsers(json.data);
+      } catch {
+        setVisibilityUsers([]);
+      }
+    }
+
+    void loadVisibilityUsers();
   }, [detail, user?.id, wagerId]);
 
   useEffect(() => {
     const controller = new AbortController();
+
     async function loadDetail() {
       try {
-        const response = await fetch(`/api/wagers/${wagerId}`, { signal: controller.signal });
-        const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
-        if (!response.ok) throw new Error(json?.message ?? "Wager not found");
-        setDetail(json?.data ?? null);
+        setPageError(null);
+
+        const response = await fetch(`/api/wagers/${wagerId}`, {
+          signal: controller.signal,
+          credentials: "same-origin",
+        });
+
+        const json = getWagerResponseSchema.parse(
+          await readJsonOrThrow(response, "Wager not found"),
+        );
+
+        setDetail(json.data);
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setPageError(e instanceof Error ? e.message : "Wager not found");
@@ -84,29 +113,42 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         setIsLoading(false);
       }
     }
+
     setIsLoading(true);
     void loadDetail();
     return () => controller.abort();
   }, [wagerId]);
 
   const refreshDetail = async () => {
-    const response = await fetch(`/api/wagers/${wagerId}`);
-    const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
-    if (!response.ok) throw new Error(json?.message ?? "Unable to refresh wager");
-    setDetail(json?.data ?? null);
+    const response = await fetch(`/api/wagers/${wagerId}`, {
+      credentials: "same-origin",
+    });
+
+    const json = getWagerResponseSchema.parse(
+      await readJsonOrThrow(response, "Unable to refresh wager"),
+    );
+
+    setDetail(json.data);
     setBetsRefreshKey((k) => k + 1);
   };
 
   const handleEndBetting = async () => {
     setEndBettingError(null);
     setIsEndingBetting(true);
+
     try {
-      const response = await fetch(`/api/wagers/${wagerId}/close`, { method: "PATCH" });
-      const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
-      if (!response.ok) throw new Error(json?.message ?? "Failed to end betting");
-      setDetail(json?.data ?? detail);
+      const response = await fetch(`/api/wagers/${wagerId}/close`, {
+        method: "PATCH",
+        credentials: "same-origin",
+      });
+
+      const json = getWagerResponseSchema.parse(
+        await readJsonOrThrow(response, "Failed to end betting"),
+      );
+
+      setDetail(json.data);
       setShowEndBettingModal(false);
-      setActionSuccess("Betting period ended — wager is now Pending.");
+      setActionSuccess("Betting period ended - wager is now Pending.");
     } catch (e) {
       setEndBettingError(toErrorMessage(e));
     } finally {
@@ -117,17 +159,23 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const handleResolve = async (outcomeId: number) => {
     setResolveError(null);
     setIsResolving(true);
+
     try {
       const response = await fetch(`/api/wagers/${detail!.id}/resolve`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ outcomeId }),
       });
-      const json = (await response.json().catch(() => null)) as { data?: WagerDetail; message?: string } | null;
-      if (!response.ok) throw new Error(json?.message ?? "Failed to resolve wager");
+
+      const json = resolveWagerResponseSchema.parse(
+        await readJsonOrThrow(response, "Failed to resolve wager"),
+      );
+
+      setDetail(json.data);
+      setBetsRefreshKey((k) => k + 1);
       setShowResolveModal(false);
-      setActionSuccess("Wager resolved — payouts processed.");
-      await refreshDetail();
+      setActionSuccess("Wager resolved - payouts processed.");
 
       if (typeof user?.id === "number") {
         void refreshWalletOverview(queryClient).catch((error: unknown) => {
@@ -147,10 +195,14 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const handleDelete = async () => {
     setDeleteError(null);
     setIsDeleting(true);
+
     try {
-      const response = await fetch(`/api/wagers/${wagerId}`, { method: "DELETE" });
-      const json = (await response.json().catch(() => null)) as { message?: string } | null;
-      if (!response.ok) throw new Error(json?.message ?? "Failed to delete wager");
+      const response = await fetch(`/api/wagers/${wagerId}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+
+      await readJsonOrThrow(response, "Failed to delete wager");
       void navigate({ to: "/wagers", search: { page: 1 } });
     } catch (e) {
       setDeleteError(toErrorMessage(e));
@@ -159,7 +211,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     }
   };
 
-  if (isLoading) return <p className="text-slate-300">Loading wager…</p>;
+  if (isLoading) return <p className="text-slate-300">Loading wager...</p>;
   if (pageError || !detail) return <p className="text-rose-300">{pageError ?? "Wager not found."}</p>;
 
   const currentUserBetAmount = Number(detail.currentUserBetAmount ?? "0");
@@ -181,14 +233,13 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
 
   return (
     <div className="mx-auto grid max-w-3xl gap-5">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-slate-400">
         <button
           type="button"
           onClick={() => void navigate({ to: "/wagers", search: { page: 1 } })}
           className="flex items-center gap-1 transition-colors hover:text-slate-200"
         >
-          ← Back
+          Back
         </button>
         <span className="text-slate-600">/</span>
         <Link to="/wagers" search={{ page: 1 }} className="transition-colors hover:text-slate-200">Wagers</Link>
@@ -196,7 +247,6 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         <span className="max-w-xs truncate text-slate-300">{detail.title}</span>
       </div>
 
-      {/* ── Header card ── */}
       <Card className="grid gap-4">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
           <h1 className="flex-1 text-2xl font-semibold leading-snug text-slate-100">{detail.title}</h1>
@@ -239,23 +289,20 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
             </div>
           )}
           <div className="ml-auto flex flex-col items-end gap-2 text-right text-xs text-slate-500">
-          
-          {/* Creator Tag */}
-          <div className="flex items-center gap-1.5">
-            <span>Created by:</span>
-            <PillTag variant="creator">{detail.creatorName}</PillTag>
+            <div className="flex items-center gap-1.5">
+              <span>Created by:</span>
+              <PillTag variant="creator">{detail.creatorName}</PillTag>
+            </div>
+
+            {detail.createdAt && (
+              <span className="mt-0.5">
+                {new Date(detail.createdAt).toLocaleDateString()}
+              </span>
+            )}
           </div>
-
-          {/* Date */}
-          {detail.createdAt && (
-            <span className="mt-0.5">
-              {new Date(detail.createdAt).toLocaleDateString()}
-            </span>
-          )}
-        </div>
         </div>
 
-        {(readOnly) && (
+        {readOnly && (
           <div className="flex gap-2">
             {isSuspended && (
               <span className="rounded-full border border-amber-500/35 px-2 py-0.5 text-xs text-amber-200">
@@ -271,7 +318,6 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         )}
       </Card>
 
-      {/* ── Outcomes card ── */}
       <Card className="grid gap-5">
         <CardTitle>Outcomes</CardTitle>
 

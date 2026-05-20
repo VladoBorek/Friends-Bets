@@ -56,9 +56,7 @@ export async function deleteGroup(groupId: number) {
     credentials: "same-origin",
   });
 
-  return groupActionResponseSchema.parse(
-    await readJsonOrThrow(response, "Unable to delete group"),
-  );
+  await readJsonOrThrow(response, "Unable to delete group");
 }
 
 export async function leaveGroup(groupId: number) {

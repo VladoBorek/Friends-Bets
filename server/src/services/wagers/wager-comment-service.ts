@@ -1,20 +1,40 @@
+import { eq } from "drizzle-orm";
+import type { WagerCommentsListQuery } from "@pb138/shared/schemas/wager";
 import { db } from "../../db/db";
 import { User } from "../../db/schema";
-import { eq } from "drizzle-orm";
-import {
-  listCommentsByWager,
-  createComment as repoCreateComment,
-} from "../../repositories/wagers/comment-repository";
 import { HttpError } from "../../errors";
+import {
+  countCommentsByWager,
+  createComment as repoCreateComment,
+  listCommentsByWagerPaginated,
+} from "../../repositories/wagers/comment-repository";
 import { mapWagerComment, type WagerComment } from "./mappers/comment-mapper";
 import { getWagerById } from "./wager-query-service";
 import { ensureUserIsNotSuspended, ensureUserIsVerified } from "./wager-validation";
 
-export async function listComments(wagerId: number, requestingUserId?: number): Promise<WagerComment[]> {
+export async function listComments(
+  wagerId: number,
+  requestingUserId: number | undefined,
+  query: WagerCommentsListQuery,
+) {
   await getWagerById(wagerId, requestingUserId);
 
-  const rows = await listCommentsByWager(wagerId);
-  return rows.map(mapWagerComment);
+  const [total, rows] = await Promise.all([
+    countCommentsByWager(wagerId),
+    listCommentsByWagerPaginated(wagerId, query.limit, query.offset),
+  ]);
+
+  const data = rows.map(mapWagerComment);
+
+  return {
+    data,
+    pagination: {
+      total,
+      limit: query.limit,
+      offset: query.offset,
+      hasMore: query.offset + data.length < total,
+    },
+  };
 }
 
 export async function createComment(
@@ -35,7 +55,7 @@ export async function createComment(
     .limit(1);
 
   if (!commentingUser) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(404, "NOT_FOUND", "User not found");
   }
 
   ensureUserIsVerified(commentingUser, "comment");

@@ -4,14 +4,18 @@ import { emailClient } from "../email-service";
 import { getUserById } from "./user-query-service";
 import * as userRepository from "../../repositories/user/user-repository";
 
-export async function updateUserRole(userId: number, roleName: "ADMIN" | "PLAYER" | "USER"): Promise<UserSummary> {
+export async function updateUserRole(
+  userId: number,
+  roleName: "ADMIN" | "PLAYER" | "USER",
+): Promise<UserSummary> {
   const roleId = await userRepository.findRoleIdByName(roleName);
 
   if (!roleId) {
-    throw new HttpError(400, `Role ${roleName} is not configured`);
+    throw new HttpError(400, "BAD_REQUEST", `Role ${roleName} is not configured`);
   }
 
   await userRepository.updateUserRoleById(userId, roleId);
+
   return getUserById(userId);
 }
 
@@ -33,6 +37,7 @@ export async function suspendUser(
   await userRepository.updateUserSuspension(userId, suspensionUntil);
 
   const user = await getUserById(userId);
+
   if (user.suspendedUntil) {
     await emailClient.sendSuspensionEmail({
       email: user.email,
@@ -46,6 +51,7 @@ export async function suspendUser(
 
 export async function unsuspendUser(userId: number): Promise<UserSummary> {
   await userRepository.updateUserSuspension(userId, null);
+
   return getUserById(userId);
 }
 

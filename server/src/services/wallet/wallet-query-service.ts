@@ -1,18 +1,18 @@
+import type { WalletHistoryItem, WalletOverview, WalletTransactionsQuery } from "@pb138/shared/schemas/wallet";
 import { HttpError } from "../../errors";
 import {
+  countTransactionsByWalletId,
   findWalletByUserId,
   listTransactionsByWalletId,
   listTransactionsByWalletIdPaginated,
-  countTransactionsByWalletId,
 } from "../../repositories/wallet/wallet-repository";
 import { mapTransactionToHistoryItem } from "./wallet-utils";
-import type { WalletHistoryItem, WalletOverview, WalletTransactionsQuery } from "@pb138/shared/schemas/wallet";
 
 export async function getWalletOverview(userId: number): Promise<WalletOverview> {
   const wallet = await findWalletByUserId(userId);
 
   if (!wallet) {
-    throw new HttpError(404, "Wallet not found");
+    throw new HttpError(404, "NOT_FOUND", "Wallet not found");
   }
 
   const transactions = await listTransactionsByWalletId(wallet.id);
@@ -33,12 +33,12 @@ export async function getWalletTransactionsPaginated(
   const wallet = await findWalletByUserId(userId);
 
   if (!wallet) {
-    throw new HttpError(404, "Wallet not found");
+    throw new HttpError(404, "NOT_FOUND", "Wallet not found");
   }
 
   const limit = Math.min(query.limit, 50);
   const offset = Math.max(0, query.offset);
-
+  const transactionType = query.type !== "ALL" ? query.type : undefined;
   const searchPattern = query.search.trim() ? `%${query.search.trim()}%` : undefined;
 
   const [rows, total] = await Promise.all([
@@ -46,10 +46,10 @@ export async function getWalletTransactionsPaginated(
       wallet.id,
       limit,
       offset,
-      query.type !== "ALL" ? query.type : undefined,
+      transactionType,
       searchPattern,
     ),
-    countTransactionsByWalletId(wallet.id, query.type !== "ALL" ? query.type : undefined, searchPattern),
+    countTransactionsByWalletId(wallet.id, transactionType, searchPattern),
   ]);
 
   return {

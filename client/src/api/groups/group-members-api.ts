@@ -1,5 +1,4 @@
 import {
-  groupActionResponseSchema,
   groupMemberResponseSchema,
   paginatedGroupMembersResponseSchema,
   type AddGroupMemberRequest,
@@ -47,9 +46,7 @@ export async function removeGroupMember(groupId: number, userId: number) {
     credentials: "same-origin",
   });
 
-  return groupActionResponseSchema.parse(
-    await readJsonOrThrow(response, "Unable to remove group member"),
-  );
+  await readJsonOrThrow(response, "Unable to remove group member");
 }
 
 export async function fetchAllGroupMembers(groupId: number) {

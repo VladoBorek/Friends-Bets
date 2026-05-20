@@ -2,48 +2,63 @@ import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
 import { z } from "zod";
 import {
+  categoriesListQuerySchema,
+  categoryResponseSchema,
   createWagerRequestSchema,
   createWagerResponseSchema,
   getWagerResponseSchema,
-  listCategoriesResponseSchema,
+  paginatedAdminCategoriesResponseSchema,
+  paginatedCategoriesResponseSchema,
+  paginatedWagerBetsResponseSchema,
+  paginatedWagerCommentsResponseSchema,
+  paginatedWagerInvitationsResponseSchema,
   paginatedWagersResponseSchema,
   placeBetRequestSchema,
   placeBetResponseSchema,
   resolveWagerRequestSchema,
   resolveWagerResponseSchema,
+  wagerCommentResponseSchema,
+  wagerBetsListQuerySchema,
+  wagerCommentsListQuerySchema,
+  wagerInvitationsListQuerySchema,
   wagersListQuerySchema,
 } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../errors";
 import {
-  listCategoriesForQuery,
-  getWagerById,
-  listWagers,
-  listWagerInvitations,
-  createWager,
-  updateWager,
-  deleteWager,
   closeWagerBetting,
-  resolveWager,
-  placeBet,
+  createComment,
+  createWager,
+  deleteWager,
+  ensureUserIsNotSuspended,
+  ensureUserIsVerified,
+  getWagerById,
   listBets,
   listComments,
-  createComment,
-  ensureUserIsVerified,
-  ensureUserIsNotSuspended,
+  listWagerInvitations,
+  listWagers,
+  placeBet,
+  resolveWager,
+  updateWager,
 } from "../services/wagers";
 import { getUserById } from "../services/user";
 import {
   createCategory,
   deleteCategory,
+  listCategories,
   listCategoriesWithUsage,
 } from "../services/category";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
+
 const createCategoryBodySchema = z.object({
   name: z.string().min(1).max(80),
 });
+
+type JwtProfile = {
+  id?: unknown;
+};
 
 export const wagerRoutes = new Elysia({ prefix: "/wagers" })
   .use(
@@ -54,29 +69,31 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
   )
   .derive(async ({ jwt, cookie: { auth_session } }) => ({
     getCurrentUser: async () => {
-      if (!auth_session || !auth_session.value) {
-        throw new HttpError(401, "Unauthorized");
+      if (!auth_session?.value) {
+        throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
       }
 
-      const profile = await jwt.verify(auth_session.value as string);
-      if (!profile || !profile.id) {
-        throw new HttpError(401, "Unauthorized");
+      const profile = await jwt.verify(auth_session.value as string) as JwtProfile | false;
+
+      if (!profile || typeof profile.id !== "number") {
+        throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
       }
 
-      return getUserById(Number(profile.id));
+      return getUserById(profile.id);
     },
     getOptionalCurrentUser: async () => {
-      if (!auth_session || !auth_session.value) {
+      if (!auth_session?.value) {
         return null;
       }
 
-      const profile = await jwt.verify(auth_session.value as string);
-      if (!profile || !profile.id) {
+      const profile = await jwt.verify(auth_session.value as string) as JwtProfile | false;
+
+      if (!profile || typeof profile.id !== "number") {
         return null;
       }
 
       try {
-        return await getUserById(Number(profile.id));
+        return await getUserById(profile.id);
       } catch {
         return null;
       }
@@ -86,53 +103,73 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const currentUser = await getOptionalCurrentUser();
     const parsedQuery = wagersListQuerySchema.parse(query);
     const result = await listWagers(parsedQuery, currentUser?.id);
+
     return paginatedWagersResponseSchema.parse(result);
   })
-  .get("/categories", async () => {
-    const data = await listCategoriesForQuery();
-    return listCategoriesResponseSchema.parse({ data });
+  .get("/categories", async ({ query }) => {
+    const parsedQuery = categoriesListQuerySchema.parse(query);
+    const result = await listCategories(parsedQuery);
+
+    return paginatedCategoriesResponseSchema.parse(result);
   })
-  .get("/categories/admin", async ({ getCurrentUser }) => {
+  .get("/categories/admin", async ({ query, getCurrentUser }) => {
     const user = await getCurrentUser();
+
     if (user.roleName !== "ADMIN") {
-      throw new HttpError(403, "Admin privileges required");
+      throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
     }
 
-    const data = await listCategoriesWithUsage();
-    return { data };
+    const parsedQuery = categoriesListQuerySchema.parse(query);
+    const result = await listCategoriesWithUsage(parsedQuery);
+
+    return paginatedAdminCategoriesResponseSchema.parse(result);
   })
-  .post("/categories", async ({ body, getCurrentUser }) => {
+  .post("/categories", async ({ body, getCurrentUser, set }) => {
     const user = await getCurrentUser();
+
     if (user.roleName !== "ADMIN") {
-      throw new HttpError(403, "Admin privileges required");
+      throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
     }
 
     const parsedBody = createCategoryBodySchema.parse(body);
     const data = await createCategory(parsedBody.name);
-    return { data };
+
+    set.status = 201;
+
+    return categoryResponseSchema.parse({ data });
   })
-  .delete("/categories/:id", async ({ params, getCurrentUser }) => {
+  .delete("/categories/:id", async ({ params, getCurrentUser, set }) => {
     const user = await getCurrentUser();
+
     if (user.roleName !== "ADMIN") {
-      throw new HttpError(403, "Admin privileges required");
+      throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
     }
 
     const parsedParams = idParamsSchema.parse(params);
+
     await deleteCategory(parsedParams.id);
-    return { message: "Category deleted successfully" };
+
+    set.status = 204;
+    return null;
   })
   .get("/:id", async ({ params, getOptionalCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
     const currentUser = await getOptionalCurrentUser();
     const data = await getWagerById(parsedParams.id, currentUser?.id);
+
     return getWagerResponseSchema.parse({ data });
   })
-  .post("", async ({ body, getCurrentUser }) => {
+  .post("", async ({ body, getCurrentUser, set }) => {
     const creator = await getCurrentUser();
+
     ensureUserIsVerified(creator);
     ensureUserIsNotSuspended(creator);
+
     const parsedBody = createWagerRequestSchema.parse(body);
     const data = await createWager(parsedBody, creator.id);
+
+    set.status = 201;
+
     return createWagerResponseSchema.parse({ data });
   })
   .patch("/:id", async ({ params, body, getCurrentUser }) => {
@@ -140,54 +177,75 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const parsedBody = createWagerRequestSchema.parse(body);
     const user = await getCurrentUser();
     const data = await updateWager(parsedParams.id, parsedBody, user.id);
+
     return getWagerResponseSchema.parse({ data });
   })
-  .delete("/:id", async ({ params, getCurrentUser }) => {
+  .delete("/:id", async ({ params, getCurrentUser, set }) => {
     const parsedParams = idParamsSchema.parse(params);
     const user = await getCurrentUser();
+
     await deleteWager(parsedParams.id, user.id);
-    return { message: "Wager deleted successfully" };
+
+    set.status = 204;
+    return null;
   })
-  .get("/:id/invitations", async ({ params, getCurrentUser }) => {
+  .get("/:id/invitations", async ({ params, query, getCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
+    const parsedQuery = wagerInvitationsListQuerySchema.parse(query);
     const user = await getCurrentUser();
-    const data = await listWagerInvitations(parsedParams.id, user.id);
-    return { data };
+    const result = await listWagerInvitations(parsedParams.id, user.id, parsedQuery);
+
+    return paginatedWagerInvitationsResponseSchema.parse(result);
   })
-  .post("/:id/bets", async ({ params, body, getCurrentUser }) => {
+  .post("/:id/bets", async ({ params, body, getCurrentUser, set }) => {
     const parsedParams = idParamsSchema.parse(params);
     const parsedBody = placeBetRequestSchema.parse(body);
     const user = await getCurrentUser();
+
     ensureUserIsVerified(user);
     ensureUserIsNotSuspended(user);
+
     const data = await placeBet(parsedParams.id, parsedBody, user.id);
+
+    set.status = 201;
+
     return placeBetResponseSchema.parse({ data });
   })
-  .get("/:id/bets", async ({ params, getOptionalCurrentUser }) => {
+  .get("/:id/bets", async ({ params, query, getOptionalCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
+    const parsedQuery = wagerBetsListQuerySchema.parse(query);
     const currentUser = await getOptionalCurrentUser();
-    const data = await listBets(parsedParams.id, currentUser?.id);
-    return { data };
+    const result = await listBets(parsedParams.id, currentUser?.id, parsedQuery);
+
+    return paginatedWagerBetsResponseSchema.parse(result);
   })
-  .get("/:id/comments", async ({ params, getOptionalCurrentUser }) => {
+  .get("/:id/comments", async ({ params, query, getOptionalCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
+    const parsedQuery = wagerCommentsListQuerySchema.parse(query);
     const currentUser = await getOptionalCurrentUser();
-    const data = await listComments(parsedParams.id, currentUser?.id);
-    return { data };
+    const result = await listComments(parsedParams.id, currentUser?.id, parsedQuery);
+
+    return paginatedWagerCommentsResponseSchema.parse(result);
   })
-  .post("/:id/comments", async ({ params, body, getCurrentUser }) => {
+  .post("/:id/comments", async ({ params, body, getCurrentUser, set }) => {
     const parsedParams = idParamsSchema.parse(params);
     const user = await getCurrentUser();
+
     ensureUserIsVerified(user, "comment");
     ensureUserIsNotSuspended(user, "comment");
+
     const { content } = z.object({ content: z.string().min(1).max(2000) }).parse(body);
     const data = await createComment(parsedParams.id, user.id, content);
-    return { data };
+
+    set.status = 201;
+
+    return wagerCommentResponseSchema.parse({ data });
   })
   .patch("/:id/close", async ({ params, getCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
     const user = await getCurrentUser();
     const data = await closeWagerBetting(parsedParams.id, user.id);
+
     return getWagerResponseSchema.parse({ data });
   })
   .patch("/:id/resolve", async ({ params, body, getCurrentUser }) => {
@@ -195,9 +253,12 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const parsedBody = resolveWagerRequestSchema.parse(body);
     const user = await getCurrentUser();
     const wager = await getWagerById(parsedParams.id, user.id);
+
     if (wager.createdById !== user.id) {
-      throw new HttpError(403, "Only the wager creator can resolve the wager");
+      throw new HttpError(403, "FORBIDDEN", "Only the wager creator can resolve the wager");
     }
+
     const data = await resolveWager(parsedParams.id, parsedBody);
+
     return resolveWagerResponseSchema.parse({ data });
   });

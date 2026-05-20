@@ -1,4 +1,5 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, ilike, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Bet, Category, Outcome, Wager } from "../../db/schema";
 
@@ -12,6 +13,36 @@ export type CategoryUsageRow = CategoryRow & {
   betCount: number;
 };
 
+function buildCategorySearchCondition(q: string): SQL | undefined {
+  return q ? ilike(Category.name, `%${q}%`) : undefined;
+}
+
+export async function countCategories(q = ""): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(Category)
+    .where(buildCategorySearchCondition(q));
+
+  return Number(row?.count ?? 0);
+}
+
+export async function listCategoriesPaginated(
+  limit: number,
+  offset: number,
+  q = "",
+): Promise<CategoryRow[]> {
+  return db
+    .select({
+      id: Category.id,
+      name: Category.name,
+    })
+    .from(Category)
+    .where(buildCategorySearchCondition(q))
+    .orderBy(asc(Category.name))
+    .limit(limit)
+    .offset(offset);
+}
+
 export async function listAllCategories(): Promise<CategoryRow[]> {
   return db
     .select({
@@ -20,6 +51,36 @@ export async function listAllCategories(): Promise<CategoryRow[]> {
     })
     .from(Category)
     .orderBy(asc(Category.name));
+}
+
+export async function listCategoriesWithUsagePaginated(
+  limit: number,
+  offset: number,
+  q = "",
+): Promise<CategoryUsageRow[]> {
+  const rows = await db
+    .select({
+      id: Category.id,
+      name: Category.name,
+      wagerCount: sql<number>`COUNT(DISTINCT ${Wager.id})`.mapWith(Number),
+      betCount: sql<number>`COUNT(${Bet.id})`.mapWith(Number),
+    })
+    .from(Category)
+    .leftJoin(Wager, eq(Wager.category_id, Category.id))
+    .leftJoin(Outcome, eq(Outcome.wager_id, Wager.id))
+    .leftJoin(Bet, eq(Bet.outcome_id, Outcome.id))
+    .where(buildCategorySearchCondition(q))
+    .groupBy(Category.id, Category.name)
+    .orderBy(asc(Category.name))
+    .limit(limit)
+    .offset(offset);
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    wagerCount: row.wagerCount ?? 0,
+    betCount: row.betCount ?? 0,
+  }));
 }
 
 export async function listAllCategoriesWithUsage(): Promise<CategoryUsageRow[]> {

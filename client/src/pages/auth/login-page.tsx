@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { readJsonOrThrow } from "../../api/http";
 import { useAuth } from "../../lib/auth-context";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -10,7 +11,7 @@ import { FormItem } from "../../components/ui/form-item";
 export function LoginPage() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,14 +26,12 @@ export function LoginPage() {
     try {
       const res = await fetch("/api/users/login", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Invalid credentials");
-      }
+      await readJsonOrThrow(res, "Invalid credentials");
 
       await refreshUser();
       await navigate({ to: "/" });
@@ -88,11 +87,7 @@ export function LoginPage() {
           </div>
         </FormItem>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? "Authenticating..." : "Sign In"}
         </Button>
       </form>

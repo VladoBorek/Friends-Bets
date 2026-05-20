@@ -1,20 +1,8 @@
 import { z } from "zod";
+import { messageDataSchema, paginationMetaSchema, paginationQuerySchema } from "./api";
 import { userSummarySchema } from "./user";
 
 export const groupRoleSchema = z.enum(["OWNER", "MEMBER"]);
-
-const paginationQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).default(10),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
-const paginationMetaSchema = z.object({
-  total: z.number().int().nonnegative(),
-  limit: z.number().int().positive(),
-  offset: z.number().int().nonnegative(),
-  hasMore: z.boolean(),
-});
-
 
 export const updateGroupMemberRoleRequestSchema = z.object({
   role: groupRoleSchema,
@@ -94,9 +82,7 @@ export const groupMemberResponseSchema = z.object({
   data: groupMemberSummarySchema,
 });
 
-export const groupActionResponseSchema = z.object({
-  message: z.string(),
-});
+export const groupActionResponseSchema = messageDataSchema;
 
 export const groupInvitationStatusSchema = z.enum(["PENDING", "ACCEPTED", "REJECTED"]);
 export const groupInvitationDirectionSchema = z.enum(["incoming", "outgoing"]);
@@ -138,8 +124,6 @@ export const groupInvitationResponseSchema = z.object({
   data: groupInvitationSummarySchema,
 });
 
-
-
 export type GroupRole = z.infer<typeof groupRoleSchema>;
 export type UpdateGroupMemberRoleRequest = z.infer<typeof updateGroupMemberRoleRequestSchema>;
 export type GroupsListQuery = z.infer<typeof groupsListQuerySchema>;
@@ -151,7 +135,6 @@ export type JoinGroupByInviteRequest = z.infer<typeof joinGroupByInviteRequestSc
 export type GroupSummary = z.infer<typeof groupSummarySchema>;
 export type GroupMemberSummary = z.infer<typeof groupMemberSummarySchema>;
 export type GroupPreviewMember = z.infer<typeof groupPreviewMemberSchema>;
-
 export type GroupInvitationDirection = z.infer<typeof groupInvitationDirectionSchema>;
 export type GroupInvitationsListQuery = z.infer<typeof groupInvitationsListQuerySchema>;
 export type SendGroupInvitationRequest = z.infer<typeof sendGroupInvitationRequestSchema>;

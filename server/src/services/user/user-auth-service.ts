@@ -4,26 +4,27 @@ import { HttpError } from "../../errors";
 import { emailClient } from "../email-service";
 import { readServerConfig } from "../../config";
 import { mapUserSummary } from "./mappers/user-mapper";
-import { 
-  buildVerificationToken, 
-  buildVerificationUrl, 
+import {
+  buildVerificationToken,
+  buildVerificationUrl,
   verifyCryptoToken,
   buildPasswordResetToken,
-  buildPasswordResetUrl
+  buildPasswordResetUrl,
 } from "./user-token-service";
 import * as userRepository from "../../repositories/user/user-repository";
 import { getUserById, getUserByEmail } from "./user-query-service";
 
 export async function createUser(input: CreateUserRequest): Promise<UserSummary> {
   const existingUser = await userRepository.findUserByEmail(input.email);
+
   if (existingUser) {
-    throw new HttpError(400, "Email already in use");
+    throw new HttpError(400, "BAD_REQUEST", "Email already in use");
   }
 
   const roleId = input.roleId ?? await userRepository.findRoleIdByName("USER");
 
   if (!roleId) {
-    throw new HttpError(500, "Default role not configured");
+    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Default role not configured");
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
@@ -54,12 +55,13 @@ export async function getUserByCredentials(input: LoginRequest): Promise<UserSum
   const user = await userRepository.findUserWithPasswordByEmail(input.email);
 
   if (!user) {
-    throw new HttpError(401, "Invalid email or password");
+    throw new HttpError(401, "UNAUTHORIZED", "Invalid email or password");
   }
 
   const isValid = await bcrypt.compare(input.password, user.passwordHash);
+
   if (!isValid) {
-    throw new HttpError(401, "Invalid email or password");
+    throw new HttpError(401, "UNAUTHORIZED", "Invalid email or password");
   }
 
   return mapUserSummary(user);
@@ -70,18 +72,21 @@ export async function verifyEmailToken(token: string): Promise<UserSummary> {
   const userId = verifyCryptoToken(token, secret);
 
   await userRepository.updateUserVerification(userId, true);
+
   return getUserById(userId);
 }
 
 export async function resendVerificationEmail(userId: number): Promise<void> {
   const emailConfig = readServerConfig().email;
+
   if (!emailConfig.enabled) {
-    throw new HttpError(400, "Email delivery is disabled.");
+    throw new HttpError(400, "BAD_REQUEST", "Email delivery is disabled.");
   }
 
   const user = await getUserById(userId);
+
   if (user.isVerified) {
-    throw new HttpError(400, "User is already verified");
+    throw new HttpError(400, "BAD_REQUEST", "User is already verified");
   }
 
   const { token } = buildVerificationToken(user.id);
@@ -96,6 +101,7 @@ export async function resendVerificationEmail(userId: number): Promise<void> {
 
 export async function resendVerificationEmailByAddress(email: string): Promise<void> {
   const user = await getUserByEmail(email);
+
   await resendVerificationEmail(user.id);
 }
 
@@ -104,9 +110,11 @@ export async function resetPasswordByToken(token: string, password: string): Pro
   const userId = verifyCryptoToken(token, secret);
 
   const passwordHash = await bcrypt.hash(password, 10);
+
   await userRepository.updateUserPassword(userId, passwordHash);
 
   const user = await userRepository.findUserById(userId);
+
   if (user) {
     await emailClient.sendPasswordChangedEmail({
       email: user.email,
@@ -130,8 +138,8 @@ export async function sendAdminPasswordReset(userId: number): Promise<void> {
 
 export async function requestPasswordReset(email: string): Promise<void> {
   const user = await userRepository.findUserByEmail(email);
+
   if (!user) {
-    // For security, don't leak that user doesn't exist.
     return;
   }
 

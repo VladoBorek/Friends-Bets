@@ -1,20 +1,9 @@
 import { z } from "zod";
+import { messageDataSchema, paginationMetaSchema, paginationQuerySchema } from "./api";
 import { userSummarySchema } from "./user";
 
 export const friendshipStatusSchema = z.enum(["PENDING", "ACCEPTED", "REJECTED"]);
 export const friendRequestDirectionSchema = z.enum(["incoming", "outgoing"]);
-
-const paginationQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).default(10),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
-const paginationMetaSchema = z.object({
-  total: z.number().int().nonnegative(),
-  limit: z.number().int().positive(),
-  offset: z.number().int().nonnegative(),
-  hasMore: z.boolean(),
-});
 
 export const friendsListQuerySchema = paginationQuerySchema;
 
@@ -35,7 +24,6 @@ export const friendRequestSummarySchema = z.object({
   addressee: userSummarySchema,
 });
 
-
 export const paginatedFriendRequestsResponseSchema = z.object({
   data: z.array(friendRequestSummarySchema),
   pagination: paginationMetaSchema,
@@ -45,9 +33,7 @@ export const friendRequestResponseSchema = z.object({
   data: friendRequestSummarySchema,
 });
 
-export const friendActionResponseSchema = z.object({
-  message: z.string(),
-});
+export const friendActionResponseSchema = messageDataSchema;
 
 export const friendDiscoveryQuerySchema = paginationQuerySchema.extend({
   q: z.string().trim().max(100).default(""),
@@ -114,7 +100,6 @@ export const friendStatsResponseSchema = z.object({
 });
 
 export const paginatedFriendWagersResponseSchema = z.object({
-  friend: friendSummarySchema,
   data: z.array(friendWagerSummarySchema),
   pagination: paginationMetaSchema,
 });

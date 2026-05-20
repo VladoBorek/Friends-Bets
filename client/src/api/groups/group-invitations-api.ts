@@ -31,7 +31,11 @@ export async function fetchAllGroupInvitations(direction: GroupInvitationDirecti
   while (true) {
     const page = await fetchGroupInvitationsPage(direction, offset);
     invites.push(...page.data);
-    if (!page.pagination.hasMore) break;
+
+    if (!page.pagination.hasMore) {
+      break;
+    }
+
     offset += page.pagination.limit;
   }
 
@@ -40,6 +44,7 @@ export async function fetchAllGroupInvitations(direction: GroupInvitationDirecti
 
 export async function fetchGroupInvitationCount(direction: GroupInvitationDirection) {
   const page = await fetchGroupInvitationsPage(direction, 0);
+
   return page.pagination.total;
 }
 

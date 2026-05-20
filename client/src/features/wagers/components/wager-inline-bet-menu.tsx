@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { placeBetResponseSchema } from "@pb138/shared/schemas/wager";
+import { readJsonOrThrow } from "../../../api/http";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { useAuth } from "../../../lib/auth-context";
@@ -69,12 +71,16 @@ export function WagerInlineBetMenu({
       const response = await fetch(`/api/wagers/${wagerId}/bets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ outcomeId, amount }),
       });
-      const json = (await response.json().catch(() => ({}))) as { data?: { id?: number }; message?: string } | null;
-      if (!response.ok) throw new Error(json?.message ?? "Failed to place bet");
+
+      const json = placeBetResponseSchema.parse(
+        await readJsonOrThrow(response, "Failed to place bet"),
+      );
+
       setSuccessMessage(
-        json?.data?.id ? `Bet placed successfully (id ${json.data.id})` : "Bet placed successfully",
+        json.data.id ? `Bet placed successfully (id ${json.data.id})` : "Bet placed successfully",
       );
       setBetAmount("");
       await onBetPlaced?.();

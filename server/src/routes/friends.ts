@@ -1,33 +1,29 @@
 import { Elysia } from "elysia";
 import { z } from "zod";
 import {
-  friendActionResponseSchema,
-  friendRequestResponseSchema,
-  friendRequestsListQuerySchema,
-  friendsListQuerySchema,
   friendDiscoveryQuerySchema,
-  friendWagersListQuerySchema,
+  friendRequestsListQuerySchema,
+  friendRequestResponseSchema,
   friendStatsResponseSchema,
-
+  friendWagersListQuerySchema,
+  friendsListQuerySchema,
+  paginatedDiscoveredUsersResponseSchema,
   paginatedFriendRequestsResponseSchema,
   paginatedFriendsResponseSchema,
-  paginatedDiscoveredUsersResponseSchema,
   paginatedFriendWagersResponseSchema,
-  
   sendFriendRequestSchema,
-
 } from "@pb138/shared/schemas/friends";
 import { authPlugin, getAuthenticatedUser } from "../plugins/auth";
 import {
-  listFriends,
-  listFriendRequests,
-  discoverUsers,
-  sendFriendRequest,
   acceptFriendRequest,
+  discoverUsers,
+  getFriendStats,
+  listFriendRequests,
+  listFriends,
+  listFriendWagers,
   rejectFriendRequest,
   removeFriend,
-  getFriendStats,
-  listFriendWagers,
+  sendFriendRequest,
 } from "../services/friends";
 
 const requestIdParamsSchema = z.object({
@@ -47,7 +43,6 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     return paginatedFriendsResponseSchema.parse(result);
   })
-
   .get("/discover", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedQuery = friendDiscoveryQuerySchema.parse(context.query);
@@ -55,7 +50,6 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     return paginatedDiscoveredUsersResponseSchema.parse(result);
   })
-
   .get("/requests", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedQuery = friendRequestsListQuerySchema.parse(context.query);
@@ -63,14 +57,13 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     return paginatedFriendRequestsResponseSchema.parse(result);
   })
-   .get("/:userId/stats", async (context) => {
+  .get("/:userId/stats", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
     const data = await getFriendStats(actor.id, parsedParams.userId);
 
     return friendStatsResponseSchema.parse({ data });
   })
-
   .get("/:userId/wagers", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
@@ -79,11 +72,12 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     return paginatedFriendWagersResponseSchema.parse(result);
   })
-
   .post("/requests", async (context) => {
     const actor = await getAuthenticatedUser(context);
     const parsedBody = sendFriendRequestSchema.parse(context.body);
     const data = await sendFriendRequest(actor.id, parsedBody);
+
+    context.set.status = 201;
 
     return friendRequestResponseSchema.parse({ data });
   })
@@ -107,7 +101,6 @@ export const friendRoutes = new Elysia({ prefix: "/friends" })
 
     await removeFriend(actor.id, parsedParams.userId);
 
-    return friendActionResponseSchema.parse({
-      message: "Friend removed successfully",
-    });
+    context.set.status = 204;
+    return null;
   });

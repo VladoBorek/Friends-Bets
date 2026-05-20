@@ -1,22 +1,22 @@
 import { z } from "zod";
+import { messageDataSchema, paginationMetaSchema, paginationQuerySchema } from "./api";
 
 export const wagerStatusSchema = z.enum(["OPEN", "PENDING", "CLOSED"]);
 
-const paginationMetaSchema = z.object({
-  total: z.number().int().nonnegative(),
-  limit: z.number().int().positive(),
-  offset: z.number().int().nonnegative(),
-  hasMore: z.boolean(),
-});
-
-export const wagersListQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).default(10),
-  offset: z.coerce.number().int().min(0).default(0),
+export const wagersListQuerySchema = paginationQuerySchema.extend({
   q: z.string().trim().max(200).default(""),
   status: z.enum(["ALL", "OPEN", "PENDING", "CLOSED"]).default("ALL"),
   category: z.string().default("ALL"),
   involvement: z.enum(["ALL", "MINE", "MY_BETS"]).default("ALL"),
 });
+
+export const categoriesListQuerySchema = paginationQuerySchema.extend({
+  q: z.string().trim().max(100).default(""),
+});
+
+export const wagerInvitationsListQuerySchema = paginationQuerySchema;
+export const wagerBetsListQuerySchema = paginationQuerySchema;
+export const wagerCommentsListQuerySchema = paginationQuerySchema;
 
 export const createWagerOutcomeSchema = z.object({
   title: z.string().min(1).max(120),
@@ -76,10 +76,6 @@ export const wagerDetailSchema = wagerSummarySchema.extend({
   outcomes: z.array(wagerDetailOutcomeSchema),
 });
 
-export const listWagersResponseSchema = z.object({
-  data: z.array(wagerSummarySchema),
-});
-
 export const paginatedWagersResponseSchema = z.object({
   data: z.array(wagerSummarySchema),
   pagination: paginationMetaSchema,
@@ -98,8 +94,34 @@ export const categorySummarySchema = z.object({
   name: z.string(),
 });
 
-export const listCategoriesResponseSchema = z.object({
+export const categoryResponseSchema = z.object({
+  data: categorySummarySchema,
+});
+
+export const categoryAdminSummarySchema = categorySummarySchema.extend({
+  wagerCount: z.number().int().nonnegative(),
+  betCount: z.number().int().nonnegative(),
+});
+
+export const paginatedCategoriesResponseSchema = z.object({
   data: z.array(categorySummarySchema),
+  pagination: paginationMetaSchema,
+});
+
+export const paginatedAdminCategoriesResponseSchema = z.object({
+  data: z.array(categoryAdminSummarySchema),
+  pagination: paginationMetaSchema,
+});
+
+export const wagerInvitationSummarySchema = z.object({
+  id: z.number().int(),
+  username: z.string(),
+  email: z.string().email(),
+});
+
+export const paginatedWagerInvitationsResponseSchema = z.object({
+  data: z.array(wagerInvitationSummarySchema),
+  pagination: paginationMetaSchema,
 });
 
 export const MIN_CREDIT_AMOUNT = 0.01;
@@ -131,6 +153,36 @@ export const betSchema = z.object({
   createdAt: z.string(),
 });
 
+export const wagerBetSummarySchema = z.object({
+  id: z.number().int(),
+  userId: z.number().int(),
+  username: z.string(),
+  outcomeTitle: z.string(),
+  amount: z.string(),
+});
+
+export const paginatedWagerBetsResponseSchema = z.object({
+  data: z.array(wagerBetSummarySchema),
+  pagination: paginationMetaSchema,
+});
+
+export const wagerCommentSchema = z.object({
+  id: z.number().int(),
+  userId: z.number().int(),
+  username: z.string(),
+  content: z.string(),
+  createdAt: z.string(),
+});
+
+export const wagerCommentResponseSchema = z.object({
+  data: wagerCommentSchema,
+});
+
+export const paginatedWagerCommentsResponseSchema = z.object({
+  data: z.array(wagerCommentSchema),
+  pagination: paginationMetaSchema,
+});
+
 export const placeBetResponseSchema = z.object({
   data: betSchema,
 });
@@ -139,12 +191,19 @@ export const resolveWagerResponseSchema = z.object({
   data: wagerDetailSchema,
 });
 
+export const wagerActionResponseSchema = messageDataSchema;
+
 export type CreateWagerRequest = z.infer<typeof createWagerRequestSchema>;
 export type WagerSummary = z.infer<typeof wagerSummarySchema>;
 export type WagerDetail = z.infer<typeof wagerDetailSchema>;
 export type CategorySummary = z.infer<typeof categorySummarySchema>;
+export type CategoryAdminSummary = z.infer<typeof categoryAdminSummarySchema>;
 export type PlaceBetRequest = z.infer<typeof placeBetRequestSchema>;
 export type Bet = z.infer<typeof betSchema>;
 export type ResolveWagerRequest = z.infer<typeof resolveWagerRequestSchema>;
 export type WagersListQuery = z.infer<typeof wagersListQuerySchema>;
+export type CategoriesListQuery = z.infer<typeof categoriesListQuerySchema>;
+export type WagerInvitationsListQuery = z.infer<typeof wagerInvitationsListQuerySchema>;
+export type WagerBetsListQuery = z.infer<typeof wagerBetsListQuerySchema>;
+export type WagerCommentsListQuery = z.infer<typeof wagerCommentsListQuerySchema>;
 export type PaginatedWagersResponse = z.infer<typeof paginatedWagersResponseSchema>;

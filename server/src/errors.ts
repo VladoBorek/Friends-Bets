@@ -1,9 +1,17 @@
+import type { ApiErrorCode } from "@pb138/shared/schemas/api";
+
+export type ErrorCode = ApiErrorCode;
+
 export class HttpError extends Error {
   readonly status: number;
+  readonly code: ErrorCode;
+  readonly details?: unknown;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, code: ErrorCode, message: string, details?: unknown) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.details = details;
     this.name = "HttpError";
   }
 }

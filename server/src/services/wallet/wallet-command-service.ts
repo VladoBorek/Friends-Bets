@@ -1,10 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "../../db/db";
-import { HttpError } from "../../errors";
-import { Wallet, Transaction } from "../../db/schema";
-import { findWalletByUserId } from "../../repositories/wallet/wallet-repository";
-import { mapTransactionToHistoryItem, formatMoney, normalizePositiveAmount } from "./wallet-utils";
 import type { WalletHistoryItem } from "@pb138/shared/schemas/wallet";
+import { db } from "../../db/db";
+import { Transaction, Wallet } from "../../db/schema";
+import { HttpError } from "../../errors";
+import { findWalletByUserId } from "../../repositories/wallet/wallet-repository";
+import { formatMoney, mapTransactionToHistoryItem, normalizePositiveAmount } from "./wallet-utils";
 
 export async function depositToWallet(
   userId: number,
@@ -30,11 +30,10 @@ async function updateWalletBalanceAtomic(
   const signedAmount = operation === "withdraw" ? -normalizedAmount : normalizedAmount;
 
   return db.transaction(async (tx) => {
-    // Get wallet
     const wallet = await findWalletByUserId(userId);
 
     if (!wallet) {
-      throw new HttpError(404, "Wallet not found");
+      throw new HttpError(404, "NOT_FOUND", "Wallet not found");
     }
 
     const whereClause =
@@ -42,7 +41,6 @@ async function updateWalletBalanceAtomic(
         ? and(eq(Wallet.id, wallet.id), sql`${Wallet.balance}::numeric >= ${amountString}::numeric`)
         : eq(Wallet.id, wallet.id);
 
-    // Update wallet balance in transaction
     const [updatedWallet] = await tx
       .update(Wallet)
       .set({
@@ -59,10 +57,9 @@ async function updateWalletBalanceAtomic(
       });
 
     if (!updatedWallet) {
-      throw new HttpError(400, "Withdraw amount exceeds available balance");
+      throw new HttpError(400, "BAD_REQUEST", "Withdraw amount exceeds available balance");
     }
 
-    // Create transaction record in transaction
     const [transactionRow] = await tx
       .insert(Transaction)
       .values({
@@ -77,7 +74,7 @@ async function updateWalletBalanceAtomic(
       });
 
     if (!transactionRow) {
-      throw new HttpError(500, "Failed to log wallet transaction");
+      throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to log wallet transaction");
     }
 
     return {

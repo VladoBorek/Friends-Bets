@@ -1,4 +1,4 @@
-import { desc, eq, and } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Bet, Outcome, User } from "../../db/schema";
 
@@ -63,6 +63,38 @@ export async function createBet(input: {
   return row;
 }
 
+export async function countBetsByWager(wagerId: number): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(Bet)
+    .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
+    .where(eq(Outcome.wager_id, wagerId));
+
+  return Number(row?.count ?? 0);
+}
+
+export async function listBetsByWagerPaginated(
+  wagerId: number,
+  limit: number,
+  offset: number,
+): Promise<BetDetailRow[]> {
+  return db
+    .select({
+      id: Bet.id,
+      userId: User.id,
+      username: User.username,
+      outcomeTitle: Outcome.title,
+      amount: Bet.amount,
+    })
+    .from(Bet)
+    .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
+    .innerJoin(User, eq(Bet.user_id, User.id))
+    .where(eq(Outcome.wager_id, wagerId))
+    .orderBy(desc(Bet.amount))
+    .limit(limit)
+    .offset(offset);
+}
+
 export async function listBetsByWager(wagerId: number): Promise<BetDetailRow[]> {
   return db
     .select({
@@ -86,6 +118,7 @@ export async function wagerHasBets(wagerId: number): Promise<boolean> {
     .innerJoin(Outcome, eq(Bet.outcome_id, Outcome.id))
     .where(eq(Outcome.wager_id, wagerId))
     .limit(1);
+
   return row !== undefined;
 }
 

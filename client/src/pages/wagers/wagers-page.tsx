@@ -1,6 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import type { CategorySummary, PaginatedWagersResponse } from "@pb138/shared/schemas/wager";
+import {
+  paginatedCategoriesResponseSchema,
+  paginatedWagersResponseSchema,
+  type CategorySummary,
+  type PaginatedWagersResponse,
+} from "@pb138/shared/schemas/wager";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { WagerPagination } from "../../features/wagers/components/wager-pagination";
@@ -10,6 +15,7 @@ import { WagersFilterPanel, type StatusFilter, type InvolvementFilter } from "..
 import { WAGERS_PAGE_SIZE } from "../../features/wagers/utils/wagers-search";
 import { useAuth } from "../../lib/auth-context";
 import { Route } from "../../routes/wagers/index";
+import { readJsonOrThrow } from "../../api/http";
 
 export function WagersPage() {
   const navigate = useNavigate({ from: Route.fullPath });
@@ -54,16 +60,21 @@ export function WagersPage() {
   };
 
   const fetchWagers = async (signal?: AbortSignal) => {
-    const response = await fetch(buildUrl(), signal ? { signal } : undefined);
-    const json = (await response.json().catch(() => null)) as PaginatedWagersResponse & { message?: string } | null;
-    if (!response.ok) throw new Error(json?.message ?? "Unable to load wagers");
-    if (!json) throw new Error("Unable to load wagers");
-    return json;
+    const response = await fetch(buildUrl(), {
+      signal,
+      credentials: "same-origin",
+    });
+
+    return paginatedWagersResponseSchema.parse(
+      await readJsonOrThrow(response, "Unable to load wagers"),
+    );
   };
 
   useEffect(() => {
     const controller = new AbortController();
     setIsLoading(true);
+    setError(null);
+
     async function load() {
       try {
         setResult(await fetchWagers(controller.signal));
@@ -74,16 +85,30 @@ export function WagersPage() {
         setIsLoading(false);
       }
     }
+
     void load();
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, statusFilter, categoryFilter, involvementFilter]);
 
   useEffect(() => {
-    fetch("/api/wagers/categories")
-      .then((r) => r.json() as Promise<{ data: CategorySummary[] }>)
-      .then((json) => setCategories(json.data ?? []))
-      .catch(() => undefined);
+    async function loadCategories() {
+      try {
+        const response = await fetch("/api/wagers/categories?limit=50&offset=0", {
+          credentials: "same-origin",
+        });
+
+        const json = paginatedCategoriesResponseSchema.parse(
+          await readJsonOrThrow(response, "Unable to load categories"),
+        );
+
+        setCategories(json.data);
+      } catch {
+        setCategories([]);
+      }
+    }
+
+    void loadCategories();
   }, []);
 
   const handleFilterChange = <T,>(setter: (v: T) => void) => (value: T) => {
@@ -131,7 +156,6 @@ export function WagersPage() {
 
   return (
     <div className="flex gap-6">
-      {/* ── Sidebar (desktop only) ── */}
       <aside className="hidden w-64 shrink-0 lg:block">
         <div className="sticky top-6 grid gap-4">
           <Button
@@ -154,9 +178,7 @@ export function WagersPage() {
         </div>
       </aside>
 
-      {/* ── List ── */}
       <div className="min-w-0 flex-1">
-        {/* Mobile-only action bar */}
         <div className="mb-4 flex items-center gap-2 lg:hidden">
           <Button
             onClick={() => setModalOpen(true)}
@@ -186,7 +208,7 @@ export function WagersPage() {
           </div>
         )}
 
-        {isLoading && <p className="text-slate-300">Loading wagers…</p>}
+        {isLoading && <p className="text-slate-300">Loading wagers...</p>}
         {error && <p className="text-rose-300">{error}</p>}
         {!isLoading && !error && wagers.length === 0 && (
           <p className="text-slate-400">No wagers match the current filters.</p>
@@ -221,7 +243,6 @@ export function WagersPage() {
         onCreated={refreshWagers}
       />
 
-      {/* Mobile filters dialog */}
       <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
         <DialogContent>
           <DialogHeader className="border-b border-slate-800 px-6 py-4">

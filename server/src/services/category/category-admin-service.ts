@@ -4,13 +4,14 @@ import * as categoryRepository from "../../repositories/wagers/category-reposito
 
 export async function createCategory(name: string): Promise<CategorySummary> {
   const normalizedName = name.trim();
+
   if (!normalizedName) {
-    throw new HttpError(400, "Category name is required");
+    throw new HttpError(400, "BAD_REQUEST", "Category name is required");
   }
 
   const existing = await categoryRepository.findCategoryByNameCaseInsensitive(normalizedName);
   if (existing) {
-    throw new HttpError(409, "Category with this name already exists");
+    throw new HttpError(409, "CONFLICT", "Category with this name already exists");
   }
 
   return categoryRepository.createCategory(normalizedName);
@@ -19,7 +20,7 @@ export async function createCategory(name: string): Promise<CategorySummary> {
 export async function deleteCategory(categoryId: number): Promise<void> {
   const existingCategory = await categoryRepository.findCategoryById(categoryId);
   if (!existingCategory) {
-    throw new HttpError(404, "Category not found");
+    throw new HttpError(404, "NOT_FOUND", "Category not found");
   }
 
   const [hasBets, hasWagers] = await Promise.all([
@@ -28,11 +29,11 @@ export async function deleteCategory(categoryId: number): Promise<void> {
   ]);
 
   if (hasBets) {
-    throw new HttpError(409, "Cannot delete category with existing bets");
+    throw new HttpError(409, "CONFLICT", "Cannot delete category with existing bets");
   }
 
   if (hasWagers) {
-    throw new HttpError(409, "Cannot delete category used by existing wagers");
+    throw new HttpError(409, "CONFLICT", "Cannot delete category used by existing wagers");
   }
 
   await categoryRepository.deleteCategoryById(categoryId);

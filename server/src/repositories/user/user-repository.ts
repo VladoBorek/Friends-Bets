@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, ne, sql } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Role, User, Wallet } from "../../db/schema";
 import type { CreateUserRequest } from "@pb138/shared/schemas/user";
@@ -77,25 +77,48 @@ export async function findUserWithPasswordById(id: number): Promise<FullUserRow 
   return row ?? null;
 }
 
-export async function listAllUsers(): Promise<UserRow[]> {
+export async function countAllUsers(): Promise<number> {
+  const [row] = await db.select({ count: sql<number>`count(*)` }).from(User);
+
+  return Number(row?.count ?? 0);
+}
+
+export async function listUsersPaginated(limit: number, offset: number): Promise<UserRow[]> {
   return db
     .select(userSelect)
     .from(User)
     .innerJoin(Role, eq(User.role_id, Role.id))
-    .orderBy(desc(User.created_at));
+    .orderBy(desc(User.created_at))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function countUsersByEmailPrefix(
+  emailQuery: string,
+  excludeUserId: number,
+): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(User)
+    .where(and(ilike(User.email, `${emailQuery}%`), ne(User.id, excludeUserId)));
+
+  return Number(row?.count ?? 0);
 }
 
 export async function searchUsersByEmailPrefix(
   emailQuery: string,
   excludeUserId: number,
-  limit: number = 10,
+  limit: number,
+  offset: number,
 ): Promise<UserRow[]> {
   return db
     .select(userSelect)
     .from(User)
     .innerJoin(Role, eq(User.role_id, Role.id))
     .where(and(ilike(User.email, `${emailQuery}%`), ne(User.id, excludeUserId)))
-    .limit(limit);
+    .orderBy(User.email)
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function createUserWithWallet(
@@ -156,7 +179,13 @@ export async function findRoleIdByName(roleName: string): Promise<number | null>
   const [role] = await db
     .select({ id: Role.id })
     .from(Role)
-    .where(inArray(Role.name, [roleName, roleName.toLowerCase(), roleName.charAt(0) + roleName.slice(1).toLowerCase()]))
+    .where(
+      inArray(Role.name, [
+        roleName,
+        roleName.toLowerCase(),
+        roleName.charAt(0) + roleName.slice(1).toLowerCase(),
+      ]),
+    )
     .limit(1);
 
   return role?.id ?? null;
