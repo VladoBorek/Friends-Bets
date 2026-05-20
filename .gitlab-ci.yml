@@ -45,6 +45,17 @@ stages:
 
 mirror-node-base:
   stage: prepare
+  tags:
+    - shared-fi
+  image: docker:27-cli
+  services:
+    - name: docker:27-dind-rootless
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_BUILDKIT: "1"
+    DOCKER_DRIVER: overlay2
   rules:
     - when: manual
   before_script:
