@@ -22,20 +22,21 @@ variables:
     DOCKER_BUILDKIT: "1"
     COMPOSE_DOCKER_CLI_BUILD: "1"
     DOCKER_DRIVER: overlay2
-    NODE_BASE_IMAGE: "$CI_REGISTRY_IMAGE/base/node:22-bookworm-slim"
+    NODE_BASE_IMAGE: "$CI_REGISTRY/xcech4/pb138-project/base/node:22-bookworm-slim"
+    DEV_CACHE_IMAGE: "$CI_REGISTRY/xcech4/pb138-project/dev:cache"
   before_script:
     - docker version
     - docker compose version
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-    - docker pull "$CI_REGISTRY_IMAGE/dev:cache" || true
+    - docker pull "$DEV_CACHE_IMAGE" || true
     - docker build
-        --cache-from "$CI_REGISTRY_IMAGE/dev:cache"
+        --cache-from "$DEV_CACHE_IMAGE"
         --build-arg BUILDKIT_INLINE_CACHE=1
         --build-arg NODE_BASE_IMAGE="$NODE_BASE_IMAGE"
         -t pb138-project-dev
-        -t "$CI_REGISTRY_IMAGE/dev:cache"
+        -t "$DEV_CACHE_IMAGE"
         -f Dockerfile.dev .
-    - docker push "$CI_REGISTRY_IMAGE/dev:cache"
+    - docker push "$DEV_CACHE_IMAGE"
 
 stages:
   - prepare
@@ -56,6 +57,7 @@ mirror-node-base:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_BUILDKIT: "1"
     DOCKER_DRIVER: overlay2
+    NODE_BASE_IMAGE: "$CI_REGISTRY/xcech4/pb138-project/base/node:22-bookworm-slim"
   rules:
     - when: manual
   before_script:
@@ -69,8 +71,8 @@ mirror-node-base:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
     - docker pull node:22-bookworm-slim
-    - docker tag node:22-bookworm-slim "$CI_REGISTRY_IMAGE/base/node:22-bookworm-slim"
-    - docker push "$CI_REGISTRY_IMAGE/base/node:22-bookworm-slim"
+    - docker tag node:22-bookworm-slim "$NODE_BASE_IMAGE"
+    - docker push "$NODE_BASE_IMAGE"
 
 verify:
   extends: .docker-job
