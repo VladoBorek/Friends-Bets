@@ -6,7 +6,10 @@ import type {
 } from "@pb138/shared/schemas/friends";
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../../errors";
-import type { FriendUserRow, FriendshipRow } from "../../../repositories/friends/friend-repository";
+import type {
+  FriendshipRow,
+  FriendUserRow,
+} from "../../../repositories/friends/friend-repository";
 import type {
   FriendStatsAggregateRow,
   SharedFriendWagerRow,
@@ -22,6 +25,7 @@ function normalizeRoleName(roleName: unknown): string {
 
 function formatMoney(value: string | number | null | undefined): string {
   const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+
   return Number.isFinite(numericValue) ? numericValue.toFixed(2) : "0.00";
 }
 
@@ -49,7 +53,11 @@ export function mapFriendRequestSummary(
   const addressee = usersById.get(row.addresseeId);
 
   if (!requester || !addressee) {
-    throw new HttpError(500, "Friend request references missing user");
+    throw new HttpError(
+      500,
+      "INTERNAL_SERVER_ERROR",
+      "Friend request references missing user",
+    );
   }
 
   return {
@@ -91,7 +99,10 @@ export function mapFriendStats(row?: FriendStatsAggregateRow): FriendStats {
   };
 }
 
-export function mapFriendSummary(user: UserSummary, statsRow?: FriendStatsAggregateRow): FriendSummary {
+export function mapFriendSummary(
+  user: UserSummary,
+  statsRow?: FriendStatsAggregateRow,
+): FriendSummary {
   return {
     ...user,
     stats: mapFriendStats(statsRow),

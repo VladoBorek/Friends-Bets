@@ -1,17 +1,26 @@
-import type { FriendRequestsListQuery, FriendsListQuery, FriendDiscoveryQuery} from "@pb138/shared/schemas/friends";
+import type {
+  FriendDiscoveryQuery,
+  FriendRequestsListQuery,
+  FriendsListQuery,
+} from "@pb138/shared/schemas/friends";
 import {
   countAcceptedFriendsForUser,
-  countPendingFriendRequestsForUser,
   countDiscoverableUsers,
+  countPendingFriendRequestsForUser,
   listAcceptedFriendshipsForUser,
+  listDiscoverableUsers,
+  listFriendshipsBetweenUserAndCandidates,
   listPendingFriendRequestsForUser,
   listUsersByIds,
-  listDiscoverableUsers,
-  listFriendshipsBetweenUserAndCandidates
 } from "../../repositories/friends/friend-repository";
-import { buildUserSummaryMap, mapFriendRequestSummary, mapRelationshipState, mapUserSummary, mapFriendSummary } from "./mappers/friend-mapper"
 import { listFriendStatsPreviewRows } from "../../repositories/friends/friend-stats-repository";
-
+import {
+  buildUserSummaryMap,
+  mapFriendRequestSummary,
+  mapFriendSummary,
+  mapRelationshipState,
+  mapUserSummary,
+} from "./mappers/friend-mapper";
 
 export async function listFriends(currentUserId: number, query: FriendsListQuery) {
   const total = await countAcceptedFriendsForUser(currentUserId);
@@ -35,6 +44,7 @@ export async function listFriends(currentUserId: number, query: FriendsListQuery
     .map((friendId) => {
       const user = usersById.get(friendId);
       if (!user) return null;
+
       return mapFriendSummary(user, statsByFriendId.get(friendId));
     })
     .filter((friend): friend is NonNullable<typeof friend> => Boolean(friend));
@@ -50,7 +60,10 @@ export async function listFriends(currentUserId: number, query: FriendsListQuery
   };
 }
 
-export async function listFriendRequests(currentUserId: number, query: FriendRequestsListQuery) {
+export async function listFriendRequests(
+  currentUserId: number,
+  query: FriendRequestsListQuery,
+) {
   const total = await countPendingFriendRequestsForUser(currentUserId, query.direction);
   const rows = await listPendingFriendRequestsForUser(
     currentUserId,
@@ -62,7 +75,6 @@ export async function listFriendRequests(currentUserId: number, query: FriendReq
   const userIds = [...new Set(rows.flatMap((row) => [row.requesterId, row.addresseeId]))];
   const users = await listUsersByIds(userIds);
   const usersById = buildUserSummaryMap(users);
-
   const data = rows.map((row) => mapFriendRequestSummary(row, usersById));
 
   return {
@@ -79,10 +91,8 @@ export async function listFriendRequests(currentUserId: number, query: FriendReq
 export async function discoverUsers(currentUserId: number, query: FriendDiscoveryQuery) {
   const total = await countDiscoverableUsers(currentUserId, query.q);
   const users = await listDiscoverableUsers(currentUserId, query.q, query.limit, query.offset);
-
   const candidateIds = users.map((user) => user.id);
   const friendships = await listFriendshipsBetweenUserAndCandidates(currentUserId, candidateIds);
-
   const friendshipsByUserId = new Map<number, (typeof friendships)[number]>();
 
   for (const friendship of friendships) {
@@ -96,16 +106,16 @@ export async function discoverUsers(currentUserId: number, query: FriendDiscover
 
   const data = users.map((user) => {
     const relationship = mapRelationshipState(
-        currentUserId,
-        friendshipsByUserId.get(user.id),
+      currentUserId,
+      friendshipsByUserId.get(user.id),
     );
 
     return {
-        ...mapUserSummary(user),
-        relationshipState: relationship.relationshipState,
-        friendshipId: relationship.friendshipId,
+      ...mapUserSummary(user),
+      relationshipState: relationship.relationshipState,
+      friendshipId: relationship.friendshipId,
     };
-    });
+  });
 
   return {
     data,

@@ -1,13 +1,20 @@
 import type { FriendWagersListQuery } from "@pb138/shared/schemas/friends";
 import { HttpError } from "../../errors";
-import { findFriendshipBetweenUsers, listUsersByIds } from "../../repositories/friends/friend-repository";
+import {
+  findFriendshipBetweenUsers,
+  listUsersByIds,
+} from "../../repositories/friends/friend-repository";
 import {
   countSharedWagers,
   listFriendStatsPreviewRows,
   listRecentSharedWagers,
   listSharedWagersPage,
 } from "../../repositories/friends/friend-stats-repository";
-import { mapFriendSummary, mapFriendWagerSummary, mapUserSummary } from "./mappers/friend-mapper";
+import {
+  mapFriendSummary,
+  mapFriendWagerSummary,
+  mapUserSummary,
+} from "./mappers/friend-mapper";
 
 const RECENT_WAGERS_LIMIT = 3;
 
@@ -15,12 +22,13 @@ async function getAcceptedFriendOrThrow(currentUserId: number, friendId: number)
   const friendship = await findFriendshipBetweenUsers(currentUserId, friendId);
 
   if (!friendship || friendship.status !== "ACCEPTED") {
-    throw new HttpError(404, "Friend not found");
+    throw new HttpError(404, "NOT_FOUND", "Friend not found");
   }
 
   const [friendRow] = await listUsersByIds([friendId]);
+
   if (!friendRow) {
-    throw new HttpError(404, "Friend not found");
+    throw new HttpError(404, "NOT_FOUND", "Friend not found");
   }
 
   return mapUserSummary(friendRow);
@@ -45,22 +53,22 @@ export async function listFriendWagers(
   friendId: number,
   query: FriendWagersListQuery,
 ) {
-  const friendUser = await getAcceptedFriendOrThrow(currentUserId, friendId);
+  await getAcceptedFriendOrThrow(currentUserId, friendId);
 
-  const [statsRows, total, rows] = await Promise.all([
-    listFriendStatsPreviewRows(currentUserId, [friendId]),
+  const [total, rows] = await Promise.all([
     countSharedWagers(currentUserId, friendId),
     listSharedWagersPage(currentUserId, friendId, query.limit, query.offset),
   ]);
 
+  const data = rows.map(mapFriendWagerSummary);
+
   return {
-    friend: mapFriendSummary(friendUser, statsRows[0]),
-    data: rows.map(mapFriendWagerSummary),
+    data,
     pagination: {
       total,
       limit: query.limit,
       offset: query.offset,
-      hasMore: query.offset + rows.length < total,
+      hasMore: query.offset + data.length < total,
     },
   };
 }

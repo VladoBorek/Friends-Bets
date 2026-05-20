@@ -6,7 +6,7 @@ export async function requireGroupMember(groupId: number, userId: number) {
   const membership = await groupMemberRepository.findMembership(groupId, userId);
 
   if (!membership) {
-    throw new HttpError(404, "Group not found");
+    throw new HttpError(404, "NOT_FOUND", "Group not found");
   }
 
   return membership;
@@ -16,7 +16,7 @@ export async function requireGroupOwner(groupId: number, userId: number) {
   const membership = await requireGroupMember(groupId, userId);
 
   if (membership.role !== "OWNER") {
-    throw new HttpError(403, "Only group owners can perform this action");
+    throw new HttpError(403, "FORBIDDEN", "Only group owners can perform this action");
   }
 
   return membership;
@@ -29,7 +29,7 @@ export async function requireGroupOwnerOrAdmin(
   const membership = await requireGroupMember(groupId, user.id);
 
   if (membership.role !== "OWNER" && user.roleName !== "ADMIN") {
-    throw new HttpError(403, "Only group owners or admins can perform this action");
+    throw new HttpError(403, "FORBIDDEN", "Only group owners or admins can perform this action");
   }
 
   return membership;

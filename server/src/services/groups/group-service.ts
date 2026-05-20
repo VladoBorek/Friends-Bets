@@ -1,13 +1,13 @@
 import crypto from "node:crypto";
 import type {
-  GroupsListQuery,
   CreateGroupRequest,
+  GroupsListQuery,
   JoinGroupByInviteRequest,
   UpdateGroupRequest,
 } from "@pb138/shared/schemas/groups";
 import { HttpError } from "../../errors";
-import * as groupRepository from "../../repositories/group/group-repository";
 import * as groupMemberRepository from "../../repositories/group/group-member-repository";
+import * as groupRepository from "../../repositories/group/group-repository";
 import { mapGroupSummary } from "./mappers/group-mapper";
 import { requireGroupOwner, requireGroupOwnerOrAdmin } from "./group-permission-service";
 
@@ -38,7 +38,7 @@ export async function getGroup(currentUserId: number, groupId: number) {
   const group = await groupRepository.findGroupForUser(groupId, currentUserId);
 
   if (!group) {
-    throw new HttpError(404, "Group not found");
+    throw new HttpError(404, "NOT_FOUND", "Group not found");
   }
 
   return mapGroupSummary(group);
@@ -66,7 +66,7 @@ export async function createGroup(currentUserId: number, input: CreateGroupReque
   const createdGroup = await groupRepository.findGroupForUser(group.id, currentUserId);
 
   if (!createdGroup) {
-    throw new HttpError(404, "Group not found");
+    throw new HttpError(404, "NOT_FOUND", "Group not found");
   }
 
   return mapGroupSummary(createdGroup);
@@ -85,13 +85,13 @@ export async function updateGroup(
   });
 
   if (!updated) {
-    throw new HttpError(404, "Group not found");
+    throw new HttpError(404, "NOT_FOUND", "Group not found");
   }
 
   const group = await groupRepository.findGroupForUser(groupId, currentUser.id);
 
   if (!group) {
-    throw new HttpError(404, "Group not found");
+    throw new HttpError(404, "NOT_FOUND", "Group not found");
   }
 
   return mapGroupSummary(group);
@@ -109,13 +109,13 @@ export async function joinGroupByInvite(
   const group = await groupRepository.findGroupByInviteCode(input.inviteCode);
 
   if (!group) {
-    throw new HttpError(404, "Invite code not found");
+    throw new HttpError(404, "NOT_FOUND", "Invite code not found");
   }
 
   const existingMembership = await groupMemberRepository.findMembership(group.id, currentUserId);
 
   if (existingMembership) {
-    throw new HttpError(400, "You are already a member of this group");
+    throw new HttpError(400, "BAD_REQUEST", "You are already a member of this group");
   }
 
   await groupMemberRepository.addGroupMember(group.id, currentUserId, "MEMBER");
@@ -123,7 +123,7 @@ export async function joinGroupByInvite(
   const joinedGroup = await groupRepository.findGroupForUser(group.id, currentUserId);
 
   if (!joinedGroup) {
-    throw new HttpError(404, "Group not found");
+    throw new HttpError(404, "NOT_FOUND", "Group not found");
   }
 
   return mapGroupSummary(joinedGroup);
