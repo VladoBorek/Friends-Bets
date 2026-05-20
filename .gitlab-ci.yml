@@ -16,15 +16,44 @@ variables:
     - name: docker:27-dind-rootless
   tags:
     - shared-fi
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_BUILDKIT: "1"
+    COMPOSE_DOCKER_CLI_BUILD: "1"
+    DOCKER_DRIVER: overlay2
+    NODE_BASE_IMAGE: "$CI_REGISTRY_IMAGE/base/node:22-bookworm-slim"
   before_script:
     - docker version
     - docker compose version
-    - docker build -t pb138-project-dev -f Dockerfile.dev .
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker pull "$CI_REGISTRY_IMAGE/dev:cache" || true
+    - docker build
+        --cache-from "$CI_REGISTRY_IMAGE/dev:cache"
+        --build-arg BUILDKIT_INLINE_CACHE=1
+        --build-arg NODE_BASE_IMAGE="$NODE_BASE_IMAGE"
+        -t pb138-project-dev
+        -t "$CI_REGISTRY_IMAGE/dev:cache"
+        -f Dockerfile.dev .
+    - docker push "$CI_REGISTRY_IMAGE/dev:cache"
 
 stages:
+  - prepare
   - test
   - build
   - deploy
+
+mirror-node-base:
+  stage: prepare
+  rules:
+    - when: manual
+  before_script:
+    - docker version
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker pull node:22-bookworm-slim
+    - docker tag node:22-bookworm-slim "$CI_REGISTRY_IMAGE/base/node:22-bookworm-slim"
+    - docker push "$CI_REGISTRY_IMAGE/base/node:22-bookworm-slim"
 
 verify:
   extends: .docker-job
