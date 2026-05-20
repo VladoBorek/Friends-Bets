@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Eye, EyeOff, KeyRound, Mail } from "lucide-react";
+import { userActionResponseSchema } from "@pb138/shared/schemas/user";
+import { readJsonOrThrow } from "../../api/http";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { AuthLayout } from "../../components/layout/auth-layout";
@@ -29,14 +31,16 @@ export function ResetPasswordPage() {
     try {
       const res = await fetch("/api/users/request-password-reset", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message || "Failed to request reset.");
+      const json = userActionResponseSchema.parse(
+        await readJsonOrThrow(res, "Failed to request reset."),
+      );
 
-      setSuccess(json.message || "Reset link sent if account exists.");
+      setSuccess(json.data.message);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to request reset.");
     } finally {
@@ -55,17 +59,20 @@ export function ResetPasswordPage() {
     }
 
     setIsLoading(true);
+
     try {
       const res = await fetch("/api/users/reset-password", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
       });
 
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message || "Password reset failed.");
+      const json = userActionResponseSchema.parse(
+        await readJsonOrThrow(res, "Password reset failed."),
+      );
 
-      setSuccess(json.message || "Password reset successful.");
+      setSuccess(json.data.message);
       await navigate({ to: "/auth/login", replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Password reset failed.");
@@ -102,7 +109,7 @@ export function ResetPasswordPage() {
         <Button
           type="button"
           variant="ghost"
-          onClick={() => void navigate({to: "/auth/login" })}
+          onClick={() => void navigate({ to: "/auth/login" })}
           className="mt-4 w-full text-slate-400 hover:text-cyan-200"
         >
           Back to Login

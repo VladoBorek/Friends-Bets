@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { UserSummary } from "@pb138/shared/schemas/user";
+import { getMeResponseSchema } from "@pb138/shared/schemas/user";
 import { useQueryClient } from "@tanstack/react-query";
+import { readJsonOrThrow } from "../api/http";
 import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -16,15 +18,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch("/api/users/me");
-      if (res.ok) {
-        const json = await res.json();
-        setUser(json.data);
-        return json.data as UserSummary;
+      const res = await fetch("/api/users/me", {
+        credentials: "same-origin",
+      });
+
+      if (!res.ok) {
+        setUser(null);
+        return null;
       }
 
-      setUser(null);
-      return null;
+      const json = getMeResponseSchema.parse(
+        await readJsonOrThrow(res, "Unable to load current user"),
+      );
+
+      setUser(json.data);
+      return json.data;
     } catch {
       setUser(null);
       return null;
@@ -35,13 +43,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch("/api/users/logout", { method: "POST" });
+    await fetch("/api/users/logout", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+
     queryClient.clear();
     setUser(null);
   }, [queryClient]);
 
   useEffect(() => {
-    fetchMe();
+    void fetchMe();
   }, [fetchMe]);
 
   return (
