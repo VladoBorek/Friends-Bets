@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { paginatedAdminCategoriesResponseSchema } from "@pb138/shared/schemas/wager";
 import { extractApiErrorMessage, readJsonResponse } from "../../../api/http";
 
+const ADMIN_CATEGORIES_PAGE_SIZE = 10;
+
 export type AdminCategorySummary = {
   id: number;
   name: string;
@@ -11,42 +13,36 @@ export type AdminCategorySummary = {
 
 type Feedback = { type: "success" | "error"; message: string } | null;
 
-async function fetchAllAdminCategories() {
-  const categories: AdminCategorySummary[] = [];
-  let offset = 0;
-  const limit = 50;
+type PaginationState = {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+};
 
-  while (true) {
-    const params = new URLSearchParams({
-      limit: String(limit),
-      offset: String(offset),
-    });
+async function fetchAdminCategoriesPage(page: number) {
+  const params = new URLSearchParams({
+    limit: String(ADMIN_CATEGORIES_PAGE_SIZE),
+    offset: String((page - 1) * ADMIN_CATEGORIES_PAGE_SIZE),
+  });
 
-    const response = await fetch(`/api/wagers/categories/admin?${params.toString()}`, {
-      credentials: "same-origin",
-    });
+  const response = await fetch(`/api/wagers/categories/admin?${params.toString()}`, {
+    credentials: "same-origin",
+  });
 
-    const json = await readJsonResponse(response);
+  const json = await readJsonResponse(response);
 
-    if (!response.ok) {
-      throw new Error(extractApiErrorMessage(json, "Unable to load categories"));
-    }
-
-    const page = paginatedAdminCategoriesResponseSchema.parse(json);
-    categories.push(...page.data);
-
-    if (!page.pagination.hasMore) {
-      break;
-    }
-
-    offset += page.pagination.limit;
+  if (!response.ok) {
+    throw new Error(extractApiErrorMessage(json, "Unable to load categories"));
   }
 
-  return categories;
+  return paginatedAdminCategoriesResponseSchema.parse(json);
 }
 
 export function useCategories(enabled: boolean) {
   const [categories, setCategories] = useState<AdminCategorySummary[]>([]);
+  const [pagination, setPagination] = useState<PaginationState | null>(null);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -58,9 +54,11 @@ export function useCategories(enabled: boolean) {
     }
 
     setIsLoading(true);
+
     try {
-      const data = await fetchAllAdminCategories();
-      setCategories(data.sort((a, b) => a.name.localeCompare(b.name)));
+      const result = await fetchAdminCategoriesPage(page);
+      setCategories(result.data);
+      setPagination(result.pagination);
     } catch (error) {
       setFeedback({
         type: "error",
@@ -69,7 +67,7 @@ export function useCategories(enabled: boolean) {
     } finally {
       setIsLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, page]);
 
   useEffect(() => {
     if (!enabled) {
@@ -78,6 +76,14 @@ export function useCategories(enabled: boolean) {
 
     void fetchCategories();
   }, [enabled, fetchCategories]);
+
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
+
+  useEffect(() => {
+    if (pagination && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, pagination, totalPages]);
 
   const addCategory = useCallback(async () => {
     const trimmedName = newCategoryName.trim();
@@ -106,6 +112,7 @@ export function useCategories(enabled: boolean) {
 
       setNewCategoryName("");
       setFeedback({ type: "success", message: `Category '${trimmedName}' added.` });
+      setPage(1);
       await fetchCategories();
     } catch (error) {
       setFeedback({
@@ -151,8 +158,12 @@ export function useCategories(enabled: boolean) {
     isLoading,
     isSubmitting,
     newCategoryName,
+    pagination,
+    page,
+    totalPages,
     setFeedback,
     setNewCategoryName,
+    setPage,
     actions: {
       addCategory,
       removeCategory,

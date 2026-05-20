@@ -1,17 +1,39 @@
 import { Input } from "../../../components/ui/input";
 import type { UserSummary } from "@pb138/shared/schemas/user";
+import { FriendsPagination } from "../../friends/components/friends-pagination";
 import { UserActionMenu } from "./user-action-menu";
 import type { UserActions } from "../hooks/use-users";
+
+type PaginationState = {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+};
 
 interface UserTableProps {
   users: UserSummary[];
   isLoading: boolean;
   query: string;
+  pagination: PaginationState | null;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
   onQueryChange: (query: string) => void;
   actions: UserActions;
 }
 
-export function UserTable({ users, isLoading, query, onQueryChange, actions }: UserTableProps) {
+export function UserTable({
+  users,
+  isLoading,
+  query,
+  pagination,
+  currentPage,
+  totalPages,
+  onPageChange,
+  onQueryChange,
+  actions,
+}: UserTableProps) {
   const getUserStatus = (entry: UserSummary): "active" | "non-verified" | "suspended" => {
     if (entry.suspendedUntil && new Date(entry.suspendedUntil) > new Date()) {
       return "suspended";
@@ -34,10 +56,24 @@ export function UserTable({ users, isLoading, query, onQueryChange, actions }: U
     suspended: "Suspended",
   };
 
+  const firstVisible = pagination && pagination.total > 0
+    ? Math.min(pagination.offset + 1, pagination.total)
+    : 0;
+  const lastVisible = pagination
+    ? Math.min(pagination.offset + users.length, pagination.total)
+    : users.length;
+
   return (
     <div>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold text-slate-100">Users Table</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-100">Users Table</h2>
+          {pagination && pagination.total > 0 && (
+            <p className="mt-1 text-xs text-slate-500">
+              Showing {firstVisible}-{lastVisible} of {pagination.total}
+            </p>
+          )}
+        </div>
         <Input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
@@ -105,10 +141,10 @@ export function UserTable({ users, isLoading, query, onQueryChange, actions }: U
                       </span>
                     </td>
                     <td className="px-2 py-4 text-right">
-                      <UserActionMenu 
-                        user={entry} 
-                        index={index} 
-                        status={status} 
+                      <UserActionMenu
+                        user={entry}
+                        index={index}
+                        status={status}
                         actions={actions}
                       />
                     </td>
@@ -119,6 +155,16 @@ export function UserTable({ users, isLoading, query, onQueryChange, actions }: U
           </table>
         )}
       </div>
+
+      {!isLoading && pagination && pagination.total > 0 && (
+        <div className="mt-5">
+          <FriendsPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

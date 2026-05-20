@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { listUsersResponseSchema, type UserSummary } from "@pb138/shared/schemas/user";
 import { extractApiErrorMessage, readJsonResponse } from "../../../api/http";
 
+const ADMIN_USERS_PAGE_SIZE = 10;
+
 export type SuspensionUnit = "hours" | "days" | "months";
+
+type PaginationState = {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+};
 
 export interface UserActions {
   deleteUser: (user: UserSummary) => Promise<boolean>;
@@ -12,6 +21,25 @@ export interface UserActions {
   resendVerification: (user: UserSummary) => Promise<boolean>;
   resetPassword: (user: UserSummary) => Promise<boolean>;
   refresh: () => Promise<void>;
+}
+
+async function fetchAdminUsersPage(page: number) {
+  const params = new URLSearchParams({
+    limit: String(ADMIN_USERS_PAGE_SIZE),
+    offset: String((page - 1) * ADMIN_USERS_PAGE_SIZE),
+  });
+
+  const response = await fetch(`/api/users/admin/users?${params.toString()}`, {
+    credentials: "same-origin",
+  });
+
+  const json = await readJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(extractApiErrorMessage(json, "Unable to load users"));
+  }
+
+  return listUsersResponseSchema.parse(json);
 }
 
 async function fetchAllAdminUsers() {
@@ -38,26 +66,42 @@ async function fetchAllAdminUsers() {
     const page = listUsersResponseSchema.parse(json);
     users.push(...page.data);
 
-    if (!page.pagination.hasMore) {
-      break;
-    }
-
+    if (!page.pagination.hasMore) break;
     offset += page.pagination.limit;
   }
 
   return users;
 }
 
+function sortUsers(users: UserSummary[]) {
+  return [...users].sort((a, b) => {
+    if (a.roleName === "ADMIN" && b.roleName !== "ADMIN") return -1;
+    if (a.roleName !== "ADMIN" && b.roleName === "ADMIN") return 1;
+    return a.username.localeCompare(b.username);
+  });
+}
+
 export function useUsers() {
   const [users, setUsers] = useState<UserSummary[]>([]);
+  const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
+  const [pagination, setPagination] = useState<PaginationState | null>(null);
+  const [page, setPageState] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQueryState] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
+
     try {
-      setUsers(await fetchAllAdminUsers());
+      const [pageResult, allResult] = await Promise.all([
+        fetchAdminUsersPage(page),
+        fetchAllAdminUsers(),
+      ]);
+
+      setUsers(sortUsers(pageResult.data));
+      setPagination(pageResult.pagination);
+      setAllUsers(sortUsers(allResult));
     } catch (error) {
       setFeedback({
         type: "error",
@@ -66,41 +110,73 @@ export function useUsers() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page]);
 
   useEffect(() => {
     void fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
-  const filteredUsers = useMemo(() => {
-    return users
-      .filter((entry) => {
-        const normalizedQuery = query.trim().toLowerCase();
-        if (!normalizedQuery) return true;
+  const setQuery = (nextQuery: string) => {
+    setQueryState(nextQuery);
+    setPageState(1);
+  };
 
-        return (
-          entry.username.toLowerCase().includes(normalizedQuery) ||
-          entry.email.toLowerCase().includes(normalizedQuery) ||
-          (entry.roleName ?? "").toLowerCase().includes(normalizedQuery)
-        );
-      })
-      .sort((a, b) => {
-        if (a.roleName === "ADMIN" && b.roleName !== "ADMIN") return -1;
-        if (a.roleName !== "ADMIN" && b.roleName === "ADMIN") return 1;
-        return a.username.localeCompare(b.username);
-      });
-  }, [users, query]);
+  const filteredAllUsers = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return allUsers;
+    }
+
+    return allUsers.filter((entry) => (
+      entry.username.toLowerCase().includes(normalizedQuery) ||
+      entry.email.toLowerCase().includes(normalizedQuery) ||
+      (entry.roleName ?? "").toLowerCase().includes(normalizedQuery)
+    ));
+  }, [allUsers, query]);
+
+  const visibleUsers = useMemo(() => {
+    if (!query.trim()) {
+      return users;
+    }
+
+    const start = (page - 1) * ADMIN_USERS_PAGE_SIZE;
+    return filteredAllUsers.slice(start, start + ADMIN_USERS_PAGE_SIZE);
+  }, [filteredAllUsers, page, query, users]);
+
+  const visiblePagination = useMemo<PaginationState | null>(() => {
+    if (!query.trim()) {
+      return pagination;
+    }
+
+    return {
+      total: filteredAllUsers.length,
+      limit: ADMIN_USERS_PAGE_SIZE,
+      offset: (page - 1) * ADMIN_USERS_PAGE_SIZE,
+      hasMore: page * ADMIN_USERS_PAGE_SIZE < filteredAllUsers.length,
+    };
+  }, [filteredAllUsers.length, page, pagination, query]);
+
+  const totalPages = visiblePagination
+    ? Math.max(1, Math.ceil(visiblePagination.total / visiblePagination.limit))
+    : 1;
+
+  useEffect(() => {
+    if (visiblePagination && page > totalPages) {
+      setPageState(totalPages);
+    }
+  }, [page, totalPages, visiblePagination]);
 
   const stats = useMemo(() => {
-    const total = users.length;
-    const admins = users.filter((u) => u.roleName === "ADMIN").length;
+    const total = allUsers.length;
+    const admins = allUsers.filter((u) => u.roleName === "ADMIN").length;
 
     return {
       total,
       admins,
       standard: total - admins,
     };
-  }, [users]);
+  }, [allUsers]);
 
   const performAction = async (
     endpoint: string,
@@ -164,14 +240,18 @@ export function useUsers() {
   };
 
   return {
-    users: filteredUsers,
-    allUsers: users,
+    users: visibleUsers,
+    allUsers,
     isLoading,
     query,
     setQuery,
     feedback,
     setFeedback,
     stats,
+    pagination: visiblePagination,
+    page,
+    totalPages,
+    setPage: setPageState,
     actions,
   };
 }
