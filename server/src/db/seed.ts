@@ -1,12 +1,13 @@
 import { faker } from "@faker-js/faker";
+import { logger } from "../observability";
 import { closeConnection } from "./db";
+import { seedFriendships } from "./seed/friends";
+import { seedGroups } from "./seed/groups";
+import { seedNotifications } from "./seed/notifications";
 import { truncateAll } from "./seed/truncate";
 import { seedRoles, seedUsers } from "./seed/users";
+import { seedTransactions, seedWallets } from "./seed/wallet";
 import { seedCategories, seedWagers } from "./seed/wagers";
-import { seedGroups } from "./seed/groups";
-import { seedWallets, seedTransactions } from "./seed/wallet";
-import { seedNotifications } from "./seed/notifications";
-import { seedFriendships } from "./seed/friends";
 
 async function main() {
   try {
@@ -25,9 +26,17 @@ async function main() {
     await seedTransactions({ userWallets: wallets.userWallets });
     await seedFriendships(users);
 
-    console.log(`Seed completed successfully. Wagers: ${createdWagers.length}, Users: ${users.length}`);
+    logger.info({
+      event_name: "seed_completed",
+      wager_count: createdWagers.length,
+      user_count: users.length,
+    });
   } catch (error) {
-    console.error("Seed failed:", error);
+    logger.error({
+      event_name: "seed_failed",
+      error,
+    });
+
     process.exitCode = 1;
   } finally {
     await closeConnection();

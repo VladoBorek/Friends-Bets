@@ -1,6 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import { readServerConfig } from "../config";
 import { HttpError } from "../errors";
+import { logger } from "../observability";
 
 type EmailTemplatePayload = {
   to: string;
@@ -85,46 +86,55 @@ class EmailClient {
   }
 
   async verify(): Promise<void> {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      return;
+    }
+
     if (this.provider === "smtp" && this.transporter) {
-      console.log("[Email] Verifying SMTP transporter", { provider: this.provider, from: this.from });
+      logger.info({
+        event_name: "smtp_verify_started",
+        provider: this.provider,
+      });
+
       await this.transporter.verify();
-      console.log("[Email] SMTP transporter verified");
+
+      logger.info({
+        event_name: "smtp_verify_completed",
+        provider: this.provider,
+      });
     }
   }
 
   async send(template: EmailTemplatePayload): Promise<void> {
     if (!this.enabled) {
-      console.warn("[Email] Send skipped because EMAIL_ENABLED=false", {
-        to: template.to,
+      logger.warn({
+        event_name: "email_send_skipped",
+        reason: "email_disabled",
         subject: template.subject,
       });
       return;
     }
 
     if (this.provider === "log") {
-      console.log("[Email LOG]", {
-        from: this.from,
-        to: template.to,
+      logger.info({
+        event_name: "email_send_logged",
+        provider: this.provider,
         subject: template.subject,
-        text: template.text ?? null,
-        html: template.html,
       });
       return;
     }
 
     if (!this.transporter) {
-      throw new HttpError(
-          500,
-          "INTERNAL_SERVER_ERROR",
-          "Email transporter is not initialized",
-        );
+      throw new HttpError({
+        status: 500,
+        code: "EMAIL_SEND_FAILED",
+        message: "Email service is not available",
+      });
     }
 
-    console.log("[Email] Sending SMTP mail", {
+    logger.info({
+      event_name: "smtp_send_started",
       provider: this.provider,
-      from: this.from,
-      to: template.to,
       subject: template.subject,
     });
 
@@ -136,18 +146,22 @@ class EmailClient {
         text: template.text,
         html: template.html,
       });
-      console.log("[Email] SMTP send successful", {
-        to: template.to,
-        messageId: info.messageId,
-        accepted: info.accepted,
-        rejected: info.rejected,
+
+      logger.info({
+        event_name: "smtp_send_completed",
+        provider: this.provider,
+        message_id: info.messageId,
+        accepted_count: info.accepted.length,
+        rejected_count: info.rejected.length,
       });
     } catch (error) {
-      console.error("[Email] SMTP send failed", {
-        to: template.to,
+      logger.error({
+        event_name: "smtp_send_failed",
+        provider: this.provider,
         subject: template.subject,
-        error: error instanceof Error ? error.message : String(error),
+        error,
       });
+
       throw error;
     }
   }

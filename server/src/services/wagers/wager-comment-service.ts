@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
 import type { WagerCommentsListQuery } from "@pb138/shared/schemas/wager";
+import { eq } from "drizzle-orm";
 import { db } from "../../db/db";
 import { User } from "../../db/schema";
 import { HttpError } from "../../errors";
@@ -55,7 +55,11 @@ export async function createComment(
     .limit(1);
 
   if (!commentingUser) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   ensureUserIsVerified(commentingUser, "comment");

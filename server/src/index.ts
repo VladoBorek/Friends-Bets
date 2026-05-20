@@ -1,6 +1,7 @@
-import { closeConnection } from "./db/db";
-import { readServerConfig } from "./config";
 import { createApp } from "./app";
+import { readServerConfig } from "./config";
+import { closeConnection } from "./db/db";
+import { logger } from "./observability";
 import { emailClient } from "./services/email-service";
 
 const { port } = readServerConfig();
@@ -12,17 +13,35 @@ app.listen({
 });
 
 void emailClient.verify().catch((error) => {
-  console.error("Email client verification failed:", error);
+  logger.error({
+    event_name: "email_client_verification_failed",
+    error,
+  });
 });
 
-console.log(`REST API running at http://localhost:${port}`);
-console.log(`Swagger docs at http://localhost:${port}/swagger`);
+logger.info({
+  event_name: "server_started",
+  port,
+  rest_api_url: `http://localhost:${port}`,
+  swagger_url: `http://localhost:${port}/swagger`,
+});
 
 const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
 
 for (const signal of shutdownSignals) {
   process.once(signal, async () => {
+    logger.info({
+      event_name: "server_shutdown_started",
+      signal,
+    });
+
     await closeConnection();
+
+    logger.info({
+      event_name: "server_shutdown_completed",
+      signal,
+    });
+
     process.exit(0);
   });
 }
