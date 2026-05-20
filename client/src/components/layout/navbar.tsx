@@ -1,6 +1,8 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { Menu, User, X } from "lucide-react";
 import { useState } from "react";
+import { userActionResponseSchema } from "@pb138/shared/schemas/user";
+import { readJsonOrThrow } from "../../api/http";
 import { useAuth } from "../../lib/auth-context";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
@@ -33,20 +35,28 @@ export function Navbar() {
 
   const handleResendVerification = async () => {
     if (!user.email) return;
+
     setIsResendLoading(true);
+
     try {
-      const res = await fetch("/api/users/resend-verification", {
+      const response = await fetch("/api/users/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ email: user.email }),
       });
-      const json = (await res.json().catch(() => null)) as { message?: string } | null;
-      if (!res.ok) {
-        setFeedback({ type: "error", message: json?.message ?? "Failed to resend verification email." });
-        return;
-      }
-      setFeedback({ type: "success", message: json?.message ?? "Verification email resent." });
+
+      const json = userActionResponseSchema.parse(
+        await readJsonOrThrow(response, "Failed to resend verification email."),
+      );
+
+      setFeedback({ type: "success", message: json.data.message });
       await refreshUser();
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to resend verification email.",
+      });
     } finally {
       setIsResendLoading(false);
     }
@@ -78,6 +88,7 @@ export function Navbar() {
           </div>
         </div>
       )}
+
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-lg font-bold uppercase tracking-[0.35em] text-cyan-300/80">Gam(bl)ing With Friends</p>

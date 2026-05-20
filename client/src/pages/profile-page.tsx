@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { LogOut, User } from "lucide-react";
 import { userMutationResponseSchema } from "@pb138/shared/schemas/user";
+import { readJsonOrThrow } from "../api/http";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { FormItem } from "../components/ui/form-item";
@@ -17,22 +18,6 @@ type FeedbackState = {
   type: "success" | "error";
   message: string;
 };
-
-async function extractErrorMessage(response: Response, fallback: string): Promise<string> {
-  const rawBody = (await response.text().catch(() => "")).trim();
-  if (!rawBody) return fallback;
-
-  try {
-    const parsed = JSON.parse(rawBody) as { message?: string };
-    if (typeof parsed.message === "string" && parsed.message.trim().length > 0) {
-      return parsed.message;
-    }
-  } catch {
-    return rawBody;
-  }
-
-  return rawBody;
-}
 
 type SettingsSection = "nickname" | "email" | "password" | null;
 
@@ -141,15 +126,15 @@ export function ProfilePage() {
     try {
       const response = await fetch("/api/users/nickname", {
         method: "PATCH",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nickname: nickname.trim() }),
       });
 
-      if (!response.ok) {
-        throw new Error(await extractErrorMessage(response, "Unable to update nickname"));
-      }
+      const json = userMutationResponseSchema.parse(
+        await readJsonOrThrow(response, "Unable to update nickname"),
+      );
 
-      const json = userMutationResponseSchema.parse(await response.json());
       setNickname(json.data.username);
       setFeedback({ type: "success", message: "Nickname updated successfully." });
       setActiveSection(null);
@@ -172,15 +157,15 @@ export function ProfilePage() {
     try {
       const response = await fetch("/api/users/email", {
         method: "PATCH",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newEmail: newEmail.trim(), currentPassword }),
       });
 
-      if (!response.ok) {
-        throw new Error(await extractErrorMessage(response, "Unable to update email"));
-      }
+      const json = userMutationResponseSchema.parse(
+        await readJsonOrThrow(response, "Unable to update email"),
+      );
 
-      const json = userMutationResponseSchema.parse(await response.json());
       setNewEmail(json.data.email);
       setCurrentPassword("");
       setShowEmailPassword(false);
@@ -206,15 +191,15 @@ export function ProfilePage() {
     try {
       const response = await fetch("/api/users/password", {
         method: "PATCH",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldPassword, newPassword }),
       });
 
-      if (!response.ok) {
-        throw new Error(await extractErrorMessage(response, "Unable to update password"));
-      }
+      userMutationResponseSchema.parse(
+        await readJsonOrThrow(response, "Unable to update password"),
+      );
 
-      userMutationResponseSchema.parse(await response.json());
       setOldPassword("");
       setNewPassword("");
       setNewPasswordRepeat("");

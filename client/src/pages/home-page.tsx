@@ -2,15 +2,20 @@ import { useSearch, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, X, Plus, ArrowRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import {
+  paginatedWagersResponseSchema,
+  type PaginatedWagersResponse,
+  type WagerSummary,
+} from "@pb138/shared/schemas/wager";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { WagerCard } from "../features/wagers/components/wager-card";
 import { groupsQueries } from "../api/groups/groups-query-options";
 import { useAuth } from "../lib/auth-context";
 import { useWalletOverview } from "../api/wallet/wallet-query-options";
-import type { PaginatedWagersResponse, WagerSummary } from "@pb138/shared/schemas/wager";
 import { formatCurrency, formatMoney } from "../features/wagers/utils/utils";
 import { WAGERS_PAGE_SIZE } from "../features/wagers/utils/wagers-search";
+import { readJsonOrThrow } from "../api/http";
 
 function StatsCard({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (
@@ -85,7 +90,7 @@ function GroupsPreviewSection() {
           <div className="flex-1 text-left">
             <p className="font-medium text-slate-100">{group.name}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {group.memberCount} members • {group.activeWagerCount} active wagers
+              {group.memberCount} members - {group.activeWagerCount} active wagers
             </p>
           </div>
           <ArrowRight className="h-4 w-4 text-slate-500" />
@@ -117,6 +122,8 @@ function WagersPreviewSection() {
     const fetchWagers = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+
         const params = new URLSearchParams({
           limit: String(Math.max(WAGERS_PAGE_SIZE, 6)),
           offset: "0",
@@ -131,8 +138,10 @@ function WagersPreviewSection() {
           credentials: "same-origin",
         });
 
-        if (!response.ok) throw new Error("Failed to load wagers");
-        const data = (await response.json()) as PaginatedWagersResponse;
+        const data = paginatedWagersResponseSchema.parse(
+          await readJsonOrThrow(response, "Failed to load wagers"),
+        );
+
         setWagers(data.data.slice(0, 3));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unable to load wagers");
@@ -180,7 +189,6 @@ function DashboardStats() {
 
     const fetchStats = async () => {
       try {
-        // Fetch active wagers count
         const activeParams = new URLSearchParams({
           limit: "1",
           offset: "0",
@@ -191,9 +199,10 @@ function DashboardStats() {
         const activeResponse = await fetch(`/api/wagers?${activeParams.toString()}`, {
           credentials: "same-origin",
         });
-        const activeData = (await activeResponse.json()) as PaginatedWagersResponse;
+        const activeData = paginatedWagersResponseSchema.parse(
+          await readJsonOrThrow(activeResponse, "Failed to load active wager stats"),
+        );
 
-        // Fetch total wagers count
         const totalParams = new URLSearchParams({
           limit: "1",
           offset: "0",
@@ -204,14 +213,16 @@ function DashboardStats() {
         const totalResponse = await fetch(`/api/wagers?${totalParams.toString()}`, {
           credentials: "same-origin",
         });
-        const totalData = (await totalResponse.json()) as PaginatedWagersResponse;
+        const totalData = paginatedWagersResponseSchema.parse(
+          await readJsonOrThrow(totalResponse, "Failed to load wager stats"),
+        );
 
         setWagerStats({
           total: totalData.pagination.total,
           active: activeData.pagination.total,
         });
       } catch {
-        // Silently fail, stats are not critical
+        // Stats are not critical for rendering the dashboard.
       }
     };
 
@@ -230,7 +241,7 @@ function DashboardStats() {
         value={
           walletQuery.data?.data.history?.[0]
             ? formatMoney(walletQuery.data.data.history[0].walletImpact)
-            : "—"
+            : "--"
         }
       />
     </div>
@@ -270,13 +281,11 @@ export function HomePage() {
         </div>
       )}
 
-      {/* Dashboard Stats */}
       <div>
         <h1 className="mb-4 text-2xl font-bold text-slate-100 sm:text-3xl">Dashboard</h1>
         <DashboardStats />
       </div>
 
-      {/* Quick Actions */}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button onClick={() => navigate({ to: `/wagers`, search: { page: 1 } })} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -292,7 +301,6 @@ export function HomePage() {
         </Button>
       </div>
 
-      {/* Main Dashboard Sections */}
       <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
         <DashboardSection
           title="Your Groups"

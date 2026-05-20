@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import type { WagerDetail } from "../../../../../shared/src/schemas/wager";
+import {
+  paginatedWagerBetsResponseSchema,
+  type WagerDetail,
+} from "@pb138/shared/schemas/wager";
+import { readJsonOrThrow } from "../../../api/http";
 import { Card, CardTitle } from "../../../components/ui/card";
 import { ScrollArea, ScrollBar } from "../../../components/ui/scroll-area";
 import { OUTCOME_COLORS, formatMoney } from "../utils/utils";
@@ -20,13 +24,24 @@ export function BetsSection({ wagerId, currentUserId, outcomes, refreshKey }: Be
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/wagers/${wagerId}/bets`);
-        const json = (await res.json().catch(() => null)) as { data?: WagerBet[] } | null;
-        setBets(json?.data ?? []);
+        setIsLoading(true);
+
+        const response = await fetch(`/api/wagers/${wagerId}/bets?limit=50&offset=0`, {
+          credentials: "same-origin",
+        });
+
+        const json = paginatedWagerBetsResponseSchema.parse(
+          await readJsonOrThrow(response, "Unable to load bets"),
+        );
+
+        setBets(json.data);
+      } catch {
+        setBets([]);
       } finally {
         setIsLoading(false);
       }
     }
+
     void load();
   }, [wagerId, refreshKey]);
 
@@ -45,7 +60,7 @@ export function BetsSection({ wagerId, currentUserId, outcomes, refreshKey }: Be
         )}
       </div>
 
-      {isLoading && <p className="mt-3 text-sm text-slate-500">Loading bets…</p>}
+      {isLoading && <p className="mt-3 text-sm text-slate-500">Loading bets...</p>}
       {!isLoading && bets.length === 0 && (
         <p className="mt-3 text-sm text-slate-500">No bets placed yet.</p>
       )}

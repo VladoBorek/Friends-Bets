@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  paginatedWagerCommentsResponseSchema,
+  wagerCommentSchema,
+} from "@pb138/shared/schemas/wager";
+import { readJsonOrThrow } from "../../../api/http";
 import { Button } from "../../../components/ui/button";
 import { Card, CardTitle } from "../../../components/ui/card";
 import { ScrollArea, ScrollBar } from "../../../components/ui/scroll-area";
@@ -31,18 +36,30 @@ export function CommentSection({
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/wagers/${wagerId}/comments`);
-        const json = (await res.json().catch(() => null)) as { data?: WagerComment[] } | null;
-        setComments(json?.data ?? []);
+        setIsLoading(true);
+
+        const response = await fetch(`/api/wagers/${wagerId}/comments?limit=50&offset=0`, {
+          credentials: "same-origin",
+        });
+
+        const json = paginatedWagerCommentsResponseSchema.parse(
+          await readJsonOrThrow(response, "Unable to load comments"),
+        );
+
+        setComments(json.data);
+      } catch {
+        setComments([]);
       } finally {
         setIsLoading(false);
       }
     }
+
     void load();
   }, [wagerId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (isSubmissionRestricted) {
       setSubmitError(commentRestrictionMessage ?? "Commenting is disabled for your account.");
       return;
@@ -50,17 +67,23 @@ export function CommentSection({
 
     const trimmed = draft.trim();
     if (!trimmed) return;
+
     setSubmitError(null);
     setIsSubmitting(true);
+
     try {
-      const res = await fetch(`/api/wagers/${wagerId}/comments`, {
+      const response = await fetch(`/api/wagers/${wagerId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ content: trimmed }),
       });
-      const json = (await res.json().catch(() => null)) as { data?: WagerComment; message?: string } | null;
-      if (!res.ok) throw new Error(json?.message ?? "Failed to post comment");
-      if (json?.data) setComments((prev) => [...prev, json.data!]);
+
+      const json = wagerCommentSchema.parse(
+        (await readJsonOrThrow(response, "Failed to post comment") as { data: unknown }).data,
+      );
+
+      setComments((prev) => [...prev, json]);
       setDraft("");
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch (e) {
@@ -81,7 +104,7 @@ export function CommentSection({
 
       <ScrollArea className="mt-4 max-h-96">
         <div className="grid gap-2">
-          {isLoading && <p className="text-sm text-slate-500">Loading comments…</p>}
+          {isLoading && <p className="text-sm text-slate-500">Loading comments...</p>}
           {!isLoading && comments.length === 0 && (
             <p className="text-sm text-slate-500">No comments yet. Be the first!</p>
           )}
@@ -118,7 +141,7 @@ export function CommentSection({
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Write a comment…"
+            placeholder="Write a comment..."
             rows={3}
             disabled={isSubmitting || isSubmissionRestricted}
           />
@@ -129,7 +152,7 @@ export function CommentSection({
               disabled={isSubmitting || isSubmissionRestricted || !draft.trim()}
               className="w-fit"
             >
-              {isSubmitting ? "Posting…" : "Post Comment"}
+              {isSubmitting ? "Posting..." : "Post Comment"}
             </Button>
           </div>
         </form>

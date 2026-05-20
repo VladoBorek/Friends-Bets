@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import type { GroupSummary } from "@pb138/shared/schemas/groups";
+import {
+  paginatedGroupMembersResponseSchema,
+  paginatedGroupsResponseSchema,
+  type GroupSummary,
+} from "@pb138/shared/schemas/groups";
+import { readJsonOrThrow } from "../../../api/http";
 import { Input } from "../../../components/ui/input";
 import type { UserSearchResult } from "./user-search-section";
 
@@ -19,25 +24,25 @@ interface GroupSearchSectionProps {
   onRemoveGroup: (groupId: number) => void;
 }
 
-type MemberRow = { id: number; username: string; email: string };
-type PaginatedApiResponse<T> = { data: T[]; pagination: { hasMore: boolean }; message?: string };
-
 async function fetchAllGroupMembers(groupId: number, currentUserId?: number): Promise<UserSearchResult[]> {
-  const all: MemberRow[] = [];
+  const all: UserSearchResult[] = [];
   let offset = 0;
 
   while (true) {
-    const res = await fetch(`/api/groups/${groupId}/members?limit=50&offset=${offset}`);
-    const json = (await res.json()) as PaginatedApiResponse<MemberRow>;
-    if (!res.ok) throw new Error(json.message ?? "Failed to load members");
-    all.push(...(json.data ?? []));
+    const response = await fetch(`/api/groups/${groupId}/members?limit=50&offset=${offset}`, {
+      credentials: "same-origin",
+    });
+
+    const json = paginatedGroupMembersResponseSchema.parse(
+      await readJsonOrThrow(response, "Failed to load members"),
+    );
+
+    all.push(...json.data.map((m) => ({ id: m.id, username: m.username, email: m.email })));
     if (!json.pagination.hasMore) break;
     offset += 50;
   }
 
-  return all
-    .filter((m) => m.id !== currentUserId)
-    .map((m) => ({ id: m.id, username: m.username, email: m.email }));
+  return all.filter((m) => m.id !== currentUserId);
 }
 
 export function GroupSearchSection({
@@ -66,14 +71,21 @@ export function GroupSearchSection({
       try {
         const all: GroupSummary[] = [];
         let offset = 0;
+
         while (true) {
-          const res = await fetch(`/api/groups?limit=50&offset=${offset}`);
-          const json = (await res.json()) as PaginatedApiResponse<GroupSummary>;
-          if (!res.ok) throw new Error(json.message ?? "Failed to load groups");
-          all.push(...(json.data ?? []));
+          const response = await fetch(`/api/groups?limit=50&offset=${offset}`, {
+            credentials: "same-origin",
+          });
+
+          const json = paginatedGroupsResponseSchema.parse(
+            await readJsonOrThrow(response, "Failed to load groups"),
+          );
+
+          all.push(...json.data);
           if (!json.pagination.hasMore) break;
           offset += 50;
         }
+
         setGroups(all);
       } catch (e) {
         setGroupsError(e instanceof Error ? e.message : "Failed to load groups");
@@ -81,6 +93,7 @@ export function GroupSearchSection({
         setIsLoadingGroups(false);
       }
     }
+
     void loadGroups();
   }, []);
 
@@ -90,6 +103,7 @@ export function GroupSearchSection({
         setDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -111,6 +125,7 @@ export function GroupSearchSection({
     setSearchQuery("");
     setMembersError(null);
     setIsLoadingMembers(true);
+
     try {
       const members = await fetchAllGroupMembers(group.id, currentUserId);
       onAddGroup({
@@ -138,7 +153,6 @@ export function GroupSearchSection({
     <div className="grid gap-3 rounded border border-slate-700 p-4">
       <p className="text-sm font-medium text-slate-300">Invite groups</p>
 
-      {/* Accordion cards for each added group */}
       {addedGroups.map((gi) => {
         const includedCount = gi.members.length - gi.excludedIds.size;
         const isExpanded = expandedGroupId === gi.groupId;
@@ -165,7 +179,12 @@ export function GroupSearchSection({
                 tabIndex={0}
                 aria-label={`Remove group ${gi.groupName}`}
                 onClick={(e) => { e.stopPropagation(); onRemoveGroup(gi.groupId); }}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); onRemoveGroup(gi.groupId); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    onRemoveGroup(gi.groupId);
+                  }
+                }}
                 className="ml-1 rounded p-0.5 text-slate-400 hover:text-rose-400"
               >
                 <X className="h-3.5 w-3.5" />
@@ -208,10 +227,9 @@ export function GroupSearchSection({
         );
       })}
 
-      {/* Group search dropdown */}
       <div ref={dropdownRef} className="relative">
         {isLoadingGroups ? (
-          <p className="text-xs text-slate-400">Loading your groups…</p>
+          <p className="text-xs text-slate-400">Loading your groups...</p>
         ) : groupsError ? (
           <p className="text-xs text-rose-300">{groupsError}</p>
         ) : availableGroupCount === 0 ? (
@@ -224,7 +242,7 @@ export function GroupSearchSection({
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setDropdownOpen(true); }}
               onFocus={() => setDropdownOpen(true)}
-              placeholder="Search your groups…"
+              placeholder="Search your groups..."
               autoComplete="off"
               disabled={isLoadingMembers}
             />
@@ -252,7 +270,7 @@ export function GroupSearchSection({
             )}
           </>
         )}
-        {isLoadingMembers && <p className="mt-1 text-xs text-slate-400">Adding group…</p>}
+        {isLoadingMembers && <p className="mt-1 text-xs text-slate-400">Adding group...</p>}
         {membersError && <p className="mt-1 text-xs text-rose-300">{membersError}</p>}
       </div>
     </div>

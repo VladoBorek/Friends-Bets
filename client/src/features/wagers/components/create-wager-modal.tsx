@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
-import { createWagerRequestSchema, type CategorySummary, type WagerDetail } from "../../../../../shared/src/schemas/wager";
+import {
+  createWagerRequestSchema,
+  createWagerResponseSchema,
+  getWagerResponseSchema,
+  paginatedCategoriesResponseSchema,
+  paginatedWagerInvitationsResponseSchema,
+  type CategorySummary,
+  type WagerDetail,
+} from "@pb138/shared/schemas/wager";
 import { Button } from "../../../components/ui/button";
 import {
   Dialog,
@@ -12,6 +20,7 @@ import { FormItem } from "../../../components/ui/form-item";
 import { Input } from "../../../components/ui/input";
 import { Switch } from "../../../components/ui/switch";
 import { Textarea } from "../../../components/ui/textarea";
+import { readJsonOrThrow } from "../../../api/http";
 import { useAuth } from "../../../lib/auth-context";
 import { toErrorMessage } from "../utils/utils";
 import { GroupSearchSection, type GroupInvitation } from "./group-search-section";
@@ -58,14 +67,22 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
       setErrorMessage(null);
       return;
     }
+
     const controller = new AbortController();
     setIsLoadingCategories(true);
+
     async function loadCategories() {
       try {
-        const response = await fetch("/api/wagers/categories", { signal: controller.signal });
-        const json = (await response.json().catch(() => null)) as { data?: CategorySummary[]; message?: string } | null;
-        if (!response.ok) throw new Error(json?.message ?? "Unable to load categories");
-        const loaded = json?.data ?? [];
+        const response = await fetch("/api/wagers/categories?limit=50&offset=0", {
+          signal: controller.signal,
+          credentials: "same-origin",
+        });
+
+        const json = paginatedCategoriesResponseSchema.parse(
+          await readJsonOrThrow(response, "Unable to load categories"),
+        );
+
+        const loaded = json.data;
         setCategories(loaded);
         if (loaded.length > 0 && !editingWager) setSelectedCategoryId(String(loaded[0].id));
       } catch (error) {
@@ -75,12 +92,14 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
         setIsLoadingCategories(false);
       }
     }
+
     void loadCategories();
     return () => controller.abort();
   }, [open, editingWager]);
 
   useEffect(() => {
     if (!open || !editingWager) return;
+
     setTitle(editingWager.title);
     setDescription(editingWager.description ?? "");
     setSelectedCategoryId(String(editingWager.categoryId));
@@ -91,28 +110,46 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
     setErrorMessage(null);
 
     if (!editingWager.isPublic) {
-      fetch(`/api/wagers/${editingWager.id}/invitations`)
-        .then((r) => r.json())
-        .then((json: { data?: UserSearchResult[] }) => { setInvitedUsers(json.data ?? []); })
-        .catch(() => {});
+      async function loadInvitations() {
+        try {
+          const response = await fetch(`/api/wagers/${editingWager!.id}/invitations?limit=50&offset=0`, {
+            credentials: "same-origin",
+          });
+
+          const json = paginatedWagerInvitationsResponseSchema.parse(
+            await readJsonOrThrow(response, "Unable to load wager invitations"),
+          );
+
+          setInvitedUsers(json.data);
+        } catch {
+          setInvitedUsers([]);
+        }
+      }
+
+      void loadInvitations();
     }
   }, [open, editingWager]);
 
   function updateOutcome(index: number, value: string) {
     setOutcomes((prev) => prev.map((o, i) => (i === index ? value : o)));
   }
+
   function addOutcome() {
     if (outcomes.length < MAX_OUTCOMES) setOutcomes((prev) => [...prev, ""]);
   }
+
   function removeOutcome(index: number) {
     if (outcomes.length > MIN_OUTCOMES) setOutcomes((prev) => prev.filter((_, i) => i !== index));
   }
+
   function addInvitedUser(u: UserSearchResult) {
     setInvitedUsers((prev) => (prev.some((x) => x.id === u.id) ? prev : [...prev, u]));
   }
+
   function removeInvitedUser(id: number) {
     setInvitedUsers((prev) => prev.filter((u) => u.id !== id));
   }
+
   function addGroupInvitation(group: GroupInvitation) {
     setGroupInvitations((prev) => {
       if (prev.some((g) => g.groupId === group.groupId)) return prev;
@@ -123,6 +160,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
       return [...prev, { ...group, excludedIds }];
     });
   }
+
   function updateGroupInvitation(groupId: number, newExcludedIds: Set<number>) {
     setGroupInvitations((prev) => {
       const target = prev.find((g) => g.groupId === groupId);
@@ -144,6 +182,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
       });
     });
   }
+
   function removeGroupInvitation(groupId: number) {
     setGroupInvitations((prev) => prev.filter((g) => g.groupId !== groupId));
   }
@@ -151,8 +190,16 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
-    if (isSuspended) { setErrorMessage("Suspended users cannot create wagers."); return; }
-    if (isUnverified) { setErrorMessage("Account must be verified to perform this action."); return; }
+
+    if (isSuspended) {
+      setErrorMessage("Suspended users cannot create wagers.");
+      return;
+    }
+
+    if (isUnverified) {
+      setErrorMessage("Account must be verified to perform this action.");
+      return;
+    }
 
     const groupUserIds = groupInvitations.flatMap((gi) =>
       gi.members.filter((m) => !gi.excludedIds.has(m.id)).map((m) => m.id),
@@ -176,21 +223,30 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
     }
 
     setIsSubmitting(true);
+
     try {
       const url = isEditing ? `/api/wagers/${editingWager.id}` : "/api/wagers";
       const method = isEditing ? "PATCH" : "POST";
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify(parsed.data),
       });
-      const json = (await response.json().catch(() => null)) as { data?: { id?: number }; message?: string } | null;
-      if (!response.ok) throw new Error(json?.message ?? (isEditing ? "Unable to update wager" : "Unable to create wager"));
+
+      const responseBody = await readJsonOrThrow(
+        response,
+        isEditing ? "Unable to update wager" : "Unable to create wager",
+      );
+
       if (isEditing) {
+        getWagerResponseSchema.parse(responseBody);
         onEdited?.();
       } else {
+        createWagerResponseSchema.parse(responseBody);
         onCreated();
       }
+
       onOpenChange(false);
     } catch (error) {
       setErrorMessage(toErrorMessage(error));
@@ -253,7 +309,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
                     className="rounded border border-slate-700 px-3 text-slate-400 hover:text-rose-400 disabled:cursor-not-allowed disabled:opacity-30"
                     aria-label="Remove outcome"
                   >
-                    ✕
+                    x
                   </button>
                 </div>
               ))}
@@ -270,9 +326,12 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
             checked={isPublic}
             onChange={(checked) => {
               setIsPublic(checked);
-              if (checked) { setInvitedUsers([]); setGroupInvitations([]); }
+              if (checked) {
+                setInvitedUsers([]);
+                setGroupInvitations([]);
+              }
             }}
-            label={isPublic ? "Public — visible to everyone" : "Private — visible only to you and invited users"}
+            label={isPublic ? "Public - visible to everyone" : "Private - visible only to you and invited users"}
           />
 
           {!isPublic && (
@@ -302,7 +361,7 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
               className="flex-1"
             >
               {isSubmitting
-                ? (isEditing ? "Saving…" : "Creating…")
+                ? (isEditing ? "Saving..." : "Creating...")
                 : (isEditing ? "Save Changes" : "Create Wager")}
             </Button>
           </div>
