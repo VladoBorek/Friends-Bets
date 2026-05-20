@@ -2,21 +2,7 @@ import {
   friendStatsResponseSchema,
   paginatedFriendWagersResponseSchema,
 } from "@pb138/shared/schemas/friends";
-
-async function readJsonOrThrow(response: Response, fallbackMessage: string) {
-  const json = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      json && typeof json === "object" && "message" in json
-        ? String((json as { message: unknown }).message)
-        : fallbackMessage;
-
-    throw new Error(message);
-  }
-
-  return json;
-}
+import { readJsonOrThrow } from "../http";
 
 export async function fetchFriendStats(friendId: number) {
   const response = await fetch(`/api/friends/${friendId}/stats`, {
@@ -24,8 +10,9 @@ export async function fetchFriendStats(friendId: number) {
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to load friend statistics");
-  return friendStatsResponseSchema.parse(json);
+  return friendStatsResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load friend statistics"),
+  );
 }
 
 export async function fetchFriendWagersPage(input: {
@@ -43,6 +30,7 @@ export async function fetchFriendWagersPage(input: {
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to load shared wagers");
-  return paginatedFriendWagersResponseSchema.parse(json);
+  return paginatedFriendWagersResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load shared wagers"),
+  );
 }

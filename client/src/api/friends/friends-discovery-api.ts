@@ -1,36 +1,23 @@
 import {
   friendRequestResponseSchema,
+  paginatedDiscoveredUsersResponseSchema,
   paginatedFriendRequestsResponseSchema,
   paginatedFriendsResponseSchema,
-  paginatedDiscoveredUsersResponseSchema,
   type FriendRequestDirection,
 } from "@pb138/shared/schemas/friends";
 import { listUsersResponseSchema } from "@pb138/shared/schemas/user";
+import { readJsonOrThrow } from "../http";
 
 const PAGE_LIMIT = 50;
 
-async function readJsonOrThrow(response: Response, fallbackMessage: string) {
-  const json = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      json && typeof json === "object" && "message" in json
-        ? String((json as { message: unknown }).message)
-        : fallbackMessage;
-
-    throw new Error(message);
-  }
-
-  return json;
-}
-
 export async function fetchAllUsers() {
-  const response = await fetch("/api/users", {
+  const response = await fetch("/api/users/admin/users?limit=50&offset=0", {
     method: "GET",
     credentials: "same-origin",
   });
 
   const json = await readJsonOrThrow(response, "Unable to load users");
+
   return listUsersResponseSchema.parse(json).data;
 }
 
@@ -45,8 +32,9 @@ async function fetchFriendsPage(offset: number) {
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to load friends");
-  return paginatedFriendsResponseSchema.parse(json);
+  return paginatedFriendsResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load friends"),
+  );
 }
 
 async function fetchFriendRequestsPage(direction: FriendRequestDirection, offset: number) {
@@ -61,8 +49,9 @@ async function fetchFriendRequestsPage(direction: FriendRequestDirection, offset
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to load friend requests");
-  return paginatedFriendRequestsResponseSchema.parse(json);
+  return paginatedFriendRequestsResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load friend requests"),
+  );
 }
 
 export async function fetchAllFriends() {
@@ -101,7 +90,6 @@ export async function fetchAllFriendRequests(direction: FriendRequestDirection) 
   return requests;
 }
 
-
 export async function sendFriendRequest(addresseeId: number) {
   const response = await fetch("/api/friends/requests", {
     method: "POST",
@@ -112,8 +100,9 @@ export async function sendFriendRequest(addresseeId: number) {
     body: JSON.stringify({ addresseeId }),
   });
 
-  const json = await readJsonOrThrow(response, "Unable to send friend request");
-  return friendRequestResponseSchema.parse(json).data;
+  return friendRequestResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to send friend request"),
+  ).data;
 }
 
 export async function acceptFriendRequest(requestId: number) {
@@ -122,8 +111,9 @@ export async function acceptFriendRequest(requestId: number) {
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to accept friend request");
-  return friendRequestResponseSchema.parse(json).data;
+  return friendRequestResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to accept friend request"),
+  ).data;
 }
 
 export async function rejectFriendRequest(requestId: number) {
@@ -132,8 +122,9 @@ export async function rejectFriendRequest(requestId: number) {
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to reject friend request");
-  return friendRequestResponseSchema.parse(json).data;
+  return friendRequestResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to reject friend request"),
+  ).data;
 }
 
 export async function fetchFriendRequestCount(direction: FriendRequestDirection) {
@@ -148,8 +139,9 @@ export async function fetchFriendRequestCount(direction: FriendRequestDirection)
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to load friend request count");
-  return paginatedFriendRequestsResponseSchema.parse(json).pagination.total;
+  return paginatedFriendRequestsResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load friend request count"),
+  ).pagination.total;
 }
 
 export async function fetchDiscoveredUsers(input: {
@@ -168,6 +160,7 @@ export async function fetchDiscoveredUsers(input: {
     credentials: "same-origin",
   });
 
-  const json = await readJsonOrThrow(response, "Unable to load discoverable users");
-  return paginatedDiscoveredUsersResponseSchema.parse(json);
+  return paginatedDiscoveredUsersResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load discoverable users"),
+  );
 }

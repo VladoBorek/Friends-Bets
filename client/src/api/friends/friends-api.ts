@@ -1,4 +1,5 @@
 import { paginatedFriendsResponseSchema } from "@pb138/shared/schemas/friends";
+import { readJsonOrThrow } from "../http";
 
 export async function fetchFriends(input: { page: number; limit: number }) {
   const params = new URLSearchParams({
@@ -11,16 +12,7 @@ export async function fetchFriends(input: { page: number; limit: number }) {
     credentials: "same-origin",
   });
 
-  const json = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      json && typeof json === "object" && "message" in json
-        ? String((json as { message: unknown }).message)
-        : "Unable to load friends";
-
-    throw new Error(message);
-  }
-
-  return paginatedFriendsResponseSchema.parse(json);
+  return paginatedFriendsResponseSchema.parse(
+    await readJsonOrThrow(response, "Unable to load friends"),
+  );
 }

@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
-import type { UserSummary } from "@pb138/shared/schemas/user";
+import { useEffect, useMemo, useState } from "react";
+import { listUsersResponseSchema, type UserSummary } from "@pb138/shared/schemas/user";
+import { extractApiErrorMessage, readJsonResponse } from "../../../api/http";
 
 export type SuspensionUnit = "hours" | "days" | "months";
 
@@ -13,6 +14,40 @@ export interface UserActions {
   refresh: () => Promise<void>;
 }
 
+async function fetchAllAdminUsers() {
+  const users: UserSummary[] = [];
+  let offset = 0;
+  const limit = 50;
+
+  while (true) {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+
+    const response = await fetch(`/api/users/admin/users?${params.toString()}`, {
+      credentials: "same-origin",
+    });
+
+    const json = await readJsonResponse(response);
+
+    if (!response.ok) {
+      throw new Error(extractApiErrorMessage(json, "Unable to load users"));
+    }
+
+    const page = listUsersResponseSchema.parse(json);
+    users.push(...page.data);
+
+    if (!page.pagination.hasMore) {
+      break;
+    }
+
+    offset += page.pagination.limit;
+  }
+
+  return users;
+}
+
 export function useUsers() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,20 +57,19 @@ export function useUsers() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/users/admin/users");
-      if (res.ok) {
-        const json = (await res.json()) as { data: UserSummary[] };
-        setUsers(json.data);
-      }
-    } catch (e) {
-      console.error("Failed to load users:", e);
+      setUsers(await fetchAllAdminUsers());
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Unable to load users",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers();
   }, []);
 
   const filteredUsers = useMemo(() => {
@@ -60,6 +94,7 @@ export function useUsers() {
   const stats = useMemo(() => {
     const total = users.length;
     const admins = users.filter((u) => u.roleName === "ADMIN").length;
+
     return {
       total,
       admins,
@@ -71,25 +106,28 @@ export function useUsers() {
     endpoint: string,
     method: string,
     body?: Record<string, unknown>,
-    successMessage?: string
+    successMessage?: string,
   ) => {
     setFeedback(null);
+
     try {
       const res = await fetch(endpoint, {
         method,
+        credentials: "same-origin",
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data: { message?: string } = await res.json().catch(() => ({}));
-      
+      const data = await readJsonResponse(res);
+
       if (!res.ok) {
-        setFeedback({ type: "error", message: data.message ?? "Action failed" });
+        setFeedback({ type: "error", message: extractApiErrorMessage(data, "Action failed") });
         return false;
       }
 
-      setFeedback({ type: "success", message: successMessage ?? data.message ?? "Action successful" });
+      setFeedback({ type: "success", message: successMessage ?? "Action successful" });
       await fetchUsers();
+
       return true;
     } catch {
       setFeedback({ type: "error", message: "Network error occurred" });
@@ -97,22 +135,22 @@ export function useUsers() {
     }
   };
 
-  const deleteUser = (user: UserSummary) => 
+  const deleteUser = (user: UserSummary) =>
     performAction(`/api/users/admin/users/${user.id}`, "DELETE", undefined, `User ${user.username} deleted.`);
 
-  const updateRole = (user: UserSummary, roleName: string) => 
+  const updateRole = (user: UserSummary, roleName: string) =>
     performAction(`/api/users/admin/users/${user.id}/role`, "PATCH", { roleName }, `Role updated for ${user.username}.`);
 
-  const suspendUser = (user: UserSummary, durationValue: number, durationUnit: SuspensionUnit) => 
+  const suspendUser = (user: UserSummary, durationValue: number, durationUnit: SuspensionUnit) =>
     performAction(`/api/users/admin/users/${user.id}/suspend`, "PATCH", { durationValue, durationUnit }, `User ${user.username} suspended.`);
 
-  const unsuspendUser = (user: UserSummary) => 
+  const unsuspendUser = (user: UserSummary) =>
     performAction(`/api/users/admin/users/${user.id}/unsuspend`, "PATCH", undefined, `User ${user.username} unsuspended.`);
 
-  const resendVerification = (user: UserSummary) => 
+  const resendVerification = (user: UserSummary) =>
     performAction(`/api/users/admin/users/${user.id}/resend-verification`, "POST", undefined, `Verification email resent to ${user.email}.`);
 
-  const resetPassword = (user: UserSummary) => 
+  const resetPassword = (user: UserSummary) =>
     performAction(`/api/users/admin/users/${user.id}/reset-password`, "POST", undefined, `Password reset email sent to ${user.email}.`);
 
   const actions: UserActions = {
