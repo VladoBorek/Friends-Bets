@@ -2,8 +2,8 @@ import type {
   FriendRequestSummary,
   SendFriendRequestRequest,
 } from "@pb138/shared/schemas/friends";
-import type { FriendshipRow } from "../../repositories/friends/friend-repository";
 import { HttpError } from "../../errors";
+import type { FriendshipRow } from "../../repositories/friends/friend-repository";
 import {
   createFriendRequest,
   findFriendshipBetweenUsers,
@@ -27,23 +27,39 @@ export async function sendFriendRequest(
   input: SendFriendRequestRequest,
 ) {
   if (currentUserId === input.addresseeId) {
-    throw new HttpError(400, "BAD_REQUEST", "You cannot send a friend request to yourself");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "You cannot send a friend request to yourself",
+    });
   }
 
   const targetUser = await findUserById(input.addresseeId);
 
   if (!targetUser) {
-    throw new HttpError(404, "NOT_FOUND", "Target user not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "Target user not found",
+    });
   }
 
   const existing = await findFriendshipBetweenUsers(currentUserId, input.addresseeId);
 
   if (existing?.status === "ACCEPTED") {
-    throw new HttpError(400, "BAD_REQUEST", "You are already friends");
+    throw new HttpError({
+      status: 409,
+      code: "FRIENDSHIP_ALREADY_EXISTS",
+      message: "You are already friends",
+    });
   }
 
   if (existing?.status === "PENDING") {
-    throw new HttpError(400, "BAD_REQUEST", "Friend request already exists");
+    throw new HttpError({
+      status: 409,
+      code: "FRIEND_REQUEST_ALREADY_EXISTS",
+      message: "Friend request already exists",
+    });
   }
 
   if (existing?.status === "REJECTED") {
@@ -65,15 +81,27 @@ export async function acceptFriendRequest(currentUserId: number, friendshipId: n
   const existing = await findFriendshipById(friendshipId);
 
   if (!existing) {
-    throw new HttpError(404, "NOT_FOUND", "Friend request not found");
+    throw new HttpError({
+      status: 404,
+      code: "FRIEND_REQUEST_NOT_FOUND",
+      message: "Friend request not found",
+    });
   }
 
   if (existing.addresseeId !== currentUserId) {
-    throw new HttpError(403, "FORBIDDEN", "You can only accept requests sent to you");
+    throw new HttpError({
+      status: 403,
+      code: "AUTH_FORBIDDEN",
+      message: "You can only accept requests sent to you",
+    });
   }
 
   if (existing.status !== "PENDING") {
-    throw new HttpError(400, "BAD_REQUEST", "Only pending requests can be accepted");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Only pending requests can be accepted",
+    });
   }
 
   const updated = await updateFriendshipStatus(friendshipId, "ACCEPTED");
@@ -85,15 +113,27 @@ export async function rejectFriendRequest(currentUserId: number, friendshipId: n
   const existing = await findFriendshipById(friendshipId);
 
   if (!existing) {
-    throw new HttpError(404, "NOT_FOUND", "Friend request not found");
+    throw new HttpError({
+      status: 404,
+      code: "FRIEND_REQUEST_NOT_FOUND",
+      message: "Friend request not found",
+    });
   }
 
   if (existing.addresseeId !== currentUserId) {
-    throw new HttpError(403, "FORBIDDEN", "You can only reject requests sent to you");
+    throw new HttpError({
+      status: 403,
+      code: "AUTH_FORBIDDEN",
+      message: "You can only reject requests sent to you",
+    });
   }
 
   if (existing.status !== "PENDING") {
-    throw new HttpError(400, "BAD_REQUEST", "Only pending requests can be rejected");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Only pending requests can be rejected",
+    });
   }
 
   const updated = await updateFriendshipStatus(friendshipId, "REJECTED");

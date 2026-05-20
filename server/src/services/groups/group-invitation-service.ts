@@ -9,8 +9,8 @@ import * as groupMemberRepository from "../../repositories/group/group-member-re
 import * as groupRepository from "../../repositories/group/group-repository";
 import * as userRepository from "../../repositories/user/user-repository";
 import { mapUserSummary } from "../user/mappers/user-mapper";
-import { mapGroupMemberSummary } from "./mappers/group-mapper";
 import { requireGroupMember } from "./group-permission-service";
+import { mapGroupMemberSummary } from "./mappers/group-mapper";
 
 async function toSummary(
   row: groupInvitationRepository.GroupInvitationRow,
@@ -26,11 +26,11 @@ async function toSummary(
     ]);
 
   if (!group || !requester || !addressee) {
-    throw new HttpError(
-      500,
-      "INTERNAL_SERVER_ERROR",
-      "Group invitation references missing data",
-    );
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Group invitation references missing data",
+    });
   }
 
   return {
@@ -85,7 +85,11 @@ export async function sendGroupInvitation(
   input: SendGroupInvitationRequest,
 ) {
   if (currentUserId === input.addresseeId) {
-    throw new HttpError(400, "BAD_REQUEST", "You cannot invite yourself");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "You cannot invite yourself",
+    });
   }
 
   await requireGroupMember(groupId, currentUserId);
@@ -93,7 +97,11 @@ export async function sendGroupInvitation(
   const user = await userRepository.findUserById(input.addresseeId);
 
   if (!user) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   const existingMembership = await groupMemberRepository.findMembership(
@@ -102,7 +110,11 @@ export async function sendGroupInvitation(
   );
 
   if (existingMembership) {
-    throw new HttpError(400, "BAD_REQUEST", "User is already a member of this group");
+    throw new HttpError({
+      status: 409,
+      code: "CONFLICT",
+      message: "User is already a member of this group",
+    });
   }
 
   const existingInvite = await groupInvitationRepository.findGroupInvitationForUser(
@@ -111,7 +123,11 @@ export async function sendGroupInvitation(
   );
 
   if (existingInvite?.status === "PENDING") {
-    throw new HttpError(400, "BAD_REQUEST", "Group invitation already exists");
+    throw new HttpError({
+      status: 409,
+      code: "CONFLICT",
+      message: "Group invitation already exists",
+    });
   }
 
   const row =
@@ -130,15 +146,27 @@ export async function acceptGroupInvitation(currentUserId: number, invitationId:
   const invite = await groupInvitationRepository.findGroupInvitationById(invitationId);
 
   if (!invite) {
-    throw new HttpError(404, "NOT_FOUND", "Group invitation not found");
+    throw new HttpError({
+      status: 404,
+      code: "GROUP_INVITATION_NOT_FOUND",
+      message: "Group invitation not found",
+    });
   }
 
   if (invite.addresseeId !== currentUserId) {
-    throw new HttpError(403, "FORBIDDEN", "You can only accept invitations sent to you");
+    throw new HttpError({
+      status: 403,
+      code: "GROUP_INVITATION_FORBIDDEN",
+      message: "You can only accept invitations sent to you",
+    });
   }
 
   if (invite.status !== "PENDING") {
-    throw new HttpError(400, "BAD_REQUEST", "Only pending invitations can be accepted");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Only pending invitations can be accepted",
+    });
   }
 
   const existingMembership = await groupMemberRepository.findMembership(
@@ -162,15 +190,27 @@ export async function rejectGroupInvitation(currentUserId: number, invitationId:
   const invite = await groupInvitationRepository.findGroupInvitationById(invitationId);
 
   if (!invite) {
-    throw new HttpError(404, "NOT_FOUND", "Group invitation not found");
+    throw new HttpError({
+      status: 404,
+      code: "GROUP_INVITATION_NOT_FOUND",
+      message: "Group invitation not found",
+    });
   }
 
   if (invite.addresseeId !== currentUserId) {
-    throw new HttpError(403, "FORBIDDEN", "You can only reject invitations sent to you");
+    throw new HttpError({
+      status: 403,
+      code: "GROUP_INVITATION_FORBIDDEN",
+      message: "You can only reject invitations sent to you",
+    });
   }
 
   if (invite.status !== "PENDING") {
-    throw new HttpError(400, "BAD_REQUEST", "Only pending invitations can be rejected");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Only pending invitations can be rejected",
+    });
   }
 
   const updated = await groupInvitationRepository.updateGroupInvitationStatus(
