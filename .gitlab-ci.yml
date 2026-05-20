@@ -59,6 +59,12 @@ mirror-node-base:
   rules:
     - when: manual
   before_script:
+    - |
+      for i in $(seq 1 30); do
+        docker info >/dev/null 2>&1 && break
+        echo "Waiting for Docker daemon..."
+        sleep 2
+      done
     - docker version
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
