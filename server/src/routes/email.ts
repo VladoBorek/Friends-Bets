@@ -1,24 +1,34 @@
 import { Elysia } from "elysia";
 import { z } from "zod";
-import { emailClient } from "../services/email-service";
+import { messageDataSchema } from "@pb138/shared/schemas/api";
 import { HttpError } from "../errors";
+import { emailClient } from "../services/email-service";
 
-const testEmailSchema = z.object({
+const testEmailRequestSchema = z.object({
   to: z.string().email(),
 });
 
 export const emailRoutes = new Elysia({ prefix: "/email" }).post("/test", async ({ body }) => {
-  const parsedBody = testEmailSchema.parse(body);
+  const parsedBody = testEmailRequestSchema.parse(body);
+
   try {
-    await emailClient.sendGenericNotification({
-      email: parsedBody.to,
-      username: "PB138 User",
-      title: "Email client is ready",
-      message: "This is a test message from the PB138 email client.",
+    await emailClient.send({
+      to: parsedBody.to,
+      subject: "PB138 test email",
+      text: "This is a PB138 test email.",
+      html: "<p>This is a PB138 test email.</p>",
     });
   } catch (error) {
-    throw new HttpError(500, `Failed to send test email: ${error instanceof Error ? error.message : "unknown error"}`);
+    throw new HttpError(
+      500,
+      "INTERNAL_SERVER_ERROR",
+      `Failed to send test email: ${error instanceof Error ? error.message : "unknown error"}`,
+    );
   }
 
-  return { message: "Test email sent" };
+  return messageDataSchema.parse({
+    data: {
+      message: "Test email sent",
+    },
+  });
 });

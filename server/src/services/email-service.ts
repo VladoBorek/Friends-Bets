@@ -114,7 +114,11 @@ class EmailClient {
     }
 
     if (!this.transporter) {
-      throw new HttpError(500, "Email transporter is not initialized");
+      throw new HttpError(
+          500,
+          "INTERNAL_SERVER_ERROR",
+          "Email transporter is not initialized",
+        );
     }
 
     console.log("[Email] Sending SMTP mail", {

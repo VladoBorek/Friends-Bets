@@ -3,6 +3,7 @@ import { node } from "@elysiajs/node";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
 import { NotFoundError } from "elysia/error";
+import { randomUUID } from "node:crypto";
 import { ZodError } from "zod";
 import { HttpError } from "./errors";
 import { healthRoutes } from "./routes/health";
@@ -13,7 +14,10 @@ import { walletRoutes } from "./routes/wallet";
 import { friendRoutes } from "./routes/friends";
 import { groupRoutes } from "./routes/groups";
 
-
+function getRequestId(headers: Record<string, string | undefined>) {
+  const incomingRequestId = headers["x-request-id"]?.trim();
+  return incomingRequestId || randomUUID();
+}
 
 export function createApp() {
   const api = new Elysia({ prefix: "/api" })
@@ -23,7 +27,7 @@ export function createApp() {
     .use(emailRoutes)
     .use(walletRoutes)
     .use(friendRoutes)
-    .use(groupRoutes)
+    .use(groupRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))
@@ -41,41 +45,76 @@ export function createApp() {
             { name: "Wallet", description: "Wallet and balance endpoints" },
             { name: "Friends", description: "Friendship and friend request endpoints" },
             { name: "Groups", description: "Group membership and group management endpoints" },
-
           ],
         },
       }),
     )
-    .onError(({ error, set }) => {
-      console.error("[API Error]", { error });
-      set.headers = {
-        "content-type": "application/json; charset=utf-8",
+    .derive(({ headers, set }) => {
+      const requestId = getRequestId(headers);
+
+      set.headers["x-request-id"] = requestId;
+
+      return {
+        requestId,
       };
+    })
+    .onError(({ error, headers, set }) => {
+      const requestId = getRequestId(headers);
+
+      set.headers["content-type"] = "application/json; charset=utf-8";
+      set.headers["x-request-id"] = requestId;
 
       if (error instanceof HttpError) {
         set.status = error.status;
-        console.error("[API HttpError]", error.status, error.message);
-        return { message: error.message };
+
+        return {
+          error: {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            requestId,
+          },
+        };
       }
 
       if (error instanceof NotFoundError) {
         set.status = 404;
-        return { message: "Endpoint not found" };
+
+        return {
+          error: {
+            code: "ENDPOINT_NOT_FOUND",
+            message: "Endpoint not found",
+            requestId,
+          },
+        };
       }
 
       if (error instanceof ZodError) {
         set.status = 400;
-        console.error("[API ZodError]", error.issues);
+
         return {
-          message: "Validation failed",
-          issues: error.issues,
+          error: {
+            code: "VALIDATION_FAILED",
+            message: "Validation failed",
+            details: error.issues,
+            requestId,
+          },
         };
       }
 
+      console.error("[API InternalError]", {
+        requestId,
+        error,
+      });
+
       set.status = 500;
-      console.error("[API InternalError]", error);
+
       return {
-        message: "Unexpected server error",
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Unexpected server error",
+          requestId,
+        },
       };
     })
     .use(api);
