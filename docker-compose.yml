@@ -66,6 +66,9 @@ services:
     <<: *node-service
     environment:
       IS_DOCKER: "true"
+      VITE_USE_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      CLIENT_PORT: ${CLIENT_PORT:-5173}
       VITE_API_TARGET: ${VITE_API_TARGET:-http://server:3000}
     ports:
       - "${CLIENT_PORT:-5173}:5173"
