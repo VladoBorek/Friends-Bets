@@ -3,18 +3,22 @@ import { Pool } from "pg";
 import dotenv from "dotenv";
 import { fileURLToPath } from "node:url";
 
-dotenv.config();
+const isDocker = process.env.IS_DOCKER === "true";
 
-if (!process.env.DATABASE_URL) {
-  const envCandidates = [
-    fileURLToPath(new URL("../../.env", import.meta.url)),
-    fileURLToPath(new URL("../../../.env", import.meta.url)),
-  ];
+if (!isDocker) {
+  dotenv.config();
 
-  for (const envPath of envCandidates) {
-    dotenv.config({ path: envPath });
-    if (process.env.DATABASE_URL) {
-      break;
+  if (!process.env.DATABASE_URL) {
+    const envCandidates = [
+      fileURLToPath(new URL("../../.env", import.meta.url)),
+      fileURLToPath(new URL("../../../.env", import.meta.url)),
+    ];
+
+    for (const envPath of envCandidates) {
+      dotenv.config({ path: envPath });
+      if (process.env.DATABASE_URL) {
+        break;
+      }
     }
   }
 }
