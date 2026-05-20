@@ -8,23 +8,31 @@ import { getUserById } from "./user-query-service";
 export async function updateNickname(userId: number, nickname: string): Promise<UserSummary> {
   await getUserById(userId);
   await userRepository.updateUsername(userId, nickname);
+
   return getUserById(userId);
 }
 
-export async function updateEmail(userId: number, newEmail: string, currentPassword: string): Promise<UserSummary> {
+export async function updateEmail(
+  userId: number,
+  newEmail: string,
+  currentPassword: string,
+): Promise<UserSummary> {
   const user = await userRepository.findUserWithPasswordById(userId);
+
   if (!user) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(404, "NOT_FOUND", "User not found");
   }
 
   const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+
   if (!isValidPassword) {
-    throw new HttpError(401, "Current password is incorrect");
+    throw new HttpError(401, "UNAUTHORIZED", "Current password is incorrect");
   }
 
   const existingUser = await userRepository.findUserByEmail(newEmail);
+
   if (existingUser && existingUser.id !== userId) {
-    throw new HttpError(400, "Email already in use");
+    throw new HttpError(400, "BAD_REQUEST", "Email already in use");
   }
 
   await userRepository.updateUserEmail(userId, newEmail);
@@ -47,22 +55,29 @@ export async function updateEmail(userId: number, newEmail: string, currentPassw
   return getUserById(userId);
 }
 
-export async function updatePassword(userId: number, oldPassword: string, newPassword: string): Promise<UserSummary> {
+export async function updatePassword(
+  userId: number,
+  oldPassword: string,
+  newPassword: string,
+): Promise<UserSummary> {
   const user = await userRepository.findUserWithPasswordById(userId);
+
   if (!user) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(404, "NOT_FOUND", "User not found");
   }
 
   const isValidPassword = await bcrypt.compare(oldPassword, user.passwordHash);
+
   if (!isValidPassword) {
-    throw new HttpError(401, "Password is incorrect");
+    throw new HttpError(401, "UNAUTHORIZED", "Password is incorrect");
   }
 
   if (oldPassword === newPassword) {
-    throw new HttpError(400, "New password must be different");
+    throw new HttpError(400, "BAD_REQUEST", "New password must be different");
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
+
   await userRepository.updateUserPassword(userId, passwordHash);
 
   return getUserById(userId);

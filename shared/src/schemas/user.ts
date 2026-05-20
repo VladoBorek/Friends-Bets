@@ -1,12 +1,19 @@
 import { z } from "zod";
+import { messageDataSchema, paginationMetaSchema, paginationQuerySchema } from "./api";
 
 export const userRoleSchema = z.enum(["ADMIN", "PLAYER", "USER"]);
+
+export const usersListQuerySchema = paginationQuerySchema;
+
+export const userSearchQuerySchema = paginationQuerySchema.extend({
+  email: z.string().min(1).max(200),
+});
 
 export const createUserRequestSchema = z.object({
   username: z.string().min(3).max(50),
   email: z.string().email(),
-  password: z.string().min(4), 
-  roleId: z.coerce.number().int().positive().optional(), 
+  password: z.string().min(4),
+  roleId: z.coerce.number().int().positive().optional(),
 });
 
 export const loginRequestSchema = z.object({
@@ -70,30 +77,32 @@ export const userMutationResponseSchema = z.object({
   data: userSummarySchema,
 });
 
-export const userDeleteResponseSchema = z.object({
-  message: z.string(),
-});
+export const userDeleteResponseSchema = messageDataSchema;
 
-export const userActionResponseSchema = z.object({
-  message: z.string(),
-});
+export const userActionResponseSchema = messageDataSchema;
 
 export const verifyEmailResponseSchema = z.object({
-  message: z.string(),
   data: userSummarySchema,
 });
 
-export const resetPasswordByAdminResponseSchema = z.object({
-  message: z.string(),
-});
+export const resetPasswordByAdminResponseSchema = messageDataSchema;
 
-// Response Wrappers
-export const loginResponseSchema = z.object({
-  message: z.string(),
-});
+export const loginResponseSchema = messageDataSchema;
 
 export const listUsersResponseSchema = z.object({
   data: z.array(userSummarySchema),
+  pagination: paginationMetaSchema,
+});
+
+export const searchUsersResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.number().int(),
+      username: z.string(),
+      email: z.string().email(),
+    }),
+  ),
+  pagination: paginationMetaSchema,
 });
 
 export const getMeResponseSchema = z.object({
@@ -112,3 +121,5 @@ export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
 export type UpdateNicknameRequest = z.infer<typeof updateNicknameRequestSchema>;
 export type UpdateEmailRequest = z.infer<typeof updateEmailRequestSchema>;
 export type UpdatePasswordRequest = z.infer<typeof updatePasswordRequestSchema>;
+export type UsersListQuery = z.infer<typeof usersListQuerySchema>;
+export type UserSearchQuery = z.infer<typeof userSearchQuerySchema>;
