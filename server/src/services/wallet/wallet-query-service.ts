@@ -12,7 +12,11 @@ export async function getWalletOverview(userId: number): Promise<WalletOverview>
   const wallet = await findWalletByUserId(userId);
 
   if (!wallet) {
-    throw new HttpError(404, "NOT_FOUND", "Wallet not found");
+    throw new HttpError({
+      status: 404,
+      code: "WALLET_NOT_FOUND",
+      message: "Wallet not found",
+    });
   }
 
   const transactions = await listTransactionsByWalletId(wallet.id);
@@ -33,7 +37,11 @@ export async function getWalletTransactionsPaginated(
   const wallet = await findWalletByUserId(userId);
 
   if (!wallet) {
-    throw new HttpError(404, "NOT_FOUND", "Wallet not found");
+    throw new HttpError({
+      status: 404,
+      code: "WALLET_NOT_FOUND",
+      message: "Wallet not found",
+    });
   }
 
   const limit = Math.min(query.limit, 50);

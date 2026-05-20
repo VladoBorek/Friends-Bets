@@ -1,11 +1,17 @@
 import type {
   CategorySummary,
+  PaginatedWagersResponse,
   WagerDetail,
   WagerInvitationsListQuery,
   WagersListQuery,
-  PaginatedWagersResponse,
 } from "@pb138/shared/schemas/wager";
 import { HttpError } from "../../errors";
+import { listAllCategories } from "../../repositories/wagers/category-repository";
+import {
+  countWagerVisibilityUsers,
+  findWagerVisibility,
+  listWagerVisibilityUsersPaginated,
+} from "../../repositories/wagers/wager-visibility-repository";
 import {
   countWagersWithFilters,
   findWagerById,
@@ -13,12 +19,6 @@ import {
   listWagerOutcomes,
   listWagersWithDetails,
 } from "../../repositories/wagers/wager-repository";
-import {
-  countWagerVisibilityUsers,
-  findWagerVisibility,
-  listWagerVisibilityUsersPaginated,
-} from "../../repositories/wagers/wager-visibility-repository";
-import { listAllCategories } from "../../repositories/wagers/category-repository";
 import { mapWagerDetail, mapWagerSummary } from "./mappers/wager-mapper";
 
 export async function listWagers(
@@ -53,7 +53,11 @@ export async function getWagerById(id: number, currentUserId?: number): Promise<
   const wagerRow = await findWagerByIdWithDetails(id, currentUserId);
 
   if (!wagerRow) {
-    throw new HttpError(404, "NOT_FOUND", "Wager not found");
+    throw new HttpError({
+      status: 404,
+      code: "WAGER_NOT_FOUND",
+      message: "Wager not found",
+    });
   }
 
   if (!wagerRow.isPublic) {
@@ -61,7 +65,11 @@ export async function getWagerById(id: number, currentUserId?: number): Promise<
       const visibility = await findWagerVisibility(id, currentUserId ?? 0);
 
       if (!visibility) {
-        throw new HttpError(404, "NOT_FOUND", "Wager not found");
+        throw new HttpError({
+          status: 404,
+          code: "WAGER_NOT_FOUND",
+          message: "Wager not found",
+        });
       }
     }
   }
@@ -79,11 +87,19 @@ export async function listWagerInvitations(
   const wagerRow = await findWagerById(wagerId);
 
   if (!wagerRow) {
-    throw new HttpError(404, "NOT_FOUND", "Wager not found");
+    throw new HttpError({
+      status: 404,
+      code: "WAGER_NOT_FOUND",
+      message: "Wager not found",
+    });
   }
 
   if (wagerRow.createdById !== requestingUserId) {
-    throw new HttpError(403, "FORBIDDEN", "Only the wager creator can view invitations");
+    throw new HttpError({
+      status: 403,
+      code: "WAGER_FORBIDDEN",
+      message: "Only the wager creator can view invitations",
+    });
   }
 
   const [total, data] = await Promise.all([

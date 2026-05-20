@@ -7,7 +7,11 @@ export function formatMoney(value: number): string {
 
 export function normalizePositiveAmount(amount: number): number {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new HttpError(400, "BAD_REQUEST", "Amount must be a positive number");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Amount must be a positive number",
+    });
   }
 
   return Number(amount.toFixed(2));

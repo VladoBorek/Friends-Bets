@@ -1,5 +1,5 @@
-import { and, eq, sql } from "drizzle-orm";
 import type { WalletHistoryItem } from "@pb138/shared/schemas/wallet";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Transaction, Wallet } from "../../db/schema";
 import { HttpError } from "../../errors";
@@ -33,7 +33,11 @@ async function updateWalletBalanceAtomic(
     const wallet = await findWalletByUserId(userId);
 
     if (!wallet) {
-      throw new HttpError(404, "NOT_FOUND", "Wallet not found");
+      throw new HttpError({
+        status: 404,
+        code: "WALLET_NOT_FOUND",
+        message: "Wallet not found",
+      });
     }
 
     const whereClause =
@@ -57,7 +61,11 @@ async function updateWalletBalanceAtomic(
       });
 
     if (!updatedWallet) {
-      throw new HttpError(400, "BAD_REQUEST", "Withdraw amount exceeds available balance");
+      throw new HttpError({
+        status: 400,
+        code: "WALLET_INSUFFICIENT_BALANCE",
+        message: "Withdraw amount exceeds available balance",
+      });
     }
 
     const [transactionRow] = await tx
@@ -74,7 +82,11 @@ async function updateWalletBalanceAtomic(
       });
 
     if (!transactionRow) {
-      throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to log wallet transaction");
+      throw new HttpError({
+        status: 500,
+        code: "WALLET_TRANSACTION_FAILED",
+        message: "Failed to update wallet",
+      });
     }
 
     return {

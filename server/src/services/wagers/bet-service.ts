@@ -1,24 +1,24 @@
-import { eq } from "drizzle-orm";
 import type {
   Bet as BetType,
   PlaceBetRequest,
   WagerBetsListQuery,
 } from "@pb138/shared/schemas/wager";
+import { eq } from "drizzle-orm";
 import { db } from "../../db/db";
-import { HttpError } from "../../errors";
 import { Transaction, User, Wallet } from "../../db/schema";
+import { HttpError } from "../../errors";
 import {
   countBetsByWager,
   createBet as repoCreateBet,
   findBetByUserAndWager,
   listBetsByWagerPaginated,
 } from "../../repositories/wagers/bet-repository";
-import { findWagerByIdWithDetails } from "../../repositories/wagers/wager-repository";
 import { findOutcomeByIdAndWager } from "../../repositories/wagers/outcome-repository";
+import { findWagerByIdWithDetails } from "../../repositories/wagers/wager-repository";
 import { mapBet, mapWagerBetSummary } from "./mappers/bet-mapper";
+import { getWagerById } from "./wager-query-service";
 import { ensureUserIsNotSuspended, ensureUserIsVerified } from "./wager-validation";
 import { formatMoney, parseMoney } from "./wager-utils";
-import { getWagerById } from "./wager-query-service";
 
 export async function placeBet(
   wagerId: number,
@@ -28,11 +28,19 @@ export async function placeBet(
   const wagerRow = await findWagerByIdWithDetails(wagerId);
 
   if (!wagerRow) {
-    throw new HttpError(404, "NOT_FOUND", "Wager not found");
+    throw new HttpError({
+      status: 404,
+      code: "WAGER_NOT_FOUND",
+      message: "Wager not found",
+    });
   }
 
   if (wagerRow.status !== "OPEN") {
-    throw new HttpError(400, "BAD_REQUEST", "Cannot place bets on wagers that are not OPEN");
+    throw new HttpError({
+      status: 400,
+      code: "WAGER_NOT_OPEN",
+      message: "Cannot place bets on wagers that are not open",
+    });
   }
 
   const [bettingUser] = await db
@@ -46,7 +54,11 @@ export async function placeBet(
     .limit(1);
 
   if (!bettingUser) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   ensureUserIsVerified(bettingUser);
@@ -55,13 +67,21 @@ export async function placeBet(
   const outcome = await findOutcomeByIdAndWager(input.outcomeId, wagerId);
 
   if (!outcome) {
-    throw new HttpError(400, "BAD_REQUEST", "Outcome not found for this wager");
+    throw new HttpError({
+      status: 400,
+      code: "OUTCOME_NOT_FOUND",
+      message: "Outcome not found for this wager",
+    });
   }
 
   const existingBet = await findBetByUserAndWager(userId, wagerId);
 
   if (existingBet) {
-    throw new HttpError(409, "CONFLICT", "You have already placed a bet on this wager");
+    throw new HttpError({
+      status: 409,
+      code: "BET_ALREADY_EXISTS",
+      message: "You have already placed a bet on this wager",
+    });
   }
 
   const created = await db.transaction(async (tx) => {
@@ -72,11 +92,19 @@ export async function placeBet(
       .limit(1);
 
     if (!currentUserWallet) {
-      throw new HttpError(404, "NOT_FOUND", "Wallet not found");
+      throw new HttpError({
+        status: 404,
+        code: "WALLET_NOT_FOUND",
+        message: "Wallet not found",
+      });
     }
 
     if (parseMoney(currentUserWallet.balance) < input.amount) {
-      throw new HttpError(400, "BAD_REQUEST", "Insufficient balance to place this bet.");
+      throw new HttpError({
+        status: 400,
+        code: "WALLET_INSUFFICIENT_BALANCE",
+        message: "Insufficient balance to place this bet",
+      });
     }
 
     const formattedAmount = formatMoney(input.amount);
@@ -105,7 +133,11 @@ export async function placeBet(
   });
 
   if (!created) {
-    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to create bet");
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to create bet",
+    });
   }
 
   return mapBet(created);

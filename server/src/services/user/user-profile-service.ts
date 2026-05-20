@@ -1,6 +1,7 @@
-import bcrypt from "bcrypt";
 import type { UserSummary } from "@pb138/shared/schemas/user";
+import bcrypt from "bcrypt";
 import { HttpError } from "../../errors";
+import { logger } from "../../observability";
 import * as userRepository from "../../repositories/user/user-repository";
 import { emailClient } from "../email-service";
 import { getUserById } from "./user-query-service";
@@ -20,19 +21,31 @@ export async function updateEmail(
   const user = await userRepository.findUserWithPasswordById(userId);
 
   if (!user) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
 
   if (!isValidPassword) {
-    throw new HttpError(401, "UNAUTHORIZED", "Current password is incorrect");
+    throw new HttpError({
+      status: 401,
+      code: "AUTH_INVALID_CREDENTIALS",
+      message: "Current password is incorrect",
+    });
   }
 
   const existingUser = await userRepository.findUserByEmail(newEmail);
 
   if (existingUser && existingUser.id !== userId) {
-    throw new HttpError(400, "BAD_REQUEST", "Email already in use");
+    throw new HttpError({
+      status: 409,
+      code: "EMAIL_ALREADY_IN_USE",
+      message: "Email already in use",
+    });
   }
 
   await userRepository.updateUserEmail(userId, newEmail);
@@ -45,10 +58,10 @@ export async function updateEmail(
       changedAtIso: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[Users] Primary email change notification failed", {
-      userId,
-      email: newEmail,
-      error: error instanceof Error ? error.message : String(error),
+    logger.error({
+      event_name: "primary_email_change_notification_failed",
+      user_id: userId,
+      error,
     });
   }
 
@@ -63,17 +76,29 @@ export async function updatePassword(
   const user = await userRepository.findUserWithPasswordById(userId);
 
   if (!user) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   const isValidPassword = await bcrypt.compare(oldPassword, user.passwordHash);
 
   if (!isValidPassword) {
-    throw new HttpError(401, "UNAUTHORIZED", "Password is incorrect");
+    throw new HttpError({
+      status: 401,
+      code: "AUTH_INVALID_CREDENTIALS",
+      message: "Password is incorrect",
+    });
   }
 
   if (oldPassword === newPassword) {
-    throw new HttpError(400, "BAD_REQUEST", "New password must be different");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "New password must be different",
+    });
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
