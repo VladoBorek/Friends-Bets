@@ -18,16 +18,29 @@ export const messageDataSchema = z.object({
   }),
 });
 
+export const apiErrorCodeSchema = z.enum([
+  "BAD_REQUEST",
+  "VALIDATION_FAILED",
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "NOT_FOUND",
+  "ENDPOINT_NOT_FOUND",
+  "CONFLICT",
+  "RATE_LIMITED",
+  "INTERNAL_SERVER_ERROR",
+]);
+
 export const apiErrorResponseSchema = z.object({
   error: z.object({
-    code: z.string(),
+    code: apiErrorCodeSchema,
     message: z.string(),
     details: z.unknown().optional(),
-    requestId: z.string(),
+    requestId: z.string().min(1),
   }),
 });
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
 export type MessageDataResponse = z.infer<typeof messageDataSchema>;
+export type ApiErrorCode = z.infer<typeof apiErrorCodeSchema>;
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;

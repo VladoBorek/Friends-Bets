@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationMetaSchema, paginationQuerySchema } from "./api";
 import { betAmountSchema } from "./wager";
 
 export const walletHistoryItemSchema = z.object({
@@ -9,18 +10,6 @@ export const walletHistoryItemSchema = z.object({
   outcome: z.string(),
   walletImpact: z.string(),
   timestamp: z.string(),
-});
-
-const paginationQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).default(10),
-  offset: z.coerce.number().int().min(0).default(0),
-});
-
-const paginationMetaSchema = z.object({
-  total: z.number().int().nonnegative(),
-  limit: z.number().int().positive(),
-  offset: z.number().int().nonnegative(),
-  hasMore: z.boolean(),
 });
 
 export const walletTransactionsQuerySchema = paginationQuerySchema.extend({

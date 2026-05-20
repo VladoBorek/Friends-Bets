@@ -1,13 +1,6 @@
-export type ErrorCode =
-  | "BAD_REQUEST"
-  | "VALIDATION_FAILED"
-  | "UNAUTHORIZED"
-  | "FORBIDDEN"
-  | "NOT_FOUND"
-  | "ENDPOINT_NOT_FOUND"
-  | "CONFLICT"
-  | "RATE_LIMITED"
-  | "INTERNAL_SERVER_ERROR";
+import type { ApiErrorCode } from "@pb138/shared/schemas/api";
+
+export type ErrorCode = ApiErrorCode;
 
 export class HttpError extends Error {
   readonly status: number;

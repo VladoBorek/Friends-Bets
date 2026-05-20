@@ -1,5 +1,5 @@
-import { HttpError } from "../../errors";
 import type { WalletHistoryItem } from "@pb138/shared/schemas/wallet";
+import { HttpError } from "../../errors";
 
 export function formatMoney(value: number): string {
   return value.toFixed(2);
@@ -7,7 +7,7 @@ export function formatMoney(value: number): string {
 
 export function normalizePositiveAmount(amount: number): number {
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new HttpError(400, "Amount must be a positive number");
+    throw new HttpError(400, "BAD_REQUEST", "Amount must be a positive number");
   }
 
   return Number(amount.toFixed(2));

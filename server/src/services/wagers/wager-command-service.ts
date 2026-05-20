@@ -1,23 +1,23 @@
-import { db } from "../../db/db";
-import { HttpError } from "../../errors";
-import { Wallet, Transaction, User } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import type { CreateWagerRequest, ResolveWagerRequest, WagerDetail } from "@pb138/shared/schemas/wager";
+import { db } from "../../db/db";
+import { Transaction, User, Wallet } from "../../db/schema";
+import { HttpError } from "../../errors";
+import { findCategoryById } from "../../repositories/wagers/category-repository";
+import { listWinningBets, wagerHasBets } from "../../repositories/wagers/bet-repository";
+import { createOutcomes, deleteOutcomesByWager } from "../../repositories/wagers/outcome-repository";
 import {
-  findWagerByIdWithDetails,
   createWager as repoCreateWager,
-  updateWagerFields,
   deleteWagerById,
-  updateWagerStatus,
+  findWagerByIdWithDetails,
   listWagerOutcomes,
   updateOutcomeWinner,
+  updateWagerFields,
+  updateWagerStatus,
 } from "../../repositories/wagers/wager-repository";
-import { findCategoryById } from "../../repositories/wagers/category-repository";
-import { createOutcomes, deleteOutcomesByWager } from "../../repositories/wagers/outcome-repository";
 import { createWagerVisibilities, deleteWagerVisibilities } from "../../repositories/wagers/wager-visibility-repository";
-import { listWinningBets, wagerHasBets } from "../../repositories/wagers/bet-repository";
 import { mapWagerDetail } from "./mappers/wager-mapper";
-import { ensureUserIsVerified, ensureUserIsNotSuspended } from "./wager-validation";
+import { ensureUserIsNotSuspended, ensureUserIsVerified } from "./wager-validation";
 import { calculatePayout, formatMoney, parseMoney } from "./wager-utils";
 
 export async function createWager(
@@ -38,11 +38,11 @@ export async function createWager(
   ]);
 
   if (!category) {
-    throw new HttpError(400, "Unknown categoryId");
+    throw new HttpError(400, "BAD_REQUEST", "Unknown categoryId");
   }
 
   if (!creator[0]) {
-    throw new HttpError(400, "Unknown creator");
+    throw new HttpError(404, "NOT_FOUND", "Creator not found");
   }
 
   ensureUserIsVerified(creator[0]);
@@ -71,7 +71,7 @@ export async function createWager(
 
   const wagerRow = await findWagerByIdWithDetails(wagerId, createdById);
   if (!wagerRow) {
-    throw new HttpError(500, "Failed to load created wager");
+    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to load created wager");
   }
 
   const outcomes = await listWagerOutcomes(wagerId);
@@ -84,14 +84,27 @@ export async function updateWager(
   requestingUserId: number,
 ): Promise<WagerDetail> {
   const wagerRow = await findWagerByIdWithDetails(wagerId, requestingUserId);
-  if (!wagerRow) throw new HttpError(404, "Wager not found");
-  if (wagerRow.createdById !== requestingUserId) throw new HttpError(403, "Only the wager creator can edit this wager");
-  if (wagerRow.status !== "OPEN") throw new HttpError(400, "Only OPEN wagers can be edited");
 
-  if (await wagerHasBets(wagerId)) throw new HttpError(400, "Cannot edit a wager that has bets");
+  if (!wagerRow) {
+    throw new HttpError(404, "NOT_FOUND", "Wager not found");
+  }
+
+  if (wagerRow.createdById !== requestingUserId) {
+    throw new HttpError(403, "FORBIDDEN", "Only the wager creator can edit this wager");
+  }
+
+  if (wagerRow.status !== "OPEN") {
+    throw new HttpError(400, "BAD_REQUEST", "Only OPEN wagers can be edited");
+  }
+
+  if (await wagerHasBets(wagerId)) {
+    throw new HttpError(400, "BAD_REQUEST", "Cannot edit a wager that has bets");
+  }
 
   const category = await findCategoryById(input.categoryId);
-  if (!category) throw new HttpError(400, "Unknown categoryId");
+  if (!category) {
+    throw new HttpError(400, "BAD_REQUEST", "Unknown categoryId");
+  }
 
   await db.transaction(async () => {
     await updateWagerFields(wagerId, {
@@ -100,26 +113,39 @@ export async function updateWager(
       categoryId: input.categoryId,
       isPublic: input.isPublic,
     });
+
     await deleteOutcomesByWager(wagerId);
     await createOutcomes(wagerId, input.outcomes.map((o) => ({ title: o.title })));
     await deleteWagerVisibilities(wagerId);
+
     if (!input.isPublic && input.invitedUserIds && input.invitedUserIds.length > 0) {
       await createWagerVisibilities(wagerId, input.invitedUserIds);
     }
   });
 
   const updated = await findWagerByIdWithDetails(wagerId, requestingUserId);
-  if (!updated) throw new HttpError(500, "Failed to load updated wager");
+  if (!updated) {
+    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to load updated wager");
+  }
+
   const outcomes = await listWagerOutcomes(wagerId);
   return mapWagerDetail(updated, outcomes);
 }
 
 export async function deleteWager(wagerId: number, requestingUserId: number): Promise<void> {
   const wagerRow = await findWagerByIdWithDetails(wagerId, requestingUserId);
-  if (!wagerRow) throw new HttpError(404, "Wager not found");
-  if (wagerRow.createdById !== requestingUserId) throw new HttpError(403, "Only the wager creator can delete this wager");
 
-  if (await wagerHasBets(wagerId)) throw new HttpError(400, "Cannot delete a wager that has bets");
+  if (!wagerRow) {
+    throw new HttpError(404, "NOT_FOUND", "Wager not found");
+  }
+
+  if (wagerRow.createdById !== requestingUserId) {
+    throw new HttpError(403, "FORBIDDEN", "Only the wager creator can delete this wager");
+  }
+
+  if (await wagerHasBets(wagerId)) {
+    throw new HttpError(400, "BAD_REQUEST", "Cannot delete a wager that has bets");
+  }
 
   await deleteWagerById(wagerId);
 }
@@ -131,22 +157,22 @@ export async function closeWagerBetting(
   const wagerRow = await findWagerByIdWithDetails(wagerId, requestingUserId);
 
   if (!wagerRow) {
-    throw new HttpError(404, "Wager not found");
+    throw new HttpError(404, "NOT_FOUND", "Wager not found");
   }
 
   if (wagerRow.createdById !== requestingUserId) {
-    throw new HttpError(403, "Only the wager creator can end betting");
+    throw new HttpError(403, "FORBIDDEN", "Only the wager creator can end betting");
   }
 
   if (wagerRow.status !== "OPEN") {
-    throw new HttpError(400, "Only OPEN wagers can have betting ended");
+    throw new HttpError(400, "BAD_REQUEST", "Only OPEN wagers can have betting ended");
   }
 
   await updateWagerStatus(wagerId, "PENDING");
 
   const updatedWagerRow = await findWagerByIdWithDetails(wagerId, requestingUserId);
   if (!updatedWagerRow) {
-    throw new HttpError(500, "Failed to load updated wager");
+    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to load updated wager");
   }
 
   const outcomes = await listWagerOutcomes(wagerId);
@@ -161,18 +187,18 @@ export async function resolveWager(
     const wagerRow = await findWagerByIdWithDetails(wagerId);
 
     if (!wagerRow) {
-      throw new HttpError(404, "Wager not found");
+      throw new HttpError(404, "NOT_FOUND", "Wager not found");
     }
 
     if (wagerRow.status === "CLOSED") {
-      throw new HttpError(400, "Wager is already closed");
+      throw new HttpError(400, "BAD_REQUEST", "Wager is already closed");
     }
 
     const outcomes = await listWagerOutcomes(wagerId);
 
     const winningOutcome = outcomes.find((o) => o.id === input.outcomeId);
     if (!winningOutcome) {
-      throw new HttpError(400, "Outcome not found for this wager");
+      throw new HttpError(400, "BAD_REQUEST", "Outcome not found for this wager");
     }
 
     const totalPool = outcomes.reduce((sum, row) => sum + parseMoney(row.totalBet), 0);
@@ -192,7 +218,7 @@ export async function resolveWager(
           .limit(1);
 
         if (!userWallet) {
-          throw new HttpError(404, "Wallet not found");
+          throw new HttpError(404, "NOT_FOUND", "Wallet not found");
         }
 
         const stake = parseMoney(betRow.amount);
@@ -214,12 +240,12 @@ export async function resolveWager(
   });
 
   if (!result) {
-    throw new HttpError(500, "Failed to resolve wager");
+    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to resolve wager");
   }
 
   const updatedWagerRow = await findWagerByIdWithDetails(wagerId);
   if (!updatedWagerRow) {
-    throw new HttpError(500, "Failed to load resolved wager");
+    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Failed to load resolved wager");
   }
 
   const outcomes = await listWagerOutcomes(wagerId);
