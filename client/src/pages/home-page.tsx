@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   paginatedWagersResponseSchema,
-  type PaginatedWagersResponse,
+  //type PaginatedWagersResponse,
   type WagerSummary,
 } from "@pb138/shared/schemas/wager";
 import { Button } from "../components/ui/button";

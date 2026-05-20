@@ -7,6 +7,7 @@ import {
   resetPasswordRequestSchema,
   resendVerificationByEmailRequestSchema,
   userActionResponseSchema,
+  userMutationResponseSchema,
   verifyEmailRequestSchema,
   verifyEmailResponseSchema,
 } from "@pb138/shared/schemas/user";
@@ -72,7 +73,7 @@ export const authRoutes = new Elysia()
     });
 
     set.status = 201;
-    return { data };
+    return userMutationResponseSchema.parse({ data });
   })
 
   .post("/logout", ({ cookie: { auth_session }, set }) => {

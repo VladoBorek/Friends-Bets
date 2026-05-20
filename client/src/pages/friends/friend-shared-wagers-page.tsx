@@ -84,7 +84,7 @@ export function FriendSharedWagersPage() {
     );
   }
 
-  const friend = detailQuery.data?.data.friend ?? historyQuery.data?.friend;
+  const friend = detailQuery.data?.data.friend;
   const wagers = historyQuery.data?.data ?? [];
   const pagination = historyQuery.data?.pagination;
   const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;

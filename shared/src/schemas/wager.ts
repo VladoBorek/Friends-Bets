@@ -94,6 +94,10 @@ export const categorySummarySchema = z.object({
   name: z.string(),
 });
 
+export const categoryResponseSchema = z.object({
+  data: categorySummarySchema,
+});
+
 export const categoryAdminSummarySchema = categorySummarySchema.extend({
   wagerCount: z.number().int().nonnegative(),
   betCount: z.number().int().nonnegative(),
@@ -168,6 +172,10 @@ export const wagerCommentSchema = z.object({
   username: z.string(),
   content: z.string(),
   createdAt: z.string(),
+});
+
+export const wagerCommentResponseSchema = z.object({
+  data: wagerCommentSchema,
 });
 
 export const paginatedWagerCommentsResponseSchema = z.object({

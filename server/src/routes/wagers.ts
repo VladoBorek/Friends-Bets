@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { z } from "zod";
 import {
   categoriesListQuerySchema,
+  categoryResponseSchema,
   createWagerRequestSchema,
   createWagerResponseSchema,
   getWagerResponseSchema,
@@ -16,7 +17,7 @@ import {
   placeBetResponseSchema,
   resolveWagerRequestSchema,
   resolveWagerResponseSchema,
- // wagerActionResponseSchema,
+  wagerCommentResponseSchema,
   wagerBetsListQuerySchema,
   wagerCommentsListQuerySchema,
   wagerInvitationsListQuerySchema,
@@ -135,7 +136,7 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
 
     set.status = 201;
 
-    return { data };
+    return categoryResponseSchema.parse({ data });
   })
   .delete("/categories/:id", async ({ params, getCurrentUser, set }) => {
     const user = await getCurrentUser();
@@ -238,7 +239,7 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
 
     set.status = 201;
 
-    return { data };
+    return wagerCommentResponseSchema.parse({ data });
   })
   .patch("/:id/close", async ({ params, getCurrentUser }) => {
     const parsedParams = idParamsSchema.parse(params);
