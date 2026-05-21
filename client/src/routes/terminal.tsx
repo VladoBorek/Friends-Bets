@@ -12,6 +12,7 @@ const terminalSearchSchema = z.object({
 export type TerminalSearch = z.infer<typeof terminalSearchSchema>;
 
 export const Route = createFileRoute("/terminal")({
+  validateSearch: (search) => terminalSearchSchema.parse(search),
   beforeLoad: async ({ context, search }) => {
     const user = await context.auth.refreshUser();
 
@@ -27,6 +28,5 @@ export const Route = createFileRoute("/terminal")({
       });
     }
   },
-  validateSearch: (search) => terminalSearchSchema.parse(search),
   component: TerminalPage,
 });

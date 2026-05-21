@@ -11,11 +11,13 @@ import { UserTable } from "../features/admin/components/user-table";
 import { useCategories } from "../features/admin/hooks/use-categories";
 import { useGroups } from "../features/admin/hooks/use-groups";
 import { useUsers } from "../features/admin/hooks/use-users";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { getRouteApi } from "@tanstack/react-router";
+
+const routeApi = getRouteApi("/terminal");
 
 export function TerminalPage() {
-  const search = useSearch({ from: "/terminal" });
-  const navigate = useNavigate({ from: "/terminal" });
+  const search = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
 
   const activeTab = search.tab ?? "users";
   const groupView = search.view ?? "overview";
