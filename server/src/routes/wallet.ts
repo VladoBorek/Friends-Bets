@@ -17,6 +17,16 @@ import {
   withdrawFromWallet,
 } from "../services/wallet";
 
+import type { WideEventBuilder } from "../observability";
+
+function getWideEvent(context: unknown): WideEventBuilder | undefined {
+  if (context && typeof context === "object" && "wideEvent" in context) {
+    return context.wideEvent as WideEventBuilder;
+  }
+
+  return undefined;
+}
+
 export const walletRoutes = new Elysia({ prefix: "/wallet" })
   .use(
     jwt({
@@ -24,18 +34,37 @@ export const walletRoutes = new Elysia({ prefix: "/wallet" })
       secret: process.env.JWT_SECRET || "super-secret-pb138",
     }),
   )
-  .derive(async ({ jwt, cookie: { auth_session } }) => ({
+  .derive(async (context) => ({
     getCurrentUser: async () => {
+      const { jwt, cookie: { auth_session } } = context;
+
       if (!auth_session?.value) {
-        throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
+        throw new HttpError({
+          status: 401,
+          code: "AUTH_REQUIRED",
+          message: "Authentication is required",
+        });
       }
 
       const profile = await jwt.verify(auth_session.value as string);
-      if (!profile || !profile.id) {
-        throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
+
+      if (
+        !profile ||
+        typeof profile !== "object" ||
+        !("id" in profile) ||
+        typeof profile.id !== "number"
+      ) {
+        throw new HttpError({
+          status: 401,
+          code: "AUTH_INVALID_SESSION",
+          message: "Authentication session is invalid",
+        });
       }
 
-      return getUserById(Number(profile.id));
+      const user = await getUserById(profile.id);
+      getWideEvent(context)?.setUserId(user.id);
+
+      return user;
     },
   }))
   .get("/me", async ({ getCurrentUser }) => {

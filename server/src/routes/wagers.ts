@@ -1,6 +1,4 @@
 import { jwt } from "@elysiajs/jwt";
-import { Elysia } from "elysia";
-import { z } from "zod";
 import {
   categoriesListQuerySchema,
   categoryResponseSchema,
@@ -17,13 +15,23 @@ import {
   placeBetResponseSchema,
   resolveWagerRequestSchema,
   resolveWagerResponseSchema,
-  wagerCommentResponseSchema,
   wagerBetsListQuerySchema,
+  wagerCommentResponseSchema,
   wagerCommentsListQuerySchema,
   wagerInvitationsListQuerySchema,
   wagersListQuerySchema,
 } from "@pb138/shared/schemas/wager";
+import { Elysia } from "elysia";
+import { z } from "zod";
 import { HttpError } from "../errors";
+import type { WideEventBuilder } from "../observability";
+import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  listCategoriesWithUsage,
+} from "../services/category";
+import { getUserById } from "../services/user";
 import {
   closeWagerBetting,
   createComment,
@@ -40,13 +48,6 @@ import {
   resolveWager,
   updateWager,
 } from "../services/wagers";
-import { getUserById } from "../services/user";
-import {
-  createCategory,
-  deleteCategory,
-  listCategories,
-  listCategoriesWithUsage,
-} from "../services/category";
 
 const idParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -60,6 +61,14 @@ type JwtProfile = {
   id?: unknown;
 };
 
+function getWideEvent(context: unknown): WideEventBuilder | undefined {
+  if (context && typeof context === "object" && "wideEvent" in context) {
+    return context.wideEvent as WideEventBuilder;
+  }
+
+  return undefined;
+}
+
 export const wagerRoutes = new Elysia({ prefix: "/wagers" })
   .use(
     jwt({
@@ -67,33 +76,57 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
       secret: process.env.JWT_SECRET || "super-secret-pb138",
     }),
   )
-  .derive(async ({ jwt, cookie: { auth_session } }) => ({
+  .derive(async (context) => ({
     getCurrentUser: async () => {
+      const {
+        jwt,
+        cookie: { auth_session },
+      } = context;
+
       if (!auth_session?.value) {
-        throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
+        throw new HttpError({
+          status: 401,
+          code: "AUTH_REQUIRED",
+          message: "Authentication is required",
+        });
       }
 
-      const profile = await jwt.verify(auth_session.value as string) as JwtProfile | false;
+      const profile = (await jwt.verify(auth_session.value as string)) as JwtProfile | false;
 
       if (!profile || typeof profile.id !== "number") {
-        throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
+        throw new HttpError({
+          status: 401,
+          code: "AUTH_INVALID_SESSION",
+          message: "Authentication session is invalid",
+        });
       }
 
-      return getUserById(profile.id);
+      const user = await getUserById(profile.id);
+      getWideEvent(context)?.setUserId(user.id);
+
+      return user;
     },
     getOptionalCurrentUser: async () => {
+      const {
+        jwt,
+        cookie: { auth_session },
+      } = context;
+
       if (!auth_session?.value) {
         return null;
       }
 
-      const profile = await jwt.verify(auth_session.value as string) as JwtProfile | false;
+      const profile = (await jwt.verify(auth_session.value as string)) as JwtProfile | false;
 
       if (!profile || typeof profile.id !== "number") {
         return null;
       }
 
       try {
-        return await getUserById(profile.id);
+        const user = await getUserById(profile.id);
+        getWideEvent(context)?.setUserId(user.id);
+
+        return user;
       } catch {
         return null;
       }
@@ -116,7 +149,11 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const user = await getCurrentUser();
 
     if (user.roleName !== "ADMIN") {
-      throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
+      throw new HttpError({
+        status: 403,
+        code: "AUTH_FORBIDDEN",
+        message: "Admin privileges required",
+      });
     }
 
     const parsedQuery = categoriesListQuerySchema.parse(query);
@@ -128,7 +165,11 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const user = await getCurrentUser();
 
     if (user.roleName !== "ADMIN") {
-      throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
+      throw new HttpError({
+        status: 403,
+        code: "AUTH_FORBIDDEN",
+        message: "Admin privileges required",
+      });
     }
 
     const parsedBody = createCategoryBodySchema.parse(body);
@@ -142,7 +183,11 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const user = await getCurrentUser();
 
     if (user.roleName !== "ADMIN") {
-      throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
+      throw new HttpError({
+        status: 403,
+        code: "AUTH_FORBIDDEN",
+        message: "Admin privileges required",
+      });
     }
 
     const parsedParams = idParamsSchema.parse(params);
@@ -255,7 +300,11 @@ export const wagerRoutes = new Elysia({ prefix: "/wagers" })
     const wager = await getWagerById(parsedParams.id, user.id);
 
     if (wager.createdById !== user.id) {
-      throw new HttpError(403, "FORBIDDEN", "Only the wager creator can resolve the wager");
+      throw new HttpError({
+        status: 403,
+        code: "WAGER_FORBIDDEN",
+        message: "Only the wager creator can resolve the wager",
+      });
     }
 
     const data = await resolveWager(parsedParams.id, parsedBody);

@@ -53,11 +53,11 @@ export function mapFriendRequestSummary(
   const addressee = usersById.get(row.addresseeId);
 
   if (!requester || !addressee) {
-    throw new HttpError(
-      500,
-      "INTERNAL_SERVER_ERROR",
-      "Friend request references missing user",
-    );
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Friend request references missing user",
+    });
   }
 
   return {

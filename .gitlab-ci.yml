@@ -13,7 +13,9 @@ stages:
 .node-job:
   tags:
     - shared-fi
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:22-bookworm-slim
+  image:
+    name: node:22-bookworm-slim
+    pull_policy: if-not-present
   variables:
     NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
   cache:

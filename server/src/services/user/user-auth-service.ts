@@ -1,30 +1,39 @@
-import bcrypt from "bcrypt";
 import type { CreateUserRequest, LoginRequest, UserSummary } from "@pb138/shared/schemas/user";
-import { HttpError } from "../../errors";
-import { emailClient } from "../email-service";
+import bcrypt from "bcrypt";
 import { readServerConfig } from "../../config";
+import { HttpError } from "../../errors";
+import { logger } from "../../observability";
+import * as userRepository from "../../repositories/user/user-repository";
+import { emailClient } from "../email-service";
 import { mapUserSummary } from "./mappers/user-mapper";
 import {
+  buildPasswordResetToken,
+  buildPasswordResetUrl,
   buildVerificationToken,
   buildVerificationUrl,
   verifyCryptoToken,
-  buildPasswordResetToken,
-  buildPasswordResetUrl,
 } from "./user-token-service";
-import * as userRepository from "../../repositories/user/user-repository";
-import { getUserById, getUserByEmail } from "./user-query-service";
+import { getUserByEmail, getUserById } from "./user-query-service";
 
 export async function createUser(input: CreateUserRequest): Promise<UserSummary> {
   const existingUser = await userRepository.findUserByEmail(input.email);
 
   if (existingUser) {
-    throw new HttpError(400, "BAD_REQUEST", "Email already in use");
+    throw new HttpError({
+      status: 409,
+      code: "EMAIL_ALREADY_IN_USE",
+      message: "Email already in use",
+    });
   }
 
   const roleId = input.roleId ?? await userRepository.findRoleIdByName("USER");
 
   if (!roleId) {
-    throw new HttpError(500, "INTERNAL_SERVER_ERROR", "Default role not configured");
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Unexpected server error",
+    });
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
@@ -41,10 +50,10 @@ export async function createUser(input: CreateUserRequest): Promise<UserSummary>
       activationUrl: verificationUrl,
     });
   } catch (error) {
-    console.error("[Users] Registration verification email failed", {
-      userId: createdUser.id,
-      email: createdUser.email,
-      error: error instanceof Error ? error.message : String(error),
+    logger.error({
+      event_name: "registration_verification_email_failed",
+      user_id: createdUser.id,
+      error,
     });
   }
 
@@ -55,13 +64,21 @@ export async function getUserByCredentials(input: LoginRequest): Promise<UserSum
   const user = await userRepository.findUserWithPasswordByEmail(input.email);
 
   if (!user) {
-    throw new HttpError(401, "UNAUTHORIZED", "Invalid email or password");
+    throw new HttpError({
+      status: 401,
+      code: "AUTH_INVALID_CREDENTIALS",
+      message: "Invalid email or password",
+    });
   }
 
   const isValid = await bcrypt.compare(input.password, user.passwordHash);
 
   if (!isValid) {
-    throw new HttpError(401, "UNAUTHORIZED", "Invalid email or password");
+    throw new HttpError({
+      status: 401,
+      code: "AUTH_INVALID_CREDENTIALS",
+      message: "Invalid email or password",
+    });
   }
 
   return mapUserSummary(user);
@@ -80,13 +97,21 @@ export async function resendVerificationEmail(userId: number): Promise<void> {
   const emailConfig = readServerConfig().email;
 
   if (!emailConfig.enabled) {
-    throw new HttpError(400, "BAD_REQUEST", "Email delivery is disabled.");
+    throw new HttpError({
+      status: 400,
+      code: "EMAIL_DELIVERY_DISABLED",
+      message: "Email delivery is disabled",
+    });
   }
 
   const user = await getUserById(userId);
 
   if (user.isVerified) {
-    throw new HttpError(400, "BAD_REQUEST", "User is already verified");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "User is already verified",
+    });
   }
 
   const { token } = buildVerificationToken(user.id);

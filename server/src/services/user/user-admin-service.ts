@@ -1,8 +1,8 @@
 import type { UserSummary } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../errors";
+import * as userRepository from "../../repositories/user/user-repository";
 import { emailClient } from "../email-service";
 import { getUserById } from "./user-query-service";
-import * as userRepository from "../../repositories/user/user-repository";
 
 export async function updateUserRole(
   userId: number,
@@ -11,7 +11,11 @@ export async function updateUserRole(
   const roleId = await userRepository.findRoleIdByName(roleName);
 
   if (!roleId) {
-    throw new HttpError(400, "BAD_REQUEST", `Role ${roleName} is not configured`);
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Unexpected server error",
+    });
   }
 
   await userRepository.updateUserRoleById(userId, roleId);

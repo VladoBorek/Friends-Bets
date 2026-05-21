@@ -5,7 +5,11 @@ export function ensureUserIsVerified(
   action = "perform this action",
 ): void {
   if (user.isVerified === false) {
-    throw new HttpError(403, "FORBIDDEN", `Account must be verified to ${action}.`);
+    throw new HttpError({
+      status: 403,
+      code: "AUTH_FORBIDDEN",
+      message: `Account must be verified to ${action}.`,
+    });
   }
 }
 
@@ -23,6 +27,10 @@ export function ensureUserIsNotSuspended(
   }
 
   if (suspensionEndsAt.getTime() > Date.now()) {
-    throw new HttpError(403, "FORBIDDEN", `Suspended users cannot ${action}`);
+    throw new HttpError({
+      status: 403,
+      code: "AUTH_FORBIDDEN",
+      message: `Suspended users cannot ${action}`,
+    });
   }
 }

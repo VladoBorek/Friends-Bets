@@ -22,13 +22,21 @@ async function getAcceptedFriendOrThrow(currentUserId: number, friendId: number)
   const friendship = await findFriendshipBetweenUsers(currentUserId, friendId);
 
   if (!friendship || friendship.status !== "ACCEPTED") {
-    throw new HttpError(404, "NOT_FOUND", "Friend not found");
+    throw new HttpError({
+      status: 404,
+      code: "FRIEND_NOT_FOUND",
+      message: "Friend not found",
+    });
   }
 
   const [friendRow] = await listUsersByIds([friendId]);
 
   if (!friendRow) {
-    throw new HttpError(404, "NOT_FOUND", "Friend not found");
+    throw new HttpError({
+      status: 404,
+      code: "FRIEND_NOT_FOUND",
+      message: "Friend not found",
+    });
   }
 
   return mapUserSummary(friendRow);

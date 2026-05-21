@@ -1,6 +1,7 @@
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { logger } from "../observability";
 import { closeConnection, db } from "./db";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
@@ -12,9 +13,15 @@ async function main() {
       migrationsFolder,
     });
 
-    console.log("Migration script completed.");
+    logger.info({
+      event_name: "migration_completed",
+    });
   } catch (error) {
-    console.error("Migration script failed:", error);
+    logger.error({
+      event_name: "migration_failed",
+      error,
+    });
+
     process.exitCode = 1;
   } finally {
     await closeConnection();

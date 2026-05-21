@@ -4,14 +4,18 @@ import type {
   UsersListQuery,
 } from "@pb138/shared/schemas/user";
 import { HttpError } from "../../errors";
-import { mapUserSummary } from "./mappers/user-mapper";
 import * as userRepository from "../../repositories/user/user-repository";
+import { mapUserSummary } from "./mappers/user-mapper";
 
 export async function getUserById(id: number): Promise<UserSummary> {
   const user = await userRepository.findUserById(id);
 
   if (!user) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   return mapUserSummary(user);
@@ -40,7 +44,11 @@ export async function getUserByEmail(email: string): Promise<UserSummary> {
   const user = await userRepository.findUserByEmail(email);
 
   if (!user) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   return mapUserSummary(user);

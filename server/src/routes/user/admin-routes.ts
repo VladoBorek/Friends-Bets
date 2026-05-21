@@ -1,5 +1,3 @@
-import { Elysia } from "elysia";
-import { z } from "zod";
 import {
   listUsersResponseSchema,
   suspendUserRequestSchema,
@@ -8,6 +6,10 @@ import {
   userMutationResponseSchema,
   usersListQuerySchema,
 } from "@pb138/shared/schemas/user";
+import { Elysia } from "elysia";
+import { z } from "zod";
+import { HttpError } from "../../errors";
+import { authPlugin, getAuthenticatedUser, type AuthContextLike } from "../../plugins/auth";
 import {
   deleteUser,
   listUsers,
@@ -17,8 +19,6 @@ import {
   unsuspendUser,
   updateUserRole,
 } from "../../services/user";
-import { HttpError } from "../../errors";
-import { authPlugin, getAuthenticatedUser, type AuthContextLike } from "../../plugins/auth";
 
 const userIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -28,7 +28,11 @@ async function ensureAdmin(context: AuthContextLike) {
   const user = await getAuthenticatedUser(context);
 
   if (user.roleName !== "ADMIN") {
-    throw new HttpError(403, "FORBIDDEN", "Admin privileges required");
+    throw new HttpError({
+      status: 403,
+      code: "AUTH_FORBIDDEN",
+      message: "Admin privileges required",
+    });
   }
 
   return user;
@@ -51,7 +55,11 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     const parsedBody = updateUserRoleRequestSchema.parse(context.body);
 
     if (parsedParams.id === adminUser.id && parsedBody.roleName !== "ADMIN") {
-      throw new HttpError(400, "BAD_REQUEST", "Cannot demote yourself");
+      throw new HttpError({
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot demote yourself",
+      });
     }
 
     const data = await updateUserRole(parsedParams.id, parsedBody.roleName);

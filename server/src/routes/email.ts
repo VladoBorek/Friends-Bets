@@ -1,7 +1,8 @@
+import { messageDataSchema } from "@pb138/shared/schemas/api";
 import { Elysia } from "elysia";
 import { z } from "zod";
-import { messageDataSchema } from "@pb138/shared/schemas/api";
 import { HttpError } from "../errors";
+import { logger } from "../observability";
 import { emailClient } from "../services/email-service";
 
 const testEmailRequestSchema = z.object({
@@ -19,11 +20,17 @@ export const emailRoutes = new Elysia({ prefix: "/email" }).post("/test", async 
       html: "<p>This is a PB138 test email.</p>",
     });
   } catch (error) {
-    throw new HttpError(
-      500,
-      "INTERNAL_SERVER_ERROR",
-      `Failed to send test email: ${error instanceof Error ? error.message : "unknown error"}`,
-    );
+    logger.error({
+      event_name: "test_email_send_failed",
+      error,
+    });
+
+    throw new HttpError({
+      status: 500,
+      code: "EMAIL_SEND_FAILED",
+      message: "Failed to send test email",
+      cause: error,
+    });
   }
 
   return messageDataSchema.parse({

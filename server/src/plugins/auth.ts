@@ -1,8 +1,9 @@
-import { Elysia } from "elysia";
 import { jwt } from "@elysiajs/jwt";
-import { HttpError } from "../errors";
-import { getUserById } from "../services/user";
+import { Elysia } from "elysia";
 import { readServerConfig } from "../config";
+import { HttpError } from "../errors";
+import type { WideEventBuilder } from "../observability";
+import { getUserById } from "../services/user";
 
 export const authPlugin = new Elysia({ name: "auth-plugin" }).use(
   jwt({
@@ -20,27 +21,43 @@ export type AuthContextLike = {
       value?: string;
     };
   };
+  wideEvent?: WideEventBuilder;
 };
+
+function isJwtProfile(value: unknown): value is { id: number } {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "id" in value &&
+      typeof value.id === "number",
+  );
+}
 
 export async function getAuthenticatedUser(context: AuthContextLike) {
   const token = context.cookie.auth_session?.value;
 
   if (!token) {
-    throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
+    throw new HttpError({
+      status: 401,
+      code: "AUTH_REQUIRED",
+      message: "Authentication is required",
+    });
   }
 
   const profile = await context.jwt.verify(token);
 
-  if (
-    !profile ||
-    typeof profile !== "object" ||
-    !("id" in profile) ||
-    typeof profile.id !== "number"
-  ) {
-    throw new HttpError(401, "UNAUTHORIZED", "Unauthorized");
+  if (!isJwtProfile(profile)) {
+    throw new HttpError({
+      status: 401,
+      code: "AUTH_INVALID_SESSION",
+      message: "Authentication session is invalid",
+    });
   }
 
-  return getUserById(profile.id);
+  const user = await getUserById(profile.id);
+  context.wideEvent?.setUserId(user.id);
+
+  return user;
 }
 
 export async function getOptionalAuthenticatedUser(context: AuthContextLike) {
@@ -53,16 +70,14 @@ export async function getOptionalAuthenticatedUser(context: AuthContextLike) {
   try {
     const profile = await context.jwt.verify(token);
 
-    if (
-      !profile ||
-      typeof profile !== "object" ||
-      !("id" in profile) ||
-      typeof profile.id !== "number"
-    ) {
+    if (!isJwtProfile(profile)) {
       return null;
     }
 
-    return await getUserById(profile.id);
+    const user = await getUserById(profile.id);
+    context.wideEvent?.setUserId(user.id);
+
+    return user;
   } catch {
     return null;
   }

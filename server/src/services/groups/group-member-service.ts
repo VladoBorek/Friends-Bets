@@ -6,8 +6,8 @@ import type {
 import { HttpError } from "../../errors";
 import * as groupMemberRepository from "../../repositories/group/group-member-repository";
 import * as userRepository from "../../repositories/user/user-repository";
-import { mapGroupMemberSummary } from "./mappers/group-mapper";
 import { requireGroupMember, requireGroupOwner } from "./group-permission-service";
+import { mapGroupMemberSummary } from "./mappers/group-mapper";
 
 export async function listGroupMembers(
   currentUserId: number,
@@ -38,7 +38,11 @@ async function ensureCanRemoveMember(groupId: number, userId: number): Promise<v
   const membership = await groupMemberRepository.findMembership(groupId, userId);
 
   if (!membership) {
-    throw new HttpError(404, "NOT_FOUND", "Group member not found");
+    throw new HttpError({
+      status: 404,
+      code: "GROUP_NOT_FOUND",
+      message: "Group member not found",
+    });
   }
 
   if (membership.role !== "OWNER") {
@@ -48,7 +52,11 @@ async function ensureCanRemoveMember(groupId: number, userId: number): Promise<v
   const otherOwners = await groupMemberRepository.countOtherGroupOwners(groupId, userId);
 
   if (otherOwners === 0) {
-    throw new HttpError(400, "BAD_REQUEST", "Cannot remove the last group owner");
+    throw new HttpError({
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Cannot remove the last group owner",
+    });
   }
 }
 
@@ -62,13 +70,21 @@ export async function addGroupMember(
   const user = await userRepository.findUserById(input.userId);
 
   if (!user) {
-    throw new HttpError(404, "NOT_FOUND", "User not found");
+    throw new HttpError({
+      status: 404,
+      code: "USER_NOT_FOUND",
+      message: "User not found",
+    });
   }
 
   const existingMembership = await groupMemberRepository.findMembership(groupId, input.userId);
 
   if (existingMembership) {
-    throw new HttpError(400, "BAD_REQUEST", "User is already a member of this group");
+    throw new HttpError({
+      status: 409,
+      code: "CONFLICT",
+      message: "User is already a member of this group",
+    });
   }
 
   await groupMemberRepository.addGroupMember(groupId, input.userId, input.role);
@@ -77,11 +93,11 @@ export async function addGroupMember(
   const createdMember = rows.find((row) => row.id === input.userId);
 
   if (!createdMember) {
-    throw new HttpError(
-      500,
-      "INTERNAL_SERVER_ERROR",
-      "Created group member could not be loaded",
-    );
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Created group member could not be loaded",
+    });
   }
 
   return mapGroupMemberSummary(createdMember);
@@ -98,14 +114,22 @@ export async function updateGroupMemberRole(
   const membership = await groupMemberRepository.findMembership(groupId, userId);
 
   if (!membership) {
-    throw new HttpError(404, "NOT_FOUND", "Group member not found");
+    throw new HttpError({
+      status: 404,
+      code: "GROUP_NOT_FOUND",
+      message: "Group member not found",
+    });
   }
 
   if (membership.role === "OWNER" && role === "MEMBER") {
     const otherOwners = await groupMemberRepository.countOtherGroupOwners(groupId, userId);
 
     if (otherOwners === 0) {
-      throw new HttpError(400, "BAD_REQUEST", "Cannot demote the last group owner");
+      throw new HttpError({
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot demote the last group owner",
+      });
     }
   }
 
@@ -115,11 +139,11 @@ export async function updateGroupMemberRole(
   const updatedMember = rows.find((row) => row.id === userId);
 
   if (!updatedMember) {
-    throw new HttpError(
-      500,
-      "INTERNAL_SERVER_ERROR",
-      "Updated group member could not be loaded",
-    );
+    throw new HttpError({
+      status: 500,
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Updated group member could not be loaded",
+    });
   }
 
   return mapGroupMemberSummary(updatedMember);

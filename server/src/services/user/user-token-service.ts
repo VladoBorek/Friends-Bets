@@ -15,13 +15,21 @@ export function generateCryptoToken(
   return { token, expiresAtMs };
 }
 
+function invalidTokenError(): HttpError {
+  return new HttpError({
+    status: 400,
+    code: "TOKEN_INVALID",
+    message: "Invalid or expired token",
+  });
+}
+
 export function verifyCryptoToken(token: string, secret: string): number {
   let decoded: string;
 
   try {
     decoded = Buffer.from(token, "base64url").toString("utf-8");
   } catch {
-    throw new HttpError(400, "BAD_REQUEST", "Invalid token format");
+    throw invalidTokenError();
   }
 
   const [userIdText, expiresAtText, providedSignature] = decoded.split(":");
@@ -29,18 +37,28 @@ export function verifyCryptoToken(token: string, secret: string): number {
   const expiresAtMs = Number(expiresAtText);
 
   if (!Number.isInteger(userId) || !Number.isFinite(expiresAtMs) || !providedSignature) {
-    throw new HttpError(400, "BAD_REQUEST", "Invalid token structure");
+    throw invalidTokenError();
   }
 
   if (Date.now() > expiresAtMs) {
-    throw new HttpError(400, "BAD_REQUEST", "Token expired");
+    throw new HttpError({
+      status: 400,
+      code: "TOKEN_EXPIRED",
+      message: "Invalid or expired token",
+    });
   }
 
   const payload = `${userId}:${expiresAtMs}`;
   const expectedSignature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
 
-  if (expectedSignature !== providedSignature) {
-    throw new HttpError(400, "BAD_REQUEST", "Invalid token signature");
+  const expectedSignatureBuffer = Buffer.from(expectedSignature, "hex");
+  const providedSignatureBuffer = Buffer.from(providedSignature, "hex");
+
+  if (
+    expectedSignatureBuffer.length !== providedSignatureBuffer.length ||
+    !crypto.timingSafeEqual(expectedSignatureBuffer, providedSignatureBuffer)
+  ) {
+    throw invalidTokenError();
   }
 
   return userId;

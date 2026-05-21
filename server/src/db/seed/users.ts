@@ -40,18 +40,5 @@ export async function seedUsers(userRoleId: number, adminRoleId: number) {
     }),
   );
 
-  const inserted = await db.insert(User).values(rows).returning();
-
-  console.log("Seeded test users (email:password):");
-  for (const name of seedConfig.users) {
-    const username = normalizeUsername(name);
-    const isAdmin = adminUsernames.has(username);
-    const password = isAdmin ? defaultAdminPassword : defaultUserPassword;
-    const email = username === "richard" ? "risac13@seznam.cz" : `${username}@midnight-wager.club`;
-    const verificationLabel = nonVerifiedUsernames.has(username) ? "(non-verified)" : "(verified)";
-
-    console.log(`- ${email} : ${password} ${isAdmin ? "(admin)" : ""} ${verificationLabel}`);
-  }
-
-  return inserted;
+  return db.insert(User).values(rows).returning();
 }
