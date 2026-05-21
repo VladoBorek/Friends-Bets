@@ -13,7 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@pb138/shared": resolve(__dirname, "../shared/src/index.ts"),
+      "@pb138/shared": resolve(__dirname, "../shared/src"),
     },
   },
 });

@@ -41,6 +41,7 @@ export function GroupMembersPanel({ groupId, groupName, onBack }: GroupMembersPa
           size="sm"
           onClick={onBack}
           className="text-slate-400 hover:text-slate-200"
+          aria-label="Back to groups list"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
