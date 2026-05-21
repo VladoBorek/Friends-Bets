@@ -43,13 +43,17 @@ async function fetchAdminGroupsPage(page: number, query: string) {
   return paginatedGroupsResponseSchema.parse(json);
 }
 
-export function useGroups(enabled: boolean) {
+export function useGroups(enabled: boolean, initialPage = 1) {
   const [groups, setGroups] = useState<AdminGroupSummary[]>([]);
   const [pagination, setPagination] = useState<PaginationState | null>(null);
-  const [page, setPageState] = useState(1);
+  const [page, setPageState] = useState(initialPage);
   const [query, setQueryState] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
+
+  useEffect(() => {
+    setPageState(initialPage);
+  }, [initialPage]);
 
   const fetchGroups = useCallback(async () => {
     if (!enabled) {

@@ -79,19 +79,13 @@ export function GroupMembersPanel({ groupId, groupName, onBack }: GroupMembersPa
         ) : members.length === 0 ? (
           <div className="p-8 text-center text-slate-400">No matching members found.</div>
         ) : (
-          <table className="w-full table-fixed text-left text-sm">
-            <colgroup>
-              <col />
-              <col className="w-[120px]" />
-              <col className="w-[140px]" />
-              <col className="w-[72px]" />
-            </colgroup>
+          <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-800/50 bg-slate-900/80">
               <tr>
                 <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Member</th>
-                <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Role</th>
-                <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Joined</th>
-                <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Actions</th>
+                <th className="w-[120px] px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Role</th>
+                <th className="w-[140px] px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Joined</th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Actions</th>
               </tr>
             </thead>
             <tbody className="[&>tr+tr]:border-t [&>tr+tr]:border-slate-800/50">
@@ -117,7 +111,7 @@ export function GroupMembersPanel({ groupId, groupName, onBack }: GroupMembersPa
                   <td className="px-6 py-4 text-slate-400">
                     {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString() : "N/A"}
                   </td>
-                  <td className="px-2 py-4 text-right">
+                  <td className="px-6 py-4 text-right">
                     <GroupMemberActionMenu
                       member={member}
                       members={members}

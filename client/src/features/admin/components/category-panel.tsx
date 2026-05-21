@@ -80,19 +80,13 @@ export function CategoryPanel({
         ) : categories.length === 0 ? (
           <div className="p-6 text-center text-slate-400">No categories found.</div>
         ) : (
-          <table className="w-full table-fixed text-left text-sm">
-            <colgroup>
-              <col />
-              <col className="w-[120px]" />
-              <col className="w-[120px]" />
-              <col className="w-[90px]" />
-            </colgroup>
+          <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-800/50 bg-slate-900/80">
               <tr>
-                <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Category</th>
-                <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Wagers</th>
-                <th className="px-5 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Bets</th>
-                <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Action</th>
+                <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Category</th>
+                <th className="w-[120px] px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Wagers</th>
+                <th className="w-[120px] px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-400">Bets</th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-400">Action</th>
               </tr>
             </thead>
             <tbody className="[&>tr+tr]:border-t [&>tr+tr]:border-slate-800/50">
@@ -101,10 +95,10 @@ export function CategoryPanel({
 
                 return (
                   <tr key={category.id} className="hover:bg-slate-800/40">
-                    <td className="px-5 py-4 text-slate-200">{category.name}</td>
-                    <td className="px-5 py-4 text-slate-400">{category.wagerCount}</td>
-                    <td className="px-5 py-4 text-slate-400">{category.betCount}</td>
-                    <td className="px-2 py-4 text-right">
+                    <td className="px-6 py-4 text-slate-200">{category.name}</td>
+                    <td className="px-6 py-4 text-slate-400">{category.wagerCount}</td>
+                    <td className="px-6 py-4 text-slate-400">{category.betCount}</td>
+                    <td className="px-6 py-4 text-right">
                       <Button
                         variant="ghost"
                         size="sm"

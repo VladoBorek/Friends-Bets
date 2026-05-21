@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Card, PremiumCard } from "../components/ui/card";
 import { CategoryPanel } from "../features/admin/components/category-panel";
@@ -9,13 +9,28 @@ import { TerminalHeader, type TerminalTab } from "../features/admin/components/t
 import { TerminalStats } from "../features/admin/components/terminal-stats";
 import { UserTable } from "../features/admin/components/user-table";
 import { useCategories } from "../features/admin/hooks/use-categories";
-import { useGroups, type AdminGroupSummary } from "../features/admin/hooks/use-groups";
+import { useGroups } from "../features/admin/hooks/use-groups";
 import { useUsers } from "../features/admin/hooks/use-users";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 export function TerminalPage() {
-  const [activeTab, setActiveTab] = useState<TerminalTab>("users");
-  const [selectedGroup, setSelectedGroup] = useState<AdminGroupSummary | null>(null);
-  const [groupView, setGroupView] = useState<"overview" | "members">("overview");
+  const search = useSearch({ from: "/terminal" });
+  const navigate = useNavigate({ from: "/terminal" });
+
+  const activeTab = search.tab ?? "users";
+  const groupView = search.view ?? "overview";
+  const selectedGroupId = search.groupId;
+  const initialPage = search.page ?? 1;
+
+  const handlePageChange = (page: number) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        page,
+      }),
+    });
+  };
+
   const {
     users,
     isLoading,
@@ -26,9 +41,9 @@ export function TerminalPage() {
     pagination,
     page,
     totalPages,
-    setPage,
     actions,
-  } = useUsers();
+  } = useUsers(initialPage);
+
   const {
     categories,
     feedback: categoriesFeedback,
@@ -38,10 +53,10 @@ export function TerminalPage() {
     pagination: categoriesPagination,
     page: categoriesPage,
     totalPages: categoriesTotalPages,
-    setPage: setCategoriesPage,
     setNewCategoryName,
     actions: categoryActions,
-  } = useCategories(activeTab === "categories");
+  } = useCategories(activeTab === "categories", initialPage);
+
   const {
     groups,
     feedback: groupsFeedback,
@@ -51,9 +66,45 @@ export function TerminalPage() {
     totalPages: groupsTotalPages,
     query: groupsQuery,
     setQuery: setGroupsQuery,
-    setPage: setGroupsPage,
     actions: groupActions,
-  } = useGroups(activeTab === "groups");
+  } = useGroups(activeTab === "groups", initialPage);
+
+  const selectedGroup = useMemo(() => {
+    if (!selectedGroupId) return null;
+    return groups.find((g) => g.id === selectedGroupId) ?? null;
+  }, [selectedGroupId, groups]);
+
+  const handleTabChange = (tab: TerminalTab) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        tab,
+        page: 1,
+        groupId: undefined,
+        view: undefined,
+      }),
+    });
+  };
+
+  const handleSelectGroup = (groupId: number | undefined) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        groupId,
+        page: 1,
+        view: groupId ? "overview" : undefined,
+      }),
+    });
+  };
+
+  const handleViewChange = (view: "overview" | "members") => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        view,
+      }),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -61,13 +112,7 @@ export function TerminalPage() {
         <main>
           <TerminalHeader
             activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              if (tab !== "groups") {
-                setSelectedGroup(null);
-                setGroupView("overview");
-              }
-            }}
+            onTabChange={handleTabChange}
           />
           {activeTab === "users" && <TerminalStats {...stats} />}
 
@@ -104,7 +149,7 @@ export function TerminalPage() {
                 pagination={pagination}
                 currentPage={page}
                 totalPages={totalPages}
-                onPageChange={setPage}
+                onPageChange={handlePageChange}
                 onQueryChange={setQuery}
                 actions={actions}
               />
@@ -113,20 +158,20 @@ export function TerminalPage() {
             {activeTab === "groups" && selectedGroup && groupView === "overview" && (
               <GroupOverviewPanel
                 group={selectedGroup}
-                onBackToList={() => setSelectedGroup(null)}
-                onViewMembers={() => setGroupView("members")}
+                onBackToList={() => handleSelectGroup(undefined)}
+                onViewMembers={() => handleViewChange("members")}
               />
             )}
 
-            {activeTab === "groups" && selectedGroup && groupView === "members" && (
+            {activeTab === "groups" && selectedGroupId && groupView === "members" && (
               <GroupMembersPanel
-                groupId={selectedGroup.id}
-                groupName={selectedGroup.name}
-                onBack={() => setGroupView("overview")}
+                groupId={selectedGroupId}
+                groupName={selectedGroup?.name ?? "Group"}
+                onBack={() => handleViewChange("overview")}
               />
             )}
 
-            {activeTab === "groups" && !selectedGroup && (
+            {activeTab === "groups" && !selectedGroupId && (
               <>
                 {groupsFeedback && (
                   <div
@@ -146,12 +191,9 @@ export function TerminalPage() {
                   pagination={groupsPagination}
                   currentPage={groupsPage}
                   totalPages={groupsTotalPages}
-                  onPageChange={setGroupsPage}
+                  onPageChange={handlePageChange}
                   onQueryChange={setGroupsQuery}
-                  onSelectGroup={(group) => {
-                    setSelectedGroup(group);
-                    setGroupView("overview");
-                  }}
+                  onSelectGroup={(group) => handleSelectGroup(group.id)}
                   actions={groupActions}
                 />
               </>
@@ -166,7 +208,7 @@ export function TerminalPage() {
                 pagination={categoriesPagination}
                 currentPage={categoriesPage}
                 totalPages={categoriesTotalPages}
-                onPageChange={setCategoriesPage}
+                onPageChange={handlePageChange}
                 onCategoryNameChange={setNewCategoryName}
                 onAddCategory={categoryActions.addCategory}
                 onDeleteCategory={categoryActions.removeCategory}
