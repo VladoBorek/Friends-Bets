@@ -1,7 +1,7 @@
 import { LayoutDashboard, UserRound, Users, Tags } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 
-export type TerminalTab = "users" | "categories";
+export type TerminalTab = "users" | "groups" | "categories";
 
 interface TerminalHeaderProps {
   activeTab: TerminalTab;
@@ -29,7 +29,12 @@ export function TerminalHeader({ activeTab, onTabChange }: TerminalHeaderProps) 
           <UserRound className="h-4 w-4" />
           <span>Users</span>
         </Button>
-        <Button variant="ghost" size="sm" disabled className="gap-2 text-slate-500">
+        <Button
+          variant={activeTab === "groups" ? "default" : "ghost"}
+          size="sm"
+          className={activeTab === "groups" ? "gap-2" : "gap-2 text-slate-300"}
+          onClick={() => onTabChange("groups")}
+        >
           <Users className="h-4 w-4" />
           <span>Groups</span>
         </Button>
