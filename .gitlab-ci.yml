@@ -5,64 +5,60 @@ workflow:
       when: never
     - if: '$CI_COMMIT_BRANCH'
 
-variables:
-  DOCKER_HOST: unix:///runner/services/docker/docker.sock
-  DOCKER_BUILDKIT: "1"
-  COMPOSE_DOCKER_CLI_BUILD: "1"
-
-.docker-job:
-  image: docker:27-cli
-  services:
-    - name: docker:27-dind-rootless
-  tags:
-    - shared-fi
-  before_script:
-    - docker version
-    - docker compose version
-    - docker build -t pb138-project-dev -f Dockerfile.dev .
-
 stages:
   - test
   - build
   - deploy
 
+.node-job:
+  tags:
+    - shared-fi
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:22-bookworm-slim
+  variables:
+    NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  before_script:
+    - node --version
+    - npm --version
+    - npm ci --prefer-offline
+
 verify:
-  extends: .docker-job
+  extends: .node-job
   stage: test
   script:
-    - docker compose --profile tools run --rm app npm run lint:local
-    - docker compose --profile tools run --rm app npm run test:local
-  after_script:
-    - docker compose down --remove-orphans || true
+    - npm run lint:local
+    - npm run test:local
 
 build:
-  extends: .docker-job
+  extends: .node-job
   stage: build
   script:
-    - docker compose --profile tools run --rm app npm run generate:local
-    - docker compose --profile tools run --rm app npm run build:local
+    - npm run generate:local
+    - npm run build:local
   artifacts:
     paths:
+      - client/dist/
       - dist/
       - client/src/api/gen/
       - client/src/routeTree.gen.ts
-    expire_in: 10 minutes
-  after_script:
-    - docker compose down --remove-orphans || true
+    expire_in: 1 week
 
 integration-tests:
+  extends: .node-job
   stage: test
-  tags:
-    - shared-fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - echo "TODO"
 
 e2e-tests:
+  extends: .node-job
   stage: test
-  tags:
-    - shared-fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
@@ -70,8 +66,6 @@ e2e-tests:
 
 deploy:
   stage: deploy
-  tags:
-    - shared-fi
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
