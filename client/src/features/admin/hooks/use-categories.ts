@@ -39,14 +39,18 @@ async function fetchAdminCategoriesPage(page: number) {
   return paginatedAdminCategoriesResponseSchema.parse(json);
 }
 
-export function useCategories(enabled: boolean) {
+export function useCategories(enabled: boolean, initialPage = 1) {
   const [categories, setCategories] = useState<AdminCategorySummary[]>([]);
   const [pagination, setPagination] = useState<PaginationState | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPageState] = useState(initialPage);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [feedback, setFeedback] = useState<Feedback>(null);
+
+  useEffect(() => {
+    setPageState(initialPage);
+  }, [initialPage]);
 
   const fetchCategories = useCallback(async () => {
     if (!enabled) {
@@ -81,7 +85,7 @@ export function useCategories(enabled: boolean) {
 
   useEffect(() => {
     if (pagination && page > totalPages) {
-      setPage(totalPages);
+      setPageState(totalPages);
     }
   }, [page, pagination, totalPages]);
 
@@ -112,7 +116,7 @@ export function useCategories(enabled: boolean) {
 
       setNewCategoryName("");
       setFeedback({ type: "success", message: `Category '${trimmedName}' added.` });
-      setPage(1);
+      setPageState(1);
       await fetchCategories();
     } catch (error) {
       setFeedback({
@@ -163,7 +167,7 @@ export function useCategories(enabled: boolean) {
     totalPages,
     setFeedback,
     setNewCategoryName,
-    setPage,
+    setPage: setPageState,
     actions: {
       addCategory,
       removeCategory,

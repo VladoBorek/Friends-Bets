@@ -34,6 +34,14 @@ export const addGroupMemberRequestSchema = z.object({
   role: groupRoleSchema.default("MEMBER"),
 });
 
+export const removeGroupMemberRequestSchema = z.object({
+  newOwnerId: z.coerce.number().int().positive().optional(),
+});
+
+export const changeGroupOwnerRequestSchema = z.object({
+  newOwnerId: z.coerce.number().int().positive(),
+});
+
 export const joinGroupByInviteRequestSchema = z.object({
   inviteCode: z.string().trim().min(1).max(120),
 });
@@ -131,6 +139,8 @@ export type GroupMembersListQuery = z.infer<typeof groupMembersListQuerySchema>;
 export type CreateGroupRequest = z.infer<typeof createGroupRequestSchema>;
 export type UpdateGroupRequest = z.infer<typeof updateGroupRequestSchema>;
 export type AddGroupMemberRequest = z.infer<typeof addGroupMemberRequestSchema>;
+export type RemoveGroupMemberRequest = z.infer<typeof removeGroupMemberRequestSchema>;
+export type ChangeGroupOwnerRequest = z.infer<typeof changeGroupOwnerRequestSchema>;
 export type JoinGroupByInviteRequest = z.infer<typeof joinGroupByInviteRequestSchema>;
 export type GroupSummary = z.infer<typeof groupSummarySchema>;
 export type GroupMemberSummary = z.infer<typeof groupMemberSummarySchema>;

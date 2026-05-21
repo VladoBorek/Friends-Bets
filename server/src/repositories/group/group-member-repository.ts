@@ -170,3 +170,21 @@ export async function countOtherGroupOwners(groupId: number, userId: number): Pr
 
   return row.count;
 }
+
+export async function setGroupOwner(groupId: number, newOwnerId: number): Promise<void> {
+  await db
+    .update(GroupMembership)
+    .set({ role: "MEMBER" })
+    .where(
+      and(
+        eq(GroupMembership.group_id, groupId),
+        eq(GroupMembership.role, "OWNER"),
+        ne(GroupMembership.user_id, newOwnerId),
+      ),
+    );
+
+  await db
+    .update(GroupMembership)
+    .set({ role: "OWNER" })
+    .where(and(eq(GroupMembership.group_id, groupId), eq(GroupMembership.user_id, newOwnerId)));
+}

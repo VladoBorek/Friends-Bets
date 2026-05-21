@@ -1,15 +1,38 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Card, PremiumCard } from "../components/ui/card";
 import { CategoryPanel } from "../features/admin/components/category-panel";
+import { GroupMembersPanel } from "../features/admin/components/group-members-panel";
+import { GroupOverviewPanel } from "../features/admin/components/group-overview-panel";
+import { GroupsPanel } from "../features/admin/components/groups-panel";
 import { TerminalHeader, type TerminalTab } from "../features/admin/components/terminal-header";
 import { TerminalStats } from "../features/admin/components/terminal-stats";
 import { UserTable } from "../features/admin/components/user-table";
 import { useCategories } from "../features/admin/hooks/use-categories";
+import { useGroups } from "../features/admin/hooks/use-groups";
 import { useUsers } from "../features/admin/hooks/use-users";
+import { getRouteApi } from "@tanstack/react-router";
+
+const routeApi = getRouteApi("/terminal");
 
 export function TerminalPage() {
-  const [activeTab, setActiveTab] = useState<TerminalTab>("users");
+  const search = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
+
+  const activeTab = search.tab ?? "users";
+  const groupView = search.view ?? "overview";
+  const selectedGroupId = search.groupId;
+  const initialPage = search.page ?? 1;
+
+  const handlePageChange = (page: number) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        page,
+      }),
+    });
+  };
+
   const {
     users,
     isLoading,
@@ -20,9 +43,9 @@ export function TerminalPage() {
     pagination,
     page,
     totalPages,
-    setPage,
     actions,
-  } = useUsers();
+  } = useUsers(initialPage);
+
   const {
     categories,
     feedback: categoriesFeedback,
@@ -32,16 +55,67 @@ export function TerminalPage() {
     pagination: categoriesPagination,
     page: categoriesPage,
     totalPages: categoriesTotalPages,
-    setPage: setCategoriesPage,
     setNewCategoryName,
     actions: categoryActions,
-  } = useCategories(activeTab === "categories");
+  } = useCategories(activeTab === "categories", initialPage);
+
+  const {
+    groups,
+    feedback: groupsFeedback,
+    isLoading: isLoadingGroups,
+    pagination: groupsPagination,
+    page: groupsPage,
+    totalPages: groupsTotalPages,
+    query: groupsQuery,
+    setQuery: setGroupsQuery,
+    actions: groupActions,
+  } = useGroups(activeTab === "groups", initialPage);
+
+  const selectedGroup = useMemo(() => {
+    if (!selectedGroupId) return null;
+    return groups.find((g) => g.id === selectedGroupId) ?? null;
+  }, [selectedGroupId, groups]);
+
+  const handleTabChange = (tab: TerminalTab) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        tab,
+        page: 1,
+        groupId: undefined,
+        view: undefined,
+      }),
+    });
+  };
+
+  const handleSelectGroup = (groupId: number | undefined) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        groupId,
+        page: 1,
+        view: groupId ? "overview" : undefined,
+      }),
+    });
+  };
+
+  const handleViewChange = (view: "overview" | "members") => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        view,
+      }),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto grid w-full max-w-[90rem] gap-6 px-6 pb-6 pt-1 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8 lg:pb-8 lg:pt-2">
         <main>
-          <TerminalHeader activeTab={activeTab} onTabChange={setActiveTab} />
+          <TerminalHeader
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
           {activeTab === "users" && <TerminalStats {...stats} />}
 
           <PremiumCard className="mb-6 p-4">
@@ -69,7 +143,7 @@ export function TerminalPage() {
               </div>
             )}
 
-            {activeTab === "users" ? (
+            {activeTab === "users" && (
               <UserTable
                 users={users}
                 isLoading={isLoading}
@@ -77,11 +151,57 @@ export function TerminalPage() {
                 pagination={pagination}
                 currentPage={page}
                 totalPages={totalPages}
-                onPageChange={setPage}
+                onPageChange={handlePageChange}
                 onQueryChange={setQuery}
                 actions={actions}
               />
-            ) : (
+            )}
+
+            {activeTab === "groups" && selectedGroup && groupView === "overview" && (
+              <GroupOverviewPanel
+                group={selectedGroup}
+                onBackToList={() => handleSelectGroup(undefined)}
+                onViewMembers={() => handleViewChange("members")}
+              />
+            )}
+
+            {activeTab === "groups" && selectedGroupId && groupView === "members" && (
+              <GroupMembersPanel
+                groupId={selectedGroupId}
+                groupName={selectedGroup?.name ?? "Group"}
+                onBack={() => handleViewChange("overview")}
+              />
+            )}
+
+            {activeTab === "groups" && !selectedGroupId && (
+              <>
+                {groupsFeedback && (
+                  <div
+                    className={`mb-4 rounded-xl border px-3 py-2 text-sm ${
+                      groupsFeedback.type === "success"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                        : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+                    }`}
+                  >
+                    {groupsFeedback.message}
+                  </div>
+                )}
+                <GroupsPanel
+                  groups={groups}
+                  isLoading={isLoadingGroups}
+                  query={groupsQuery}
+                  pagination={groupsPagination}
+                  currentPage={groupsPage}
+                  totalPages={groupsTotalPages}
+                  onPageChange={handlePageChange}
+                  onQueryChange={setGroupsQuery}
+                  onSelectGroup={(group) => handleSelectGroup(group.id)}
+                  actions={groupActions}
+                />
+              </>
+            )}
+
+            {activeTab === "categories" && (
               <CategoryPanel
                 categories={categories}
                 isLoading={isLoadingCategories}
@@ -90,7 +210,7 @@ export function TerminalPage() {
                 pagination={categoriesPagination}
                 currentPage={categoriesPage}
                 totalPages={categoriesTotalPages}
-                onPageChange={setCategoriesPage}
+                onPageChange={handlePageChange}
                 onCategoryNameChange={setNewCategoryName}
                 onAddCategory={categoryActions.addCategory}
                 onDeleteCategory={categoryActions.removeCategory}
@@ -106,14 +226,20 @@ export function TerminalPage() {
             </h2>
             <div className="space-y-3 text-sm">
               <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                <p className="text-slate-200">{activeTab === "users" ? "Users module active" : "Categories module active"}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {activeTab === "users" ? "Live management view enabled." : "Category management view enabled."}
+                <p className="text-slate-200">
+                  {activeTab === "users"
+                    ? "Users module active"
+                    : activeTab === "groups"
+                      ? "Groups module active"
+                      : "Categories module active"}
                 </p>
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                <p className="text-slate-500">Groups module</p>
-                <p className="mt-1 text-xs text-slate-600">Under Construction</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {activeTab === "users"
+                    ? "Live management view enabled."
+                    : activeTab === "groups"
+                      ? "Group management view enabled."
+                      : "Category management view enabled."}
+                </p>
               </div>
               <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
                 <p className="text-slate-500">Category deletion policy</p>

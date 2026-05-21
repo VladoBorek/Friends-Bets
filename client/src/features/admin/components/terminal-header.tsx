@@ -1,7 +1,8 @@
 import { LayoutDashboard, UserRound, Users, Tags } from "lucide-react";
 import { Button } from "../../../components/ui/button";
+import { cn } from "../../../lib/utils";
 
-export type TerminalTab = "users" | "categories";
+export type TerminalTab = "users" | "groups" | "categories";
 
 interface TerminalHeaderProps {
   activeTab: TerminalTab;
@@ -9,6 +10,14 @@ interface TerminalHeaderProps {
 }
 
 export function TerminalHeader({ activeTab, onTabChange }: TerminalHeaderProps) {
+  const getTabClass = (tab: TerminalTab) =>
+    cn(
+      "gap-2 transition-all duration-200",
+      activeTab === tab
+        ? "bg-cyan-500 text-slate-950 hover:bg-cyan-400"
+        : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+    );
+
   return (
     <>
       <header className="mb-6">
@@ -23,20 +32,25 @@ export function TerminalHeader({ activeTab, onTabChange }: TerminalHeaderProps) 
         <Button
           variant={activeTab === "users" ? "default" : "ghost"}
           size="sm"
-          className="gap-2"
+          className={getTabClass("users")}
           onClick={() => onTabChange("users")}
         >
           <UserRound className="h-4 w-4" />
           <span>Users</span>
         </Button>
-        <Button variant="ghost" size="sm" disabled className="gap-2 text-slate-500">
+        <Button
+          variant={activeTab === "groups" ? "default" : "ghost"}
+          size="sm"
+          className={getTabClass("groups")}
+          onClick={() => onTabChange("groups")}
+        >
           <Users className="h-4 w-4" />
           <span>Groups</span>
         </Button>
         <Button
           variant={activeTab === "categories" ? "default" : "ghost"}
           size="sm"
-          className={activeTab === "categories" ? "gap-2" : "gap-2 text-slate-300"}
+          className={getTabClass("categories")}
           onClick={() => onTabChange("categories")}
         >
           <Tags className="h-4 w-4" />

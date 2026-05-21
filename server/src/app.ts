@@ -6,6 +6,7 @@ import { handleAppError } from "./http/error-handler";
 import { requestContextPlugin } from "./observability";
 import { emailRoutes } from "./routes/email";
 import { friendRoutes } from "./routes/friends";
+import { groupAdminRoutes } from "./routes/groups-admin";
 import { groupRoutes } from "./routes/groups";
 import { healthRoutes } from "./routes/health";
 import { userRoutes } from "./routes/user";
@@ -20,7 +21,8 @@ export function createApp() {
     .use(emailRoutes)
     .use(walletRoutes)
     .use(friendRoutes)
-    .use(groupRoutes);
+    .use(groupRoutes)
+    .use(groupAdminRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))

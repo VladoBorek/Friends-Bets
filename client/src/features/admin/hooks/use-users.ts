@@ -81,14 +81,18 @@ function sortUsers(users: UserSummary[]) {
   });
 }
 
-export function useUsers() {
+export function useUsers(initialPage = 1) {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [allUsers, setAllUsers] = useState<UserSummary[]>([]);
   const [pagination, setPagination] = useState<PaginationState | null>(null);
-  const [page, setPageState] = useState(1);
+  const [page, setPageState] = useState(initialPage);
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQueryState] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    setPageState(initialPage);
+  }, [initialPage]);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);

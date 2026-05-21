@@ -127,6 +127,15 @@ export async function countGroupsForUser(userId: number, query: string): Promise
   return row.count;
 }
 
+export async function countAllGroups(query: string): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(distinct ${Group.id})`.mapWith(Number) })
+    .from(Group)
+    .where(groupSearchCondition(query));
+
+  return row.count;
+}
+
 export async function listGroupsForUser(
   userId: number,
   query: string,
@@ -161,6 +170,39 @@ export async function listGroupsForUser(
   return groups.map((group) => ({
     ...group,
     netPnl: netPnlByGroupId.get(group.id) ?? "0",
+    topMembers: topMembersByGroupId.get(group.id) ?? [],
+  }));
+}
+
+export async function listAllGroups(
+  query: string,
+  limit: number,
+  offset: number,
+): Promise<GroupRow[]> {
+  const groups = await db
+    .select({
+      ...groupSelect,
+      currentUserRole: sql<string>`'OWNER'`,
+      memberCount: sql<number>`count(distinct ${AllGroupMembership.id})`.mapWith(Number),
+      activeWagerCount: sql<number>`
+        count(distinct ${Wager.id}) filter (where ${Wager.status} in ('OPEN', 'PENDING'))
+      `.mapWith(Number),
+    })
+    .from(Group)
+    .leftJoin(AllGroupMembership, eq(AllGroupMembership.group_id, Group.id))
+    .leftJoin(Wager, eq(Wager.group_id, Group.id))
+    .where(groupSearchCondition(query))
+    .groupBy(Group.id, Group.name, Group.description, Group.invite_code, Group.created_at)
+    .orderBy(desc(Group.created_at), desc(Group.id))
+    .limit(limit)
+    .offset(offset);
+
+  const groupIds = groups.map((group) => group.id);
+  const topMembersByGroupId = await getTopMembersByGroupId(groupIds);
+
+  return groups.map((group) => ({
+    ...group,
+    netPnl: "0",
     topMembers: topMembersByGroupId.get(group.id) ?? [],
   }));
 }
