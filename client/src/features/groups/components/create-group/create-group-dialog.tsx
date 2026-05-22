@@ -8,10 +8,11 @@ import { FriendsDialogShell } from "../../../friends/components/dialog/friends-d
 type CreateGroupDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: () => void;
 };
 
-export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps) {
-  const { name, setName, description, setDescription, mutation, handleSubmit } = useCreateGroup(onOpenChange);
+export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroupDialogProps) {
+  const { name, setName, description, setDescription, mutation, handleSubmit } = useCreateGroup(onOpenChange, onCreated);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
