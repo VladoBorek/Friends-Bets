@@ -9,6 +9,7 @@ import { friendRoutes } from "./routes/friends";
 import { groupAdminRoutes } from "./routes/groups-admin";
 import { groupRoutes } from "./routes/groups";
 import { healthRoutes } from "./routes/health";
+import { notificationRoutes } from "./routes/notifications";
 import { userRoutes } from "./routes/user";
 import { wagerRoutes } from "./routes/wagers";
 import { walletRoutes } from "./routes/wallet";
@@ -22,7 +23,8 @@ export function createApp() {
     .use(walletRoutes)
     .use(friendRoutes)
     .use(groupRoutes)
-    .use(groupAdminRoutes);
+    .use(groupAdminRoutes)
+    .use(notificationRoutes);
 
   return new Elysia({ adapter: node() })
     .use(cors({ origin: true }))

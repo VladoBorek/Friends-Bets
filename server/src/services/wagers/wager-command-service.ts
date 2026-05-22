@@ -2,6 +2,7 @@ import type { CreateWagerRequest, ResolveWagerRequest, WagerDetail } from "@pb13
 import { eq } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Transaction, User, Wallet } from "../../db/schema";
+import { handleWagerResolved } from "../notifications/notification-service";
 import { HttpError } from "../../errors";
 import { findCategoryById } from "../../repositories/wagers/category-repository";
 import { listWinningBets, wagerHasBets } from "../../repositories/wagers/bet-repository";
@@ -348,6 +349,11 @@ export async function resolveWager(
   }
 
   const outcomes = await listWagerOutcomes(wagerId);
+
+  // Fire-and-forget — notification failure must not roll back the already-committed payouts
+  handleWagerResolved(wagerId).catch((err: unknown) => {
+    console.error("[notifications] Failed to notify on wager resolution", err);
+  });
 
   return mapWagerDetail(updatedWagerRow, outcomes);
 }
