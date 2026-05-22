@@ -1,7 +1,7 @@
 import type { WagerSummary } from "@pb138/shared/schemas/wager";
 import { Card, CardTitle } from "../../../components/ui/card";
 import { PillTag, type PillTagVariant } from "../../../components/ui/pill-tag";
-import { formatMoney } from "../utils/utils";
+import { formatMoney, OUTCOME_COLORS } from "../utils/utils";
 
 interface WagerCardProps {
   wager: WagerSummary;
@@ -70,10 +70,11 @@ export function WagerCard({ wager, currentUserId, onClick }: WagerCardProps) {
       {/* Tertiary: outcomes (left) + category/visibility (right) */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
-          {wager.outcomes.map((outcome) => {
+          {wager.outcomes.map((outcome, i) => {
             const pct = totalPool > 0 ? Math.round((Number(outcome.totalBet) / totalPool) * 100) : 0;
+            const color = OUTCOME_COLORS[i % OUTCOME_COLORS.length];
             return (
-              <PillTag key={outcome.id} variant="outcome">
+              <PillTag key={outcome.id} variant="outcome" className={color.pill}>
                 {outcome.title} ({pct}%)
               </PillTag>
             );
