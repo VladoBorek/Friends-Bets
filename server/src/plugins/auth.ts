@@ -60,6 +60,20 @@ export async function getAuthenticatedUser(context: AuthContextLike) {
   return user;
 }
 
+export async function ensureAdmin(context: AuthContextLike) {
+  const user = await getAuthenticatedUser(context);
+
+  if (user.roleName !== "ADMIN") {
+    throw new HttpError({
+      status: 403,
+      code: "AUTH_FORBIDDEN",
+      message: "Admin privileges required",
+    });
+  }
+
+  return user;
+}
+
 export async function getOptionalAuthenticatedUser(context: AuthContextLike) {
   const token = context.cookie.auth_session?.value;
 
