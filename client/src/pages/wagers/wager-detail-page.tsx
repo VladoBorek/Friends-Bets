@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  getWagerResponseSchema,
   paginatedWagerInvitationsResponseSchema,
   resolveWagerResponseSchema,
   type WagerDetail,
@@ -10,6 +9,7 @@ import {
 import { Accordion } from "../../components/ui/accordion";
 import { Card, CardTitle } from "../../components/ui/card";
 import { PillTag } from "../../components/ui/pill-tag";
+import { Spinner } from "../../components/ui/spinner";
 import { BetsSection } from "../../features/wagers/components/bets-section";
 import { CommentSection } from "../../features/wagers/components/comment-section";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
@@ -22,11 +22,11 @@ import { WagerActionsMenu } from "../../features/wagers/components/wager-actions
 import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
 import { formatMoney, toErrorMessage } from "../../features/wagers/utils/utils";
-import { Spinner } from "../../components/ui/spinner";
 import { useAuth } from "../../lib/auth-context";
 import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet/wallet-query-options";
 import { friendsKeys } from "../../api/friends/friends-query-options";
 import { readJsonOrThrow } from "../../api/http";
+import { wagersKeys, wagersQueries } from "../../api/wagers/wagers-query-options";
 
 interface WagerDetailPageProps {
   wagerId: number;
@@ -36,10 +36,8 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [detail, setDetail] = useState<WagerDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
   const [openBetOutcomeId, setOpenBetOutcomeId] = useState<number | null>(null);
-  const [pageError, setPageError] = useState<string | null>(null);
 
   const [showEndBettingModal, setShowEndBettingModal] = useState(false);
   const [endBettingError, setEndBettingError] = useState<string | null>(null);
@@ -57,6 +55,9 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [betsRefreshKey, setBetsRefreshKey] = useState(0);
   const [visibilityUsers, setVisibilityUsers] = useState<{ id: number; username: string; email: string }[]>([]);
+
+  const detailQuery = useQuery(wagersQueries.detail(wagerId));
+  const detail = detailQuery.data?.data ?? null;
 
   const isSuspended = Boolean(user?.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now());
   const isUnverified = user?.isVerified === false;
@@ -90,46 +91,12 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     void loadVisibilityUsers();
   }, [detail, user?.id, wagerId]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadDetail() {
-      try {
-        setPageError(null);
-
-        const response = await fetch(`/api/wagers/${wagerId}`, {
-          signal: controller.signal,
-          credentials: "same-origin",
-        });
-
-        const json = getWagerResponseSchema.parse(
-          await readJsonOrThrow(response, "Wager not found"),
-        );
-
-        setDetail(json.data);
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setPageError(e instanceof Error ? e.message : "Wager not found");
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
-      }
-    }
-
-    setIsLoading(true);
-    void loadDetail();
-    return () => controller.abort();
-  }, [wagerId]);
+  const setDetail = (updated: WagerDetail) => {
+    queryClient.setQueryData(wagersKeys.detail(wagerId), { data: updated });
+  };
 
   const refreshDetail = async () => {
-    const response = await fetch(`/api/wagers/${wagerId}`, {
-      credentials: "same-origin",
-    });
-
-    const json = getWagerResponseSchema.parse(
-      await readJsonOrThrow(response, "Unable to refresh wager"),
-    );
-
-    setDetail(json.data);
+    await queryClient.invalidateQueries({ queryKey: wagersKeys.detail(wagerId) });
     setBetsRefreshKey((k) => k + 1);
   };
 
@@ -143,11 +110,8 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         credentials: "same-origin",
       });
 
-      const json = getWagerResponseSchema.parse(
-        await readJsonOrThrow(response, "Failed to end betting"),
-      );
-
-      setDetail(json.data);
+      const json = await readJsonOrThrow(response, "Failed to end betting");
+      setDetail((json as { data: WagerDetail }).data);
       setShowEndBettingModal(false);
       setActionSuccess("Betting period ended - wager is now Pending.");
     } catch (e) {
@@ -204,6 +168,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
       });
 
       await readJsonOrThrow(response, "Failed to delete wager");
+      void queryClient.invalidateQueries({ queryKey: wagersKeys.lists() });
       void navigate({ to: "/wagers", search: { page: 1 } });
     } catch (e) {
       setDeleteError(toErrorMessage(e));
@@ -212,8 +177,11 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
-  if (pageError || !detail) return <p className="text-rose-300">{pageError ?? "Wager not found."}</p>;
+  if (detailQuery.isLoading) return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
+  if (detailQuery.isError || !detail) {
+    const msg = detailQuery.error instanceof Error ? detailQuery.error.message : "Wager not found.";
+    return <p className="text-rose-300">{msg}</p>;
+  }
 
   const currentUserBetAmount = Number(detail.currentUserBetAmount ?? "0");
   const hasCurrentUserBet = currentUserBetAmount > 0;
