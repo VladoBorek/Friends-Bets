@@ -6,6 +6,7 @@ import { readJsonOrThrow } from "../../api/http";
 import { useAuth } from "../../lib/auth-context";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
+import { NotificationBell } from "../../features/notifications/components/NotificationBell";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
@@ -138,6 +139,7 @@ export function Navbar() {
         </nav>
 
         <div className="inline-flex items-center gap-2">
+          <NotificationBell />
           <Link
             to="/profile"
             aria-label="User Settings"
