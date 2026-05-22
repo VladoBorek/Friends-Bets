@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   JWT_SECRET: z.string().default("super-secret-pb138"),
+  CORS_ORIGINS: z.string().default("http://localhost:5173,http://127.0.0.1:5173"),
   EMAIL_VERIFICATION_SECRET: z.string().optional(),
   PASSWORD_RESET_SECRET: z.string().optional(),
   EMAIL_ENABLED: z
@@ -32,6 +33,7 @@ export function readServerConfig() {
 
   return {
     port: parsed.data.PORT,
+    corsOrigins: parsed.data.CORS_ORIGINS.split(","),
     secrets: {
       jwt: jwtSecret,
       emailVerification: parsed.data.EMAIL_VERIFICATION_SECRET ?? jwtSecret,

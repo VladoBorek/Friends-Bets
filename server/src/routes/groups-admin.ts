@@ -8,8 +8,7 @@ import {
   paginatedGroupsResponseSchema,
   removeGroupMemberRequestSchema,
 } from "@pb138/shared/schemas/groups";
-import { HttpError } from "../errors";
-import { authPlugin, getAuthenticatedUser, type AuthContextLike } from "../plugins/auth";
+import { authPlugin, ensureAdmin, type AuthContextLike } from "../plugins/auth";
 import {
   changeGroupOwnerAdmin,
   deleteGroupAdmin,
@@ -27,31 +26,18 @@ const groupMemberParamsSchema = z.object({
   userId: z.coerce.number().int().positive(),
 });
 
-async function ensureAdmin(context: AuthContextLike) {
-  const user = await getAuthenticatedUser(context);
-
-  if (user.roleName !== "ADMIN") {
-    throw new HttpError({
-      status: 403,
-      code: "AUTH_FORBIDDEN",
-      message: "Admin privileges required",
-    });
-  }
-
-  return user;
-}
-
 export const groupAdminRoutes = new Elysia({ prefix: "/admin/groups" })
   .use(authPlugin)
+  .onBeforeHandle(async (context) => {
+    await ensureAdmin(context as AuthContextLike);
+  })
   .get("", async (context) => {
-    await ensureAdmin(context);
     const query = groupsListQuerySchema.parse(context.query);
     const result = await listAllGroups(query.q, query.limit, query.offset);
 
     return paginatedGroupsResponseSchema.parse(result);
   })
   .get("/:groupId/members", async (context) => {
-    await ensureAdmin(context);
     const params = groupIdParamsSchema.parse(context.params);
     const query = groupMembersListQuerySchema.parse(context.query);
     const result = await listGroupMembersAdmin(params.groupId, query.q, query.limit, query.offset);
@@ -59,7 +45,6 @@ export const groupAdminRoutes = new Elysia({ prefix: "/admin/groups" })
     return paginatedGroupMembersResponseSchema.parse(result);
   })
   .delete("/:groupId/members/:userId", async (context) => {
-    await ensureAdmin(context);
     const params = groupMemberParamsSchema.parse(context.params);
     const body = removeGroupMemberRequestSchema.optional().parse(context.body) ?? {};
 
@@ -69,7 +54,6 @@ export const groupAdminRoutes = new Elysia({ prefix: "/admin/groups" })
     return null;
   })
   .patch("/:groupId/owner", async (context) => {
-    await ensureAdmin(context);
     const params = groupIdParamsSchema.parse(context.params);
     const body = changeGroupOwnerRequestSchema.parse(context.body);
 
@@ -79,7 +63,6 @@ export const groupAdminRoutes = new Elysia({ prefix: "/admin/groups" })
     return null;
   })
   .delete("/:groupId", async (context) => {
-    await ensureAdmin(context);
     const params = groupIdParamsSchema.parse(context.params);
 
     await deleteGroupAdmin(params.groupId);

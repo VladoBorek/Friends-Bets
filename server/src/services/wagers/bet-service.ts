@@ -3,7 +3,7 @@ import type {
   PlaceBetRequest,
   WagerBetsListQuery,
 } from "@pb138/shared/schemas/wager";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Transaction, User, Wallet } from "../../db/schema";
 import { HttpError } from "../../errors";
@@ -115,12 +115,22 @@ export async function placeBet(
       amount: formattedAmount,
     });
 
-    const nextUserBalance = formatMoney(parseMoney(currentUserWallet.balance) - input.amount);
-
-    await tx
+    const [updatedWallet] = await tx
       .update(Wallet)
-      .set({ balance: nextUserBalance })
-      .where(eq(Wallet.id, currentUserWallet.id));
+      .set({
+        balance: sql`${Wallet.balance}::numeric - ${formattedAmount}::numeric`,
+        updated_at: new Date(),
+      })
+      .where(eq(Wallet.id, currentUserWallet.id))
+      .returning({ id: Wallet.id });
+
+    if (!updatedWallet) {
+      throw new HttpError({
+        status: 500,
+        code: "WALLET_TRANSACTION_FAILED",
+        message: "Failed to update wallet balance",
+      });
+    }
 
     await tx.insert(Transaction).values({
       wallet_id: currentUserWallet.id,

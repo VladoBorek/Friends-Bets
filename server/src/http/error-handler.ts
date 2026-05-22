@@ -63,10 +63,15 @@ function resolveError(error: unknown): ResolvedError {
   }
 
   if (error instanceof ZodError) {
+    const firstIssue = error.issues[0];
+    const message = firstIssue
+      ? `${firstIssue.path.join(".")}: ${firstIssue.message}`
+      : "Validation failed";
+
     return {
       status: 400,
       code: "VALIDATION_FAILED",
-      message: "Validation failed",
+      message,
       details: error.issues,
       logUnexpectedError: false,
     };

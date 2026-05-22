@@ -1,5 +1,5 @@
 import type { CreateWagerRequest, ResolveWagerRequest, WagerDetail } from "@pb138/shared/schemas/wager";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../../db/db";
 import { Transaction, User, Wallet } from "../../db/schema";
 import { HttpError } from "../../errors";
@@ -313,15 +313,21 @@ export async function resolveWager(
 
         const stake = parseMoney(betRow.amount);
         const payout = calculatePayout(totalPool, stake, winningPool);
-        const nextUserBalance = formatMoney(parseMoney(userWallet.balance) + payout);
+        const formattedPayout = formatMoney(payout);
 
-        await db.update(Wallet).set({ balance: nextUserBalance }).where(eq(Wallet.id, userWallet.id));
+        await db
+          .update(Wallet)
+          .set({
+            balance: sql`${Wallet.balance}::numeric + ${formattedPayout}::numeric`,
+            updated_at: new Date(),
+          })
+          .where(eq(Wallet.user_id, betRow.userId));
 
         await db.insert(Transaction).values({
           wallet_id: userWallet.id,
           outcome_id: input.outcomeId,
           type: "payout",
-          amount: formatMoney(payout),
+          amount: formattedPayout,
         });
       }
     }

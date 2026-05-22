@@ -9,7 +9,7 @@ import {
 import { Elysia } from "elysia";
 import { z } from "zod";
 import { HttpError } from "../../errors";
-import { authPlugin, getAuthenticatedUser, type AuthContextLike } from "../../plugins/auth";
+import { authPlugin, ensureAdmin, type AuthContextLike } from "../../plugins/auth";
 import {
   deleteUser,
   listUsers,
@@ -24,25 +24,13 @@ const userIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-async function ensureAdmin(context: AuthContextLike) {
-  const user = await getAuthenticatedUser(context);
-
-  if (user.roleName !== "ADMIN") {
-    throw new HttpError({
-      status: 403,
-      code: "AUTH_FORBIDDEN",
-      message: "Admin privileges required",
-    });
-  }
-
-  return user;
-}
-
 export const adminRoutes = new Elysia({ prefix: "/admin" })
   .use(authPlugin)
+  .onBeforeHandle(async (context) => {
+    await ensureAdmin(context as AuthContextLike);
+  })
 
   .get("/users", async (context) => {
-    await ensureAdmin(context);
     const query = usersListQuerySchema.parse(context.query);
     const result = await listUsers(query);
 
@@ -50,7 +38,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
 
   .patch("/users/:id/role", async (context) => {
-    const adminUser = await ensureAdmin(context);
+    const adminUser = await ensureAdmin(context as AuthContextLike);
     const parsedParams = userIdParamsSchema.parse(context.params);
     const parsedBody = updateUserRoleRequestSchema.parse(context.body);
 
@@ -68,7 +56,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
 
   .patch("/users/:id/suspend", async (context) => {
-    await ensureAdmin(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
     const parsedBody = suspendUserRequestSchema.parse(context.body);
     const data = await suspendUser(parsedParams.id, parsedBody.durationValue, parsedBody.durationUnit);
@@ -77,7 +64,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
 
   .patch("/users/:id/unsuspend", async (context) => {
-    await ensureAdmin(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
     const data = await unsuspendUser(parsedParams.id);
 
@@ -85,7 +71,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
 
   .post("/users/:id/resend-verification", async (context) => {
-    await ensureAdmin(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
     await resendVerificationEmail(parsedParams.id);
 
@@ -97,7 +82,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
 
   .post("/users/:id/reset-password", async (context) => {
-    await ensureAdmin(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
     await sendAdminPasswordReset(parsedParams.id);
 
@@ -109,7 +93,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
 
   .delete("/users/:id", async (context) => {
-    await ensureAdmin(context);
     const parsedParams = userIdParamsSchema.parse(context.params);
     await deleteUser(parsedParams.id);
 

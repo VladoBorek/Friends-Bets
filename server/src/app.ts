@@ -2,6 +2,7 @@ import { cors } from "@elysiajs/cors";
 import { node } from "@elysiajs/node";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
+import { readServerConfig } from "./config";
 import { handleAppError } from "./http/error-handler";
 import { requestContextPlugin } from "./observability";
 import { emailRoutes } from "./routes/email";
@@ -14,6 +15,7 @@ import { wagerRoutes } from "./routes/wagers";
 import { walletRoutes } from "./routes/wallet";
 
 export function createApp() {
+  const config = readServerConfig();
   const api = new Elysia({ prefix: "/api" })
     .use(healthRoutes)
     .use(wagerRoutes)
@@ -25,7 +27,7 @@ export function createApp() {
     .use(groupAdminRoutes);
 
   return new Elysia({ adapter: node() })
-    .use(cors({ origin: true }))
+    .use(cors({ origin: config.corsOrigins }))
     .use(
       swagger({
         documentation: {

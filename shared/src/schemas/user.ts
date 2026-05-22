@@ -6,32 +6,38 @@ export const userRoleSchema = z.enum(["ADMIN", "PLAYER", "USER"]);
 export const usersListQuerySchema = paginationQuerySchema;
 
 export const userSearchQuerySchema = paginationQuerySchema.extend({
-  email: z.string().min(1).max(200),
+  email: z.string().min(1, "Email is required").max(200),
 });
 
+const strongPasswordSchema = z
+  .string()
+  .min(10, "Password must be at least 10 characters long")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
+
 export const createUserRequestSchema = z.object({
-  username: z.string().min(3).max(50),
-  email: z.string().email(),
-  password: z.string().min(4),
+  username: z.string().min(3, "Username must be at least 3 characters long").max(50, "Username is too long"),
+  email: z.string().email("Invalid email format"),
+  password: strongPasswordSchema,
   roleId: z.coerce.number().int().positive().optional(),
 });
 
 export const loginRequestSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const resendVerificationByEmailRequestSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email("Invalid email format"),
 });
 
 export const requestPasswordResetRequestSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email("Invalid email format"),
 });
 
 export const resetPasswordRequestSchema = z.object({
-  token: z.string().min(1),
-  password: z.string().min(4),
+  token: z.string().min(1, "Token is required"),
+  password: strongPasswordSchema,
 });
 
 export const userSummarySchema = z.object({
@@ -56,21 +62,21 @@ export const suspendUserRequestSchema = z.object({
 });
 
 export const verifyEmailRequestSchema = z.object({
-  token: z.string().min(1),
+  token: z.string().min(1, "Verification token is required"),
 });
 
 export const updateNicknameRequestSchema = z.object({
-  nickname: z.string().min(3).max(50),
+  nickname: z.string().min(3, "Nickname must be at least 3 characters long").max(50, "Nickname is too long"),
 });
 
 export const updateEmailRequestSchema = z.object({
-  newEmail: z.string().email(),
-  currentPassword: z.string().min(1),
+  newEmail: z.string().email("Invalid email format"),
+  currentPassword: z.string().min(1, "Current password is required"),
 });
 
 export const updatePasswordRequestSchema = z.object({
-  oldPassword: z.string().min(1),
-  newPassword: z.string().min(4),
+  oldPassword: z.string().min(1, "Old password is required"),
+  newPassword: strongPasswordSchema,
 });
 
 export const userMutationResponseSchema = z.object({

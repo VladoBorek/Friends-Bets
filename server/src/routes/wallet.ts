@@ -1,4 +1,3 @@
-import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
 import {
   getWalletResponseSchema,
@@ -7,8 +6,11 @@ import {
   walletBalanceMutationResponseSchema,
   walletTransactionsQuerySchema,
 } from "@pb138/shared/schemas/wallet";
-import { HttpError } from "../errors";
-import { getUserById } from "../services/user";
+import {
+  authPlugin,
+  getAuthenticatedUser,
+  type AuthContextLike,
+} from "../plugins/auth";
 import { ensureUserIsNotSuspended, ensureUserIsVerified } from "../services/wagers";
 import {
   depositToWallet,
@@ -17,55 +19,10 @@ import {
   withdrawFromWallet,
 } from "../services/wallet";
 
-import type { WideEventBuilder } from "../observability";
-
-function getWideEvent(context: unknown): WideEventBuilder | undefined {
-  if (context && typeof context === "object" && "wideEvent" in context) {
-    return context.wideEvent as WideEventBuilder;
-  }
-
-  return undefined;
-}
-
 export const walletRoutes = new Elysia({ prefix: "/wallet" })
-  .use(
-    jwt({
-      name: "jwt",
-      secret: process.env.JWT_SECRET || "super-secret-pb138",
-    }),
-  )
-  .derive(async (context) => ({
-    getCurrentUser: async () => {
-      const { jwt, cookie: { auth_session } } = context;
-
-      if (!auth_session?.value) {
-        throw new HttpError({
-          status: 401,
-          code: "AUTH_REQUIRED",
-          message: "Authentication is required",
-        });
-      }
-
-      const profile = await jwt.verify(auth_session.value as string);
-
-      if (
-        !profile ||
-        typeof profile !== "object" ||
-        !("id" in profile) ||
-        typeof profile.id !== "number"
-      ) {
-        throw new HttpError({
-          status: 401,
-          code: "AUTH_INVALID_SESSION",
-          message: "Authentication session is invalid",
-        });
-      }
-
-      const user = await getUserById(profile.id);
-      getWideEvent(context)?.setUserId(user.id);
-
-      return user;
-    },
+  .use(authPlugin)
+  .derive((context) => ({
+    getCurrentUser: () => getAuthenticatedUser(context as AuthContextLike),
   }))
   .get("/me", async ({ getCurrentUser }) => {
     const user = await getCurrentUser();
