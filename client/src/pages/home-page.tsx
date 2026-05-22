@@ -8,6 +8,7 @@ import {
   type WagerSummary,
 } from "@pb138/shared/schemas/wager";
 import { Button } from "../components/ui/button";
+import { Spinner } from "../components/ui/spinner";
 import { Card } from "../components/ui/card";
 import { WagerCard } from "../features/wagers/components/wager-card";
 import { groupsQueries } from "../api/groups/groups-query-options";
@@ -40,8 +41,8 @@ function DashboardSection({ title, children, action }: { title: string; children
 
 function LoadingCard() {
   return (
-    <Card className="rounded-2xl border-slate-800 p-6 text-sm text-slate-400">
-      Loading...
+    <Card className="flex justify-center rounded-2xl border-slate-800 p-6">
+      <Spinner />
     </Card>
   );
 }

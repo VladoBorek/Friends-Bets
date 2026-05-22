@@ -16,6 +16,7 @@ import { WAGERS_PAGE_SIZE } from "../../features/wagers/utils/wagers-search";
 import { useAuth } from "../../lib/auth-context";
 import { Route } from "../../routes/wagers/index";
 import { readJsonOrThrow } from "../../api/http";
+import { Spinner } from "../../components/ui/spinner";
 
 export function WagersPage() {
   const navigate = useNavigate({ from: Route.fullPath });
@@ -82,7 +83,7 @@ export function WagersPage() {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setError(e instanceof Error ? e.message : "Unable to load wagers");
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
 
@@ -208,7 +209,7 @@ export function WagersPage() {
           </div>
         )}
 
-        {isLoading && <p className="text-slate-300">Loading wagers...</p>}
+        {isLoading && <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>}
         {error && <p className="text-rose-300">{error}</p>}
         {!isLoading && !error && wagers.length === 0 && (
           <p className="text-slate-400">No wagers match the current filters.</p>

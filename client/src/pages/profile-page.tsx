@@ -4,6 +4,7 @@ import { LogOut, User } from "lucide-react";
 import { userMutationResponseSchema } from "@pb138/shared/schemas/user";
 import { readJsonOrThrow } from "../api/http";
 import { Button } from "../components/ui/button";
+import { Spinner } from "../components/ui/spinner";
 import { Card } from "../components/ui/card";
 import { FormItem } from "../components/ui/form-item";
 import { Input } from "../components/ui/input";
@@ -47,7 +48,7 @@ export function ProfilePage() {
   }, [user?.email, user?.username]);
 
   if (!user) {
-    return <p className="text-slate-300">Loading profile...</p>;
+    return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
   }
 
   const canSaveNickname = nickname.trim().length >= 3 && nickname !== user.username && !isNicknameSaving;

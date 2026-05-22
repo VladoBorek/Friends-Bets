@@ -22,6 +22,7 @@ import { WagerActionsMenu } from "../../features/wagers/components/wager-actions
 import { WagerInlineBetMenu } from "../../features/wagers/components/wager-inline-bet-menu";
 import { WagerOutcomeItem } from "../../features/wagers/components/wager-outcome-item";
 import { formatMoney, toErrorMessage } from "../../features/wagers/utils/utils";
+import { Spinner } from "../../components/ui/spinner";
 import { useAuth } from "../../lib/auth-context";
 import { publishWalletBalanceRefresh, refreshWalletOverview } from "../../api/wallet/wallet-query-options";
 import { friendsKeys } from "../../api/friends/friends-query-options";
@@ -110,7 +111,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setPageError(e instanceof Error ? e.message : "Wager not found");
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
 
@@ -211,7 +212,7 @@ export function WagerDetailPage({ wagerId }: WagerDetailPageProps) {
     }
   };
 
-  if (isLoading) return <p className="text-slate-300">Loading wager...</p>;
+  if (isLoading) return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
   if (pageError || !detail) return <p className="text-rose-300">{pageError ?? "Wager not found."}</p>;
 
   const currentUserBetAmount = Number(detail.currentUserBetAmount ?? "0");
