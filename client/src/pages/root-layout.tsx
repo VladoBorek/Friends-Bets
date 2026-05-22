@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { formatCurrency } from "../features/wagers/utils/utils";
 import { useWalletOverview } from "../api/wallet/wallet-query-options";
 import { cn } from "../lib/utils";
+import { NotificationBell } from "../features/notifications/components/NotificationBell";
 
 const routeNavItems = [
   { to: "/", label: "Dashboard", exact: true },
@@ -147,6 +148,8 @@ export function RootLayout() {
                 >
                   <User className="h-4 w-4" />
                 </Link>
+
+                <NotificationBell />
 
                 <Button
                   variant="ghost"
