@@ -8,7 +8,6 @@ import { WagerPagination } from "../../features/wagers/components/wager-paginati
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
 import { WagerCard } from "../../features/wagers/components/wager-card";
 import { WagersFilterPanel, type StatusFilter, type InvolvementFilter } from "../../features/wagers/components/wagers-filter-panel";
-import { WAGERS_PAGE_SIZE } from "../../features/wagers/utils/wagers-search";
 import { useAuth } from "../../lib/auth-context";
 import { Route } from "../../routes/wagers/index";
 import { wagersKeys, wagersQueries } from "../../api/wagers/wagers-query-options";
