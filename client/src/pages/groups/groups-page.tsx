@@ -1,4 +1,5 @@
 import { Card } from "../../components/ui/card";
+import { Spinner } from "../../components/ui/spinner";
 import { CreateGroupDialog } from "../../features/groups/components/create-group/create-group-dialog";
 import { GroupDetailDialog } from "../../features/groups/components/group-detail/group-detail-dialog";
 import { GroupListSection } from "../../features/groups/components/main-page/group-list-section";
@@ -10,7 +11,7 @@ export function GroupsPage() {
   const page = useGroupsPage();
 
   if (page.groupsQuery.isLoading) {
-    return <Card className="rounded-2xl border-slate-800 p-6 text-sm text-slate-400">Loading groups...</Card>;
+    return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
   }
 
   if (page.groupsQuery.isError) {

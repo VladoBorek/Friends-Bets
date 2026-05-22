@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { createGroup } from "../../../api/groups/groups-api";
 import { groupsKeys } from "../../../api/groups/groups-query-options";
 
-export function useCreateGroup(onOpenChange: (open: boolean) => void) {
+export function useCreateGroup(onOpenChange: (open: boolean) => void, onCreated?: () => void) {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -20,6 +20,7 @@ export function useCreateGroup(onOpenChange: (open: boolean) => void) {
       setName("");
       setDescription("");
       onOpenChange(false);
+      onCreated?.();
       await queryClient.invalidateQueries({ queryKey: groupsKeys.all });
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Unable to create group"),

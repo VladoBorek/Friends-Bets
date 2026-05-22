@@ -1,6 +1,10 @@
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, X, Plus, ArrowRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CreateWagerModal } from "../features/wagers/components/create-wager-modal";
+import { CreateGroupDialog } from "../features/groups/components/create-group/create-group-dialog";
+import { wagersKeys } from "../api/wagers/wagers-query-options";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   paginatedWagersResponseSchema,
@@ -8,6 +12,7 @@ import {
   type WagerSummary,
 } from "@pb138/shared/schemas/wager";
 import { Button } from "../components/ui/button";
+import { Spinner } from "../components/ui/spinner";
 import { Card } from "../components/ui/card";
 import { WagerCard } from "../features/wagers/components/wager-card";
 import { groupsQueries } from "../api/groups/groups-query-options";
@@ -40,8 +45,8 @@ function DashboardSection({ title, children, action }: { title: string; children
 
 function LoadingCard() {
   return (
-    <Card className="rounded-2xl border-slate-800 p-6 text-sm text-slate-400">
-      Loading...
+    <Card className="flex justify-center rounded-2xl border-slate-800 p-6">
+      <Spinner />
     </Card>
   );
 }
@@ -251,7 +256,10 @@ function DashboardStats() {
 export function HomePage() {
   const search = useSearch({ from: "/" });
   const navigate = useNavigate({ from: "/" });
+  const queryClient = useQueryClient();
   const [showVerifiedPopup, setShowVerifiedPopup] = useState(false);
+  const [wagerModalOpen, setWagerModalOpen] = useState(false);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
 
   useEffect(() => {
     setShowVerifiedPopup(search.verified === "1");
@@ -287,13 +295,13 @@ export function HomePage() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button onClick={() => navigate({ to: `/wagers`, search: { page: 1 } })} className="gap-2">
+        <Button onClick={() => setWagerModalOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Create Wager
         </Button>
         <Button
           variant="secondary"
-          onClick={() => navigate({ to: `/groups`, search: { page: 1 } })}
+          onClick={() => setGroupDialogOpen(true)}
           className="gap-2 border border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800"
         >
           <Plus className="h-4 w-4" />
@@ -334,6 +342,20 @@ export function HomePage() {
           <WagersPreviewSection />
         </DashboardSection>
       </div>
+
+      <CreateWagerModal
+        open={wagerModalOpen}
+        onOpenChange={setWagerModalOpen}
+        onCreated={() => {
+          void queryClient.invalidateQueries({ queryKey: wagersKeys.lists() });
+          void navigate({ to: "/wagers", search: { page: 1 } });
+        }}
+      />
+      <CreateGroupDialog
+        open={groupDialogOpen}
+        onOpenChange={setGroupDialogOpen}
+        onCreated={() => navigate({ to: "/groups", search: { page: 1 } })}
+      />
     </div>
   );
 }

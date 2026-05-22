@@ -1,31 +1,23 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import {
-  paginatedCategoriesResponseSchema,
-  paginatedWagersResponseSchema,
-  type CategorySummary,
-  type PaginatedWagersResponse,
-} from "@pb138/shared/schemas/wager";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { Spinner } from "../../components/ui/spinner";
 import { WagerPagination } from "../../features/wagers/components/wager-pagination";
 import { CreateWagerModal } from "../../features/wagers/components/create-wager-modal";
 import { WagerCard } from "../../features/wagers/components/wager-card";
 import { WagersFilterPanel, type StatusFilter, type InvolvementFilter } from "../../features/wagers/components/wagers-filter-panel";
-import { WAGERS_PAGE_SIZE } from "../../features/wagers/utils/wagers-search";
 import { useAuth } from "../../lib/auth-context";
 import { Route } from "../../routes/wagers/index";
-import { readJsonOrThrow } from "../../api/http";
+import { wagersKeys, wagersQueries } from "../../api/wagers/wagers-query-options";
 
 export function WagersPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { page } = Route.useSearch();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const [result, setResult] = useState<PaginatedWagersResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -38,7 +30,15 @@ export function WagersPage() {
   const isUnverified = user?.isVerified === false;
   const readOnly = isSuspended || isUnverified;
 
-  const offset = (page - 1) * WAGERS_PAGE_SIZE;
+  const wagersQuery = useQuery(wagersQueries.list({
+    page,
+    search,
+    status: statusFilter,
+    category: categoryFilter,
+    involvement: involvementFilter,
+  }));
+
+  const categoriesQuery = useQuery(wagersQueries.categories());
 
   const activeFilterCount = [
     search !== "",
@@ -46,70 +46,6 @@ export function WagersPage() {
     categoryFilter !== "ALL",
     involvementFilter !== "ALL",
   ].filter(Boolean).length;
-
-  const buildUrl = () => {
-    const params = new URLSearchParams({
-      limit: String(WAGERS_PAGE_SIZE),
-      offset: String(offset),
-      q: search,
-      status: statusFilter,
-      category: categoryFilter,
-      involvement: involvementFilter,
-    });
-    return `/api/wagers?${params.toString()}`;
-  };
-
-  const fetchWagers = async (signal?: AbortSignal) => {
-    const response = await fetch(buildUrl(), {
-      signal,
-      credentials: "same-origin",
-    });
-
-    return paginatedWagersResponseSchema.parse(
-      await readJsonOrThrow(response, "Unable to load wagers"),
-    );
-  };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
-
-    async function load() {
-      try {
-        setResult(await fetchWagers(controller.signal));
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setError(e instanceof Error ? e.message : "Unable to load wagers");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void load();
-    return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, statusFilter, categoryFilter, involvementFilter]);
-
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const response = await fetch("/api/wagers/categories?limit=50&offset=0", {
-          credentials: "same-origin",
-        });
-
-        const json = paginatedCategoriesResponseSchema.parse(
-          await readJsonOrThrow(response, "Unable to load categories"),
-        );
-
-        setCategories(json.data);
-      } catch {
-        setCategories([]);
-      }
-    }
-
-    void loadCategories();
-  }, []);
 
   const handleFilterChange = <T,>(setter: (v: T) => void) => (value: T) => {
     setter(value);
@@ -133,12 +69,12 @@ export function WagersPage() {
     onCategoryChange: handleFilterChange(setCategoryFilter),
     involvementFilter,
     onInvolvementChange: handleFilterChange(setInvolvementFilter),
-    categories,
+    categories: categoriesQuery.data?.data ?? [],
     showInvolvement: Boolean(user),
   };
 
-  const wagers = result?.data ?? [];
-  const pagination = result?.pagination ?? null;
+  const wagers = wagersQuery.data?.data ?? [];
+  const pagination = wagersQuery.data?.pagination ?? null;
   const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.limit)) : 1;
 
   const handlePageChange = (newPage: number) => {
@@ -149,9 +85,8 @@ export function WagersPage() {
     void navigate({ to: "/wagers/$wagerId", params: { wagerId: String(wagerId) } });
   };
 
-  const refreshWagers = async () => {
-    const fresh = await fetchWagers();
-    setResult(fresh);
+  const refreshWagers = () => {
+    void queryClient.invalidateQueries({ queryKey: wagersKeys.lists() });
   };
 
   return (
@@ -208,12 +143,12 @@ export function WagersPage() {
           </div>
         )}
 
-        {isLoading && <p className="text-slate-300">Loading wagers...</p>}
-        {error && <p className="text-rose-300">{error}</p>}
-        {!isLoading && !error && wagers.length === 0 && (
+        {wagersQuery.isLoading && <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>}
+        {wagersQuery.isError && <p className="text-rose-300">{wagersQuery.error instanceof Error ? wagersQuery.error.message : "Unable to load wagers"}</p>}
+        {!wagersQuery.isLoading && !wagersQuery.isError && wagers.length === 0 && (
           <p className="text-slate-400">No wagers match the current filters.</p>
         )}
-        {!isLoading && !error && wagers.length > 0 && (
+        {!wagersQuery.isLoading && !wagersQuery.isError && wagers.length > 0 && (
           <div className="grid gap-4">
             {wagers.map((wager) => (
               <WagerCard
@@ -226,7 +161,7 @@ export function WagersPage() {
           </div>
         )}
 
-        {!isLoading && !error && (
+        {!wagersQuery.isLoading && !wagersQuery.isError && (
           <div className="mt-6">
             <WagerPagination
               currentPage={page}

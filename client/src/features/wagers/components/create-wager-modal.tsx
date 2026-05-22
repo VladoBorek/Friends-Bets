@@ -275,13 +275,13 @@ export function CreateWagerModal({ open, onOpenChange, onCreated, editingWager, 
             />
           </FormItem>
 
-          <FormItem label="Category" htmlFor="modal-category">
+          <FormItem label="Category:" htmlFor="modal-category">
             <select
               id="modal-category"
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
               disabled={isLoadingCategories || categories.length === 0}
-              className="rounded border border-slate-700 bg-slate-800 p-2 text-white"
+              className="w-full rounded border border-slate-700 bg-slate-800 p-2 text-white"
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
