@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { Spinner } from "../../components/ui/spinner";
 import type {
   WalletHistoryItem,
   WalletOverview,
@@ -218,7 +219,7 @@ export function WalletPage() {
   };
 
   if (walletQuery.isLoading) {
-    return <p className="text-slate-300">Loading wallet...</p>;
+    return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
   }
 
   if (walletQuery.error) {

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import type { FriendWagerSummary } from "@pb138/shared/schemas/friends";
 import { friendsQueries } from "../../api/friends/friends-query-options";
 import { Card, CardDescription, CardTitle } from "../../components/ui/card";
+import { Spinner } from "../../components/ui/spinner";
 import { FriendsPagination } from "../../features/friends/components/friends-pagination";
 import { Route } from "../../routes/friends/$friendId.wagers";
 import { cn } from "../../lib/utils";
@@ -65,7 +66,7 @@ export function FriendSharedWagersPage() {
   }
 
   if (detailQuery.isLoading || historyQuery.isLoading) {
-    return <p className="text-slate-300">Loading shared wagers...</p>;
+    return <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>;
   }
 
   if (detailQuery.error) {
