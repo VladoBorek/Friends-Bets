@@ -6,7 +6,8 @@
   "workspaces": [
     "client",
     "server",
-    "shared"
+    "shared",
+    "tests"
   ],
   "scripts": {
     "dev": "docker compose up --build client server",
@@ -35,7 +36,7 @@
 
     "build:local": "npm run build -w @pb138/client && npm run build -w @pb138/server",
     "lint:local": "npm run lint -w @pb138/client && npm run lint -w @pb138/server && eslint scripts",
-    "test:local": "npm run test -w @pb138/client && npm run test -w @pb138/server",
+    "test:local": "npm run test -w @pb138/tests",
 
     "generate:local": "npm run api:generate:local && npm run routes:generate:local",
     "api:generate:local": "npm run api:generate -w @pb138/client",
