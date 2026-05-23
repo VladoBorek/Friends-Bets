@@ -29,16 +29,22 @@ stages:
     - npm --version
     - npm ci --prefer-offline
 
-verify:
+lint:
   extends: .node-job
   stage: test
   script:
     - npm run lint:local
+
+unit-test:
+  extends: .node-job
+  stage: test
+  script:
     - npm run test:local
 
 build:
   extends: .node-job
   stage: build
+  needs: [lint, unit-test]
   script:
     - npm run generate:local
     - npm run build:local
