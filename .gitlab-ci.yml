@@ -57,16 +57,18 @@ build:
     expire_in: 1 week
 
 integration-tests:
-  extends: .node-job
   stage: test
+  tags:
+    - shared-fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - echo "TODO"
 
 e2e-tests:
-  extends: .node-job
   stage: test
+  tags:
+    - shared-fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
