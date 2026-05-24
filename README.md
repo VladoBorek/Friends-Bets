@@ -1,103 +1,119 @@
 # PB138 Project
 
-Clean client-server split with dedicated packages:
-- `client` (React + Vite + generated API hooks)
-- `server` (Elysia + Drizzle + PostgreSQL)
-- `shared` (shared Zod schemas)
-- root package (orchestration scripts only)
+PB138 is a small monorepo application for managing social wagers: create wagers, place bets, view live pools/odds, manage wallet balance, follow friends and groups, and receive in-app notifications. It is organized as a multi-package workspace with a clear client/server separation and shared type/schema definitions.
 
-## Quick Start
+**Implemented features (current)**
+- Wager lifecycle: create wagers, list, view details, resolve wagers and trigger payouts
+- Betting: place single bet per user per wager; odds and pools derived from current bets
+- Wallet: deposit/withdraw endpoints, balance overview and paginated transaction history
+- Friends: send/accept friendship relationships; view friend-specific wagers
+- Groups: group membership and group-scoped wagers
+- Notifications: in-app notifications for wager events and system messages
+- Auth & restrictions: verified users and suspension checks gate wallet and betting actions
+
+## Architecture
+
+- Monorepo workspace: `client`, `server`, `shared`, and `tests` packages (workspace roots in `package.json`).
+- Client: React + Vite front-end using TanStack Router and React Query; generates API hooks from the server OpenAPI spec.
+- Server: Elysia HTTP server using Drizzle ORM against PostgreSQL; routes are implemented under `server/src/routes` and rely on service layers under `server/src/services`.
+- Shared: Zod schemas and TypeScript types shared between client and server live in `shared/src/schemas` and are consumed by both sides for runtime validation and type-safety.
+
+Repository → Service pattern:
+- Routes in `server/src/routes/*` handle HTTP concerns and request/response validation (Zod).
+- Business logic lives in `server/src/services/*` (transactional operations, domain rules).
+- Persistence-layer code (Drizzle schema and queries) lives under `server/src/db` and `server/src/repositories` (where present). Services call repositories/DB functions — services do not implement raw SQL directly.
+
+Separation of concerns:
+- UI and UX live entirely in `client/src`.
+- Request validation and serialization follow `shared` Zod schemas.
+- Background logic (notifications, wager resolution, payouts) is implemented in server service modules and invoked from route handlers.
+
+## Repository layout (important folders)
+- `client/` — React application, routes, features and generated API client.
+- `server/` — Elysia server, Drizzle migrations, services, repositories and routes.
+- `shared/` — Zod schemas and small utilities used by both client and server.
+- `drizzle/` — SQL migration snapshots used by Drizzle kit.
+- `docker-compose.yml`, `Dockerfile.dev` — local Docker composition for dev and setup flows.
+
+## Setup & development
 
 ### Prerequisites
 - Node.js 18+
 - npm
 - Docker
 
-### One-command setup
+Environment
+- Copy or create a `.env` file at repository root. `.env.example` is used by the legacy setup script if no `.env` exists.
+
+One-command setup (Docker-based)
 
 ```bash
 npm run setup
 ```
 
-This command:
-1. Creates/starts PostgreSQL Docker container `pb138`
-2. Installs dependencies in `server` and `client`
-3. Runs DB generate/migrate/seed
-4. Generates client API from OpenAPI
-5. Runs lint
+What `npm run setup` does (current behavior)
+- Runs `docker compose --profile setup run --rm setup` which executes the `setup` service defined in `docker-compose.yml`.
+- The `setup` service waits for migrations to complete and then runs (in order): database seed, API client generation, router generation and a lint pass. It expects Docker to be available.
 
-If Docker is unavailable or any Docker command fails, setup exits immediately with a non-zero status.
+Legacy setup (non-docker helper)
+- `npm run setup:legacy` runs `scripts/setup.ts`. That script will attempt to create/start a container named `pb138` directly (uses `docker run`), create `.env` from `.env.example` if missing, then run migrations/seeds locally.
 
-### Start API
-
-```bash
-npm run server
-```
-
-Server URLs:
-- API: `http://localhost:3000`
-- Swagger: `http://localhost:3000/swagger`
-
-### Start frontend
+Running locally (without Docker compose orchestration)
+- Start the server (local):
 
 ```bash
-npm run client
+npm run server:local
 ```
 
-Frontend URL:
-- App: `http://localhost:5173`
-
-## Scripts (root)
-
-- `npm run setup` - full setup pipeline using npm
-- `npm run server` - start server package
-- `npm run client` - start client package
-- `npm run build` - build client + server typecheck
-- `npm run lint` - lint client + server + root scripts
-- `npm run api:generate` - generate `client/src/api/gen`
-- `npm run db:generate` - generate drizzle migration
-- `npm run db:migrate` - apply migrations
-- `npm run db:seed` - seed sample data
-- `npm run cli:query` - run query report
-
-## Debugging
-
-### Query summary
+- Start the client (local):
 
 ```bash
-npm run cli:query
+npm run client:local
 ```
 
-Shows open wagers, recent bets, and accurate totals.
-
-### Health check
+Docker-based development
+- Launch both client and server with Docker compose:
 
 ```bash
-curl http://localhost:3000/api/health
+npm run dev
 ```
 
-Expected response:
+Start only server or client (Docker):
 
-```json
-{"status":"ok","service":"pb138-api"}
+```bash
+npm run server   # starts the server container
+npm run client   # starts the client container
 ```
 
-## Notes
+Database migrations & seeds
+- Generate drizzle artifacts: `npm run db:generate` (root delegates to server workspace)
+- Apply migrations:
+	- Docker/migrate service: `npm run db:migrate` (root delegates to `docker compose run --rm migrate`)
+	- Local: `npm run db:migrate:local` (runs inside `@pb138/server`)
+- Seed: `npm run db:seed` (root delegates to server workspace via tools profile)
 
-- Client and server are separate packages with separate dependency trees.
-- Root package is intentionally thin and only orchestrates workflows.
-- Shared schemas are in `shared/src/schemas` and imported by both sides.
-- Authenticated users now have a Wallet tab that shows current balance plus wager-related transaction history.
-- Bets are limited to one per user per wager, and suspended users cannot place bets or create wagers.
-- Create Wager and wager resolution both use the authenticated user on the backend; the UI no longer asks for manual user IDs.
-- Wager cards and detail pages show live pool totals and odds derived from current bet totals.
-- The wager detail page includes a temporary resolve shortcut so any authenticated user can close an open wager and trigger payouts.
+Linting & tests
+- Lint (root): `npm run lint` — runs linting inside the workspace via the tools profile.
+- Tests (root): `npm run test` — runs test suite inside the tools profile.
+- Local test run: `npm run test:local` to run tests in `@pb138/tests` package.
 
-## Seeded Test Users
+## Testing
 
-The development seed creates a set of test users with predictable passwords so contributors can sign in quickly. Run `npm run db:seed` (or `npm run setup`) to apply the seed.
+- Tests are implemented with Vitest. Server and client packages each have their own `test` scripts (`vitest run`).
+- Run tests via the root workspace helpers (`npm run test`) or run package-specific tests with `npm run test -w @pb138/client` or `-w @pb138/server`.
 
-Default passwords:
+## Key commands (quick reference)
+- `npm run setup` — Docker-based project setup (recommended)
+- `npm run dev` — bring up client + server in Docker
+- `npm run server` / `npm run client` — start server or client containers
+- `npm run docker:down` — stop compose services
+- `npm run docker:reset` — stop compose and remove volumes (clean DB)
+- `npm run db:migrate` / `npm run db:seed` — manage DB migrations and seed
+- `npm run lint` / `npm run test` — QA tools
+
+## Testing credentials (development seed)
+
+The dev seed inserts predictable test accounts. The seeded passwords used by the seed scripts are:
 - Admins: `AdminPass123!`
 - Users: `UserPass123!`
 
@@ -116,6 +132,17 @@ Seeded accounts (email : password):
 - sam@midnight-wager.club : UserPass123!
 - richard@midnight-wager.club : UserPass123!
 
-Notes:
-- These passwords are for development and testing only. Do not use them in production.
-- The seed logs the same credentials to the console when run, so you can verify them.
+These accounts are intended for local development only.
+
+## Code organization & conventions
+
+- `client/src/features/*` contains feature folders (wagers, friends, groups, notifications, wallet) with components, hooks and API hooks.
+- `client/src/api/*` has thin network helpers and generated API clients.
+- `server/src/routes/*` are HTTP route modules that validate and forward to service functions.
+- `server/src/services/*` implement domain logic and coordinate repository/DB calls.
+- `server/src/db` and `drizzle/` contain Drizzle schema and SQL migration snapshots.
+- `shared/src/schemas` contains Zod schemas and response/request shapes used to keep client/server contracts in sync.
+
+Design rules
+- Keep business logic in `server/src/services/*` and persist/retrieve via `server/src/db` or `repositories` helpers.
+- Route handlers should be thin: validate → call service → return typed response using `shared` schemas.
