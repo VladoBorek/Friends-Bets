@@ -20,11 +20,12 @@ npm run setup
 ```
 
 This command:
-1. Creates/starts PostgreSQL Docker container `pb138`
-2. Installs dependencies in `server` and `client`
-3. Runs DB generate/migrate/seed
-4. Generates client API from OpenAPI
-5. Runs lint
+1. Removes the project's Docker containers, networks, and volumes so setup starts clean
+2. Creates/starts PostgreSQL Docker container `pb138`
+3. Installs dependencies in `server` and `client`
+4. Runs DB generate/migrate/seed
+5. Generates client API from OpenAPI
+6. Runs lint
 
 If Docker is unavailable or any Docker command fails, setup exits immediately with a non-zero status.
 
@@ -49,7 +50,7 @@ Frontend URL:
 
 ## Scripts (root)
 
-- `npm run setup` - full setup pipeline using npm
+- `npm run setup` - full setup pipeline using npm, with a clean Docker reset first
 - `npm run server` - start server package
 - `npm run client` - start client package
 - `npm run build` - build client + server typecheck
