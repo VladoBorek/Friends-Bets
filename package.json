@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "dev": "docker compose up --build client server",
-    "setup": "docker compose --profile setup run --rm setup",
+    "setup:reset": "docker compose down -v --remove-orphans",
+    "setup": "npm run setup:reset && docker compose --profile setup run --rm setup",
 
     "client": "docker compose up --build client",
     "server": "docker compose up --build server",
@@ -47,8 +48,8 @@
     "db:seed:local": "npm run db:seed -w @pb138/server",
     "cli:query:local": "npm run cli:query -w @pb138/server",
 
-    "docker:down": "docker compose down",
-    "docker:reset": "docker compose down -v"
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:reset": "docker compose down -v --remove-orphans"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
