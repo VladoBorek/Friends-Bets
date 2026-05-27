@@ -123,6 +123,14 @@ Friends-Bets is a full-stack web application for managing social wagers: create 
 - Notifications: in-app notifications for wager events and system messages
 - Auth & restrictions: verified users and suspension checks gate wallet and betting actions
 
+## Production Readiness Roadmap
+
+I am currently extending the project with production-focused improvements around security, scalability, resiliency, observability, and quality-of-life improvements.
+
+Planned and ongoing work includes stronger RBAC, rate limiting, Google OIDC sign-in, structured request/error logging, health and readiness checks, OpenTelemetry-based monitoring, and a production deployment pipeline. 
+The deployment goal is to run the application on a real public server with HTTPS, environment-based configuration, persistent PostgreSQL storage, backup strategy, monitoring, and CI/CD-supported release workflow.
+
+
 # Creators:
 - Štefan Šutý
 - Richard Čech
