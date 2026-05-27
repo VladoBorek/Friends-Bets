@@ -1,8 +1,56 @@
-# PB138 Project
+# Friends-Bets
 
-PB138 is a small monorepo application for managing social wagers: create wagers, place bets, view live pools/odds, manage wallet balance, follow friends and groups, and receive in-app notifications. It is organized as a multi-package workspace with a clear client/server separation and shared type/schema definitions.
+Friends-Bets is a full-stack web application for managing social wagers: create wagers, place bets, view live pools/odds, manage wallet balance, follow friends and groups, and receive in-app notifications. It is organized as a multi-package workspace with a clear client/server separation and shared type/schema definitions.
 
-**Implemented features (current)**
+# UI Screenshots
+<table>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/wagers.png">
+        <img src="./docs/screenshots/wagers.png" alt="Wagers page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/wager_detail.png">
+        <img src="./docs/screenshots/wager_detail.png" alt="Wager detail page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Wagers</strong></td>
+    <td align="center"><strong>Wager Detail</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/friends.png">
+        <img src="./docs/screenshots/friends.png" alt="Friends page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/wallet.png">
+        <img src="./docs/screenshots/wallet.png" alt="Wallet page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Friends</strong></td>
+    <td align="center"><strong>Wallet</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/admin.png">
+        <img src="./docs/screenshots/admin.png" alt="Admin page" width="100%">
+      </a>
+    </td>
+    <td></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Admin</strong></td>
+    <td></td>
+  </tr>
+</table>
+
+**Implemented features**
 - Wager lifecycle: create wagers, list, view details, resolve wagers and trigger payouts
 - Betting: place single bet per user per wager; odds and pools derived from current bets
 - Wallet: deposit/withdraw endpoints, balance overview and paginated transaction history
@@ -12,6 +60,25 @@ PB138 is a small monorepo application for managing social wagers: create wagers,
 - Auth & restrictions: verified users and suspension checks gate wallet and betting actions
 
 ## Architecture
+The project is built as a modern TypeScript-first monolithic application with a React frontend, REST API backend, PostgreSQL database, role-based access control. It focuses on clean architecture, maintainability, and production-ready development practices.
+
+# Tech Stack
+## Frontend
+- React
+- TypeScript
+- TanStack Router
+- Tailwind CSS
+- Vite
+
+## Backend
+- Node.js
+- TypeScript
+- Express-style REST API
+- PostgreSQL
+- Drizzle ORM
+- Docker
+- Authentication and authorization services
+- 
 
 - Monorepo workspace: `client`, `server`, `shared`, and `tests` packages (workspace roots in `package.json`).
 - Client: React + Vite front-end using TanStack Router and React Query; generates API hooks from the server OpenAPI spec.
@@ -110,29 +177,6 @@ Linting & tests
 - `npm run docker:reset` — stop compose and remove volumes (clean DB)
 - `npm run db:migrate` / `npm run db:seed` — manage DB migrations and seed
 - `npm run lint` / `npm run test` — QA tools
-
-## Testing credentials (development seed)
-
-The dev seed inserts predictable test accounts. The seeded passwords used by the seed scripts are:
-- Admins: `AdminPass123!`
-- Users: `UserPass123!`
-
-Seeded accounts (email : password):
-- you@midnight-wager.club : AdminPass123! (admin)
-- sarah@midnight-wager.club : AdminPass123! (admin)
-- mike@midnight-wager.club : UserPass123!
-- joe@midnight-wager.club : UserPass123!
-- dave@midnight-wager.club : UserPass123!
-- pete@midnight-wager.club : UserPass123!
-- lisa@midnight-wager.club : UserPass123!
-- tom@midnight-wager.club : UserPass123!
-- anna@midnight-wager.club : UserPass123!
-- greg@midnight-wager.club : UserPass123!
-- kate@midnight-wager.club : UserPass123!
-- sam@midnight-wager.club : UserPass123!
-- richard@midnight-wager.club : UserPass123!
-
-These accounts are intended for local development only.
 
 ## Code organization & conventions
 
