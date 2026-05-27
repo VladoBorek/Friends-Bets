@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { parseMoney, formatMoney, calculatePayout, calculateOdds } from "@server/services/wagers/wager-utils";
+import {
+  calculateOdds,
+  calculatePayout,
+  formatMoney,
+  normalizeStatus,
+  parseMoney,
+} from "@server/services/wagers/wager-utils";
 
 describe("parseMoney", () => {
   it("returns a number value unchanged", () => {
@@ -130,5 +136,18 @@ describe("calculateOdds", () => {
 
   it("returns null for negative totalPool", () => {
     expect(calculateOdds(-10, 40)).toBeNull();
+  });
+});
+
+describe("normalizeStatus", () => {
+  it("preserves valid wager statuses", () => {
+    expect(normalizeStatus("OPEN")).toBe("OPEN");
+    expect(normalizeStatus("PENDING")).toBe("PENDING");
+    expect(normalizeStatus("CLOSED")).toBe("CLOSED");
+  });
+
+  it("falls back to OPEN for invalid or missing values", () => {
+    expect(normalizeStatus(null)).toBe("OPEN");
+    expect(normalizeStatus("archived" as never)).toBe("OPEN");
   });
 });

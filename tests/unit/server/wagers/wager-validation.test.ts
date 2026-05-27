@@ -11,6 +11,12 @@ describe("wager-validation", () => {
       );
     });
 
+    it("uses the default action text when none is provided", () => {
+      expect(() => ensureUserIsVerified({ isVerified: false })).toThrow(
+        "Account must be verified to perform this action.",
+      );
+    });
+
     it("allows verified users", () => {
       expect(() => ensureUserIsVerified({ isVerified: true }, "comment")).not.toThrow();
     });
@@ -28,6 +34,10 @@ describe("wager-validation", () => {
     it("allows users whose suspension expired", () => {
       const pastDate = new Date(Date.now() - 60_000).toISOString();
       expect(() => ensureUserIsNotSuspended({ suspendedUntil: pastDate }, "comment")).not.toThrow();
+    });
+
+    it("ignores invalid suspension timestamps", () => {
+      expect(() => ensureUserIsNotSuspended({ suspendedUntil: "not-a-date" }, "comment")).not.toThrow();
     });
   });
 });
