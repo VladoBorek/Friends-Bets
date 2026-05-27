@@ -1,13 +1,28 @@
 # Friends-Bets
 
 Friends-Bets is a full-stack web application for managing social wagers: create wagers, place bets, view live pools/odds, manage wallet balance, follow friends and groups, and receive in-app notifications. It is organized as a multi-package workspace with a clear client/server separation and shared type/schema definitions.
-
 # UI Screenshots
 <table>
   <tr>
     <td>
-      <a href="./docs/screenshots/wagers.png">
-        <img src="./docs/screenshots/wagers.png" alt="Wagers page" width="100%">
+      <a href="./docs/screenshots/dashboard.png">
+        <img src="./docs/screenshots/dashboard.png" alt="Dashboard page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/all_wagers.png">
+        <img src="./docs/screenshots/all_wagers.png" alt="Wagers page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Dashboard</strong></td>
+    <td align="center"><strong>Wagers</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/create_wager.png">
+        <img src="./docs/screenshots/create_wager.png" alt="Create wager page" width="100%">
       </a>
     </td>
     <td>
@@ -17,35 +32,83 @@ Friends-Bets is a full-stack web application for managing social wagers: create 
     </td>
   </tr>
   <tr>
-    <td align="center"><strong>Wagers</strong></td>
+    <td align="center"><strong>Create Wager</strong></td>
     <td align="center"><strong>Wager Detail</strong></td>
   </tr>
   <tr>
+    <td>
+      <a href="./docs/screenshots/wager_detail_2.png">
+        <img src="./docs/screenshots/wager_detail_2.png" alt="Wager detail with participants" width="100%">
+      </a>
+    </td>
     <td>
       <a href="./docs/screenshots/friends.png">
         <img src="./docs/screenshots/friends.png" alt="Friends page" width="100%">
       </a>
     </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Wager Detail Participants</strong></td>
+    <td align="center"><strong>Friends</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/add_friend.png">
+        <img src="./docs/screenshots/add_friend.png" alt="Add friend page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/pending_requests.png">
+        <img src="./docs/screenshots/pending_requests.png" alt="Pending friend requests page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Add Friend</strong></td>
+    <td align="center"><strong>Pending Requests</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/groups.png">
+        <img src="./docs/screenshots/groups.png" alt="Groups page" width="100%">
+      </a>
+    </td>
+    <td>
+      <a href="./docs/screenshots/group_detail.png">
+        <img src="./docs/screenshots/group_detail.png" alt="Group detail page" width="100%">
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Groups</strong></td>
+    <td align="center"><strong>Group Detail</strong></td>
+  </tr>
+  <tr>
     <td>
       <a href="./docs/screenshots/wallet.png">
         <img src="./docs/screenshots/wallet.png" alt="Wallet page" width="100%">
       </a>
     </td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Friends</strong></td>
-    <td align="center"><strong>Wallet</strong></td>
-  </tr>
-  <tr>
     <td>
       <a href="./docs/screenshots/admin.png">
         <img src="./docs/screenshots/admin.png" alt="Admin page" width="100%">
       </a>
     </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Wallet</strong></td>
+    <td align="center"><strong>Admin</strong></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="./docs/screenshots/user_settings.png">
+        <img src="./docs/screenshots/user_settings.png" alt="User settings page" width="100%">
+      </a>
+    </td>
     <td></td>
   </tr>
   <tr>
-    <td align="center"><strong>Admin</strong></td>
+    <td align="center"><strong>User Settings</strong></td>
     <td></td>
   </tr>
 </table>
