@@ -59,6 +59,12 @@ Friends-Bets is a full-stack web application for managing social wagers: create 
 - Notifications: in-app notifications for wager events and system messages
 - Auth & restrictions: verified users and suspension checks gate wallet and betting actions
 
+# Creators:
+- Štefan Šutý
+- Richard Čech
+- Nina Prachárová
+- Vladimír Borek
+
 ## Architecture
 The project is built as a modern TypeScript-first monolithic application with a React frontend, REST API backend, PostgreSQL database, role-based access control. It focuses on clean architecture, maintainability, and production-ready development practices.
 
